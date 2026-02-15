@@ -4,6 +4,7 @@ import Editor from "./components/Editor";
 import StatusBar from "./components/StatusBar";
 import Terminal from "./components/Terminal";
 import Toolbar from "./components/Toolbar";
+import VariablesPanel from "./components/VariablesPanel";
 import { DebugController, type DebugMode } from "./DebugController";
 import { runCode } from "./runner";
 import styles from "./styles/app.module.css";
@@ -164,6 +165,8 @@ export default function App() {
     debugCtrl.current?.updateBreakpoints(lines);
   }, []);
 
+  const isDebugging = debugMode === "debugging" || debugMode === "paused";
+
   return (
     <div className={styles.root}>
       <Toolbar
@@ -189,6 +192,8 @@ export default function App() {
               onBreakpointsChange={handleBreakpointsChange}
             />
           </div>
+
+          <VariablesPanel variables={variables} isVisible={isDebugging} />
         </div>
 
         <div className={styles.bottomPane}>
