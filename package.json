@@ -1,10 +1,12 @@
 {
   "name": "visualg",
   "version": "1.0.0",
-  "description": "",
+  "description": "VisuAlg IDE moderna — Electron + React + Monaco",
   "main": "dist/main/main.js",
   "scripts": {
-    "dev": "vite",
+    "dev:renderer": "vite",
+    "dev:main": "tsc -p tsconfig.main.json --watch",
+    "dev": "concurrently \"npm run dev:renderer\" \"npm run dev:main\" \"wait-on http://localhost:5173 && electron .\"",
     "lint": "biome lint ./src",
     "format": "biome format --write ./src",
     "check": "biome check --write ./src"
@@ -14,11 +16,13 @@
     "@types/react": "19.2.1",
     "@types/react-dom": "19.2.1",
     "@vitejs/plugin-react": "5.1.4",
+    "concurrently": "9.2.1",
     "electron": "40.4.1",
     "electron-builder": "25.0.0",
     "ts-node": "10.9.2",
     "typescript": "5.9.3",
-    "vite": "7.3.1"
+    "vite": "7.3.1",
+    "wait-on": "9.0.4"
   },
   "dependencies": {
     "@biomejs/biome": "2.3.15",
