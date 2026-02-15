@@ -34,7 +34,7 @@ export interface ProgramNode {
 
 export interface VarDeclarationNode {
   kind: "VarDeclaration";
-  names: string[];       // várias vars podem ser declaradas juntas: a, b, c: inteiro
+  names: string[]; // várias vars podem ser declaradas juntas: a, b, c: inteiro
   type: VizType;
   line: number;
 }
@@ -51,7 +51,7 @@ export interface AssignNode {
 export interface WriteNode {
   kind: "Write";
   args: ASTNode[];
-  newline: boolean;      // escreval = true, escreva = false
+  newline: boolean; // escreval = true, escreva = false
   line: number;
 }
 
@@ -74,7 +74,7 @@ export interface ForNode {
   variable: string;
   from: ASTNode;
   to: ASTNode;
-  step: ASTNode | null;   // passo (opcional)
+  step: ASTNode | null; // passo (opcional)
   body: ASTNode[];
   line: number;
 }
@@ -89,7 +89,7 @@ export interface WhileNode {
 export interface RepeatNode {
   kind: "Repeat";
   body: ASTNode[];
-  condition: ASTNode;    // repita...ate <condition>
+  condition: ASTNode; // repita...ate <condition>
   line: number;
 }
 
@@ -129,7 +129,7 @@ export interface CallNode {
 
 export interface BinaryOpNode {
   kind: "BinaryOp";
-  op: string;            // "+", "-", "*", "/", "div", "mod", "=", "<>", "<", ">", "<=", ">=", "e", "ou"
+  op: string; // "+", "-", "*", "/", "div", "mod", "=", "<>", "<", ">", "<=", ">=", "e", "ou"
   left: ASTNode;
   right: ASTNode;
   line: number;
@@ -137,7 +137,7 @@ export interface BinaryOpNode {
 
 export interface UnaryOpNode {
   kind: "UnaryOp";
-  op: string;            // "nao", "-"
+  op: string; // "nao", "-"
   operand: ASTNode;
   line: number;
 }

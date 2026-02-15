@@ -1,6 +1,6 @@
-import {
-  AssignNode,
+import type {
   ASTNode,
+  AssignNode,
   CallNode,
   ForNode,
   FunctionNode,
@@ -10,15 +10,20 @@ import {
   ReadNode,
   RepeatNode,
   ReturnNode,
-  VarDeclarationNode, VizType,
+  VarDeclarationNode,
+  VizType,
   WhileNode,
-  WriteNode
+  WriteNode,
 } from "./AST";
-import { Token, } from "./Token";
+import type { Token } from "./Token";
 import { TokenType } from "./TokenType";
 
 export class ParseError extends Error {
-  constructor(message: string, public line: number, public col: number) {
+  constructor(
+    message: string,
+    public line: number,
+    public col: number,
+  ) {
     super(`[Linha ${line}, Col ${col}] Erro de sintaxe: ${message}`);
     this.name = ParseError.name;
   }
@@ -34,12 +39,12 @@ export class Parser {
     const name = this.expect(TokenType.STRING, "Esperado nome do algoritmo entre aspas").value;
 
     const declarations = this.parseVarBlock();
-    const procedures   = this.parseProceduresAndFunctions();
+    const procedures = this.parseProceduresAndFunctions();
     this.expect(TokenType.INICIO, "Esperado 'inicio'");
     const body = this.parseStatements([TokenType.FIMALGORITMO]);
     this.expect(TokenType.FIMALGORITMO, "Esperado 'fimalgoritmo'");
 
-    return { kind: "Program", name, declarations: [...declarations, ...procedures as any], body };
+    return { kind: "Program", name, declarations: [...declarations, ...(procedures as any)], body };
   }
 
   // ─── Declarações de variáveis ─────────────────────────────────────────────────
@@ -84,17 +89,18 @@ export class Parser {
   private parseType(): VizType {
     const token = this.current();
     const typeMap: Partial<Record<TokenType, VizType>> = {
-      [TokenType.TYPE_INTEIRO]:   "inteiro",
-      [TokenType.TYPE_REAL]:      "real",
+      [TokenType.TYPE_INTEIRO]: "inteiro",
+      [TokenType.TYPE_REAL]: "real",
       [TokenType.TYPE_CARACTERE]: "caractere",
-      [TokenType.TYPE_LOGICO]:    "logico",
+      [TokenType.TYPE_LOGICO]: "logico",
     };
 
     const type = typeMap[token.type];
     if (!type) {
       throw new ParseError(
         `Tipo inválido '${token.value}'. Esperado: inteiro, real, caractere ou logico`,
-        token.line, token.col
+        token.line,
+        token.col,
       );
     }
 
@@ -109,7 +115,7 @@ export class Parser {
 
     while (this.check(TokenType.PROCEDIMENTO) || this.check(TokenType.FUNCAO)) {
       if (this.check(TokenType.PROCEDIMENTO)) subs.push(this.parseProcedure());
-      else                                     subs.push(this.parseFunction());
+      else subs.push(this.parseFunction());
     }
 
     return subs;
@@ -175,21 +181,27 @@ export class Parser {
     const token = this.current();
 
     switch (token.type) {
-      case TokenType.IDENTIFIER: return this.parseAssignOrCall();
-      case TokenType.ESCREVA:    return this.parseWrite(false);
-      case TokenType.ESCREVAL:   return this.parseWrite(true);
-      case TokenType.LEIA:       return this.parseRead();
-      case TokenType.SE:         return this.parseIf();
-      case TokenType.PARA:       return this.parseFor();
-      case TokenType.ENQUANTO:   return this.parseWhile();
-      case TokenType.REPITA:     return this.parseRepeat();
-      case TokenType.RETORNE:    return this.parseReturn();
+      case TokenType.IDENTIFIER:
+        return this.parseAssignOrCall();
+      case TokenType.ESCREVA:
+        return this.parseWrite(false);
+      case TokenType.ESCREVAL:
+        return this.parseWrite(true);
+      case TokenType.LEIA:
+        return this.parseRead();
+      case TokenType.SE:
+        return this.parseIf();
+      case TokenType.PARA:
+        return this.parseFor();
+      case TokenType.ENQUANTO:
+        return this.parseWhile();
+      case TokenType.REPITA:
+        return this.parseRepeat();
+      case TokenType.RETORNE:
+        return this.parseReturn();
 
       default:
-        throw new ParseError(
-          `Comando inesperado '${token.value}'`,
-          token.line, token.col
-        );
+        throw new ParseError(`Comando inesperado '${token.value}'`, token.line, token.col);
     }
   }
 
@@ -372,8 +384,10 @@ export class Parser {
     let left = this.parseAddSub();
 
     while (
-      this.check(TokenType.LESS) || this.check(TokenType.GREATER) ||
-      this.check(TokenType.LESS_EQUAL) || this.check(TokenType.GREATER_EQUAL)
+      this.check(TokenType.LESS) ||
+      this.check(TokenType.GREATER) ||
+      this.check(TokenType.LESS_EQUAL) ||
+      this.check(TokenType.GREATER_EQUAL)
     ) {
       const line = this.current().line;
       const op = this.advance().value;
@@ -403,8 +417,10 @@ export class Parser {
     let left = this.parseUnary();
 
     while (
-      this.check(TokenType.MULTIPLY) || this.check(TokenType.DIVIDE) ||
-      this.check(TokenType.DIV) || this.check(TokenType.MOD)
+      this.check(TokenType.MULTIPLY) ||
+      this.check(TokenType.DIVIDE) ||
+      this.check(TokenType.DIV) ||
+      this.check(TokenType.MOD)
     ) {
       const line = this.current().line;
       const op = this.advance().value;
@@ -473,7 +489,8 @@ export class Parser {
 
     throw new ParseError(
       `Expressão inválida: token inesperado '${token.value}'`,
-      token.line, token.col
+      token.line,
+      token.col,
     );
   }
 

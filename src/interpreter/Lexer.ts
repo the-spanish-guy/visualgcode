@@ -1,8 +1,12 @@
-import { KEYWORDS, Token } from "./Token";
+import { KEYWORDS, type Token } from "./Token";
 import { TokenType } from "./TokenType";
 
 export class LexerError extends Error {
-  constructor(message: string, public line: number, public col: number) {
+  constructor(
+    message: string,
+    public line: number,
+    public col: number,
+  ) {
     super(`[Linha ${line}, Col ${col}] Erro léxico: ${message}`);
     this.name = LexerError.name;
   }
@@ -32,24 +36,44 @@ export class Lexer {
   private readNextToken(): void {
     const char = this.current();
 
-    if (this.isDigit(char))           return this.readNumber();
-    if (char === '"')                  return this.readString();
-    if (this.isAlpha(char))           return this.readIdentifierOrKeyword();
+    if (this.isDigit(char)) return this.readNumber();
+    if (char === '"') return this.readString();
+    if (this.isAlpha(char)) return this.readIdentifierOrKeyword();
 
     // Operadores de 1 ou 2 caracteres
     switch (char) {
-      case '+': this.advance(); return this.pushToken(TokenType.PLUS, "+");
-      case '-': this.advance(); return this.pushToken(TokenType.MINUS, "-");
-      case '*': this.advance(); return this.pushToken(TokenType.MULTIPLY, "*");
-      case '/': this.advance(); return this.pushToken(TokenType.DIVIDE, "/");
-      case '(': this.advance(); return this.pushToken(TokenType.LPAREN, "(");
-      case ')': this.advance(); return this.pushToken(TokenType.RPAREN, ")");
-      case ':': this.advance(); return this.pushToken(TokenType.COLON, ":");
-      case ',': this.advance(); return this.pushToken(TokenType.COMMA, ",");
-      case '=': this.advance(); return this.pushToken(TokenType.EQUAL, "=");
+      case "+":
+        this.advance();
+        return this.pushToken(TokenType.PLUS, "+");
+      case "-":
+        this.advance();
+        return this.pushToken(TokenType.MINUS, "-");
+      case "*":
+        this.advance();
+        return this.pushToken(TokenType.MULTIPLY, "*");
+      case "/":
+        this.advance();
+        return this.pushToken(TokenType.DIVIDE, "/");
+      case "(":
+        this.advance();
+        return this.pushToken(TokenType.LPAREN, "(");
+      case ")":
+        this.advance();
+        return this.pushToken(TokenType.RPAREN, ")");
+      case ":":
+        this.advance();
+        return this.pushToken(TokenType.COLON, ":");
+      case ",":
+        this.advance();
+        return this.pushToken(TokenType.COMMA, ",");
+      case "=":
+        this.advance();
+        return this.pushToken(TokenType.EQUAL, "=");
 
-      case '<': return this.readLessThan();
-      case '>': return this.readGreaterThan();
+      case "<":
+        return this.readLessThan();
+      case ">":
+        return this.readGreaterThan();
 
       default:
         throw new LexerError(`Caractere inesperado '${char}'`, this.line, this.col);
@@ -157,7 +181,12 @@ export class Lexer {
 
     if (!this.isAtEnd() && this.current() === "=") {
       this.advance();
-      this.tokens.push({ type: TokenType.GREATER_EQUAL, value: ">=", line: this.line, col: startCol });
+      this.tokens.push({
+        type: TokenType.GREATER_EQUAL,
+        value: ">=",
+        line: this.line,
+        col: startCol,
+      });
       return;
     }
 
@@ -244,9 +273,7 @@ export class Lexer {
   }
 
   private isAlpha(c: string): boolean {
-    return (c >= "a" && c <= "z") ||
-           (c >= "A" && c <= "Z") ||
-           c === "_";
+    return (c >= "a" && c <= "z") || (c >= "A" && c <= "Z") || c === "_";
   }
 
   private isAlphaNumeric(c: string): boolean {
