@@ -2,6 +2,7 @@ import { useState } from "react";
 import Editor from "./components/Editor";
 import Toolbar from "./components/Toolbar";
 import styles from "./styles/app.module.css";
+
 const STARTER_CODE = `algoritmo "Meu Programa"
 
 var
@@ -27,19 +28,14 @@ inicio
 fimalgoritmo
 `;
 export default function App() {
-  const [code, setCode]                 = useState(STARTER_CODE);
-  const [cursorInfo, setCursorInfo]     = useState({ line: 1, col: 1 });
+  const [code, setCode] = useState(STARTER_CODE);
+  const [cursorInfo, setCursorInfo] = useState({ line: 1, col: 1 });
 
-
-  return ( 
+  return (
     <div className={styles.root}>
-      <Toolbar/>
+      <Toolbar />
 
-      <Editor
-              value={STARTER_CODE}
-              onChange={setCode}
-              onCursorChange={setCursorInfo}
-            />
+      <Editor value={STARTER_CODE} onChange={setCode} onCursorChange={setCursorInfo} />
     </div>
   );
 }
