@@ -1,5 +1,10 @@
+import Toolbar from "./components/Toolbar";
+import styles from "./styles/app.module.css";
+
 export default function App() {
-  return (
-    <p>Hola mundo</p>
+  return ( 
+    <div className={styles.root}>
+      <Toolbar/>
+    </div>
   );
 }
