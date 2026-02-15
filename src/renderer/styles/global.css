@@ -1,0 +1,93 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;600;700;800&display=swap');
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  /* Cores base */
+  --bg-void:      #080b10;
+  --bg-deep:      #0d1117;
+  --bg-panel:     #111620;
+  --bg-surface:   #161c2a;
+  --bg-elevated:  #1c2333;
+  --bg-hover:     #232d42;
+
+  /* Bordas */
+  --border-dim:   #1e2a3a;
+  --border-soft:  #253042;
+  --border-mid:   #2e3d54;
+
+  /* Texto */
+  --text-primary:  #e2eaf5;
+  --text-secondary: #7a90aa;
+  --text-muted:    #3f5068;
+  --text-dim:      #2a3a50;
+
+  /* Acento — laranja elétrico */
+  --accent:        #ff6b2b;
+  --accent-glow:   rgba(255, 107, 43, 0.2);
+  --accent-dim:    rgba(255, 107, 43, 0.08);
+
+  /* Status */
+  --green:  #3ddc97;
+  --red:    #ff4d6a;
+  --yellow: #ffd166;
+  --blue:   #5ba4f5;
+
+  /* Layout */
+  --titlebar-h:   38px;
+  --toolbar-h:    44px;
+  --statusbar-h:  24px;
+  --sidebar-w:    220px;
+  --panel-h:      200px;
+
+  /* Tipografia */
+  --font-ui:   'Syne', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* Raios */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+}
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg-void);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+
+/* Scrollbar customizada */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-mid); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* Animações */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-accent {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}
+
+.animate-in {
+  animation: fadeIn 0.2s ease forwards;
+}

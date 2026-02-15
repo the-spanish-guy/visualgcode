@@ -14,6 +14,6 @@
     "outDir": "./dist/renderer",
     "rootDir": "./src"
   },
-  "include": ["src/**/*"],
+  "include": ["src/renderer/**/*"],
   "exclude": ["node_modules"]
 }
