@@ -169,10 +169,10 @@ export default function App() {
         isRunning={isRunning}
         debugMode={debugMode}
         onRun={handleRun}
-        onDebug={handleDebug}
         onStep={handleStep}
-        onContinue={handleContinue}
         onStop={handleStop}
+        onDebug={handleDebug}
+        onContinue={handleContinue}
       />
 
       <div className={styles.workarea}>
@@ -180,11 +180,12 @@ export default function App() {
           <div className={styles.editorPane}>
             <Editor
               value={code}
+              errors={errors}
+              currentLine={currentLine}
+              breakpoints={breakpoints}
               onChange={setCode}
               onCursorChange={setCursorInfo}
               onBreakpointsChange={handleBreakpointsChange}
-              breakpoints={breakpoints}
-              currentLine={currentLine}
             />
           </div>
         </div>
@@ -192,11 +193,11 @@ export default function App() {
         <div className={styles.bottomPane}>
           <Terminal
             lines={output}
+            errors={errors}
             isRunning={isRunning}
             waitingInput={waitingInput}
-            onInput={handleTerminalInput}
             onClear={handleClear}
-            errors={errors}
+            onInput={handleTerminalInput}
           />
         </div>
       </div>

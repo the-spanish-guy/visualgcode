@@ -6,20 +6,22 @@ import { snippets } from "./editor";
 
 interface Props {
   value: string;
-  onChange: (val: string) => void;
-  onCursorChange: (pos: { line: number; col: number }) => void;
-  onBreakpointsChange: (lines: number[]) => void;
-  currentLine: number | null;
+  errors: string[];
   breakpoints: Set<number>;
+  currentLine: number | null;
+  onChange: (val: string) => void;
+  onBreakpointsChange: (lines: number[]) => void;
+  onCursorChange: (pos: { line: number; col: number }) => void;
 }
 
 export default function Editor({
   value,
+  errors,
+  currentLine,
+  breakpoints,
   onChange,
   onCursorChange,
   onBreakpointsChange,
-  currentLine,
-  breakpoints,
 }: Props) {
   const editorRef = useRef<Monaco.editor.IStandaloneCodeEditor | null>(null);
   const monacoRef = useRef<typeof Monaco | null>(null);
@@ -31,7 +33,6 @@ export default function Editor({
     monacoRef.current = monaco;
 
     registerVisuAlgLanguage(monaco);
-
     decorations.current = editor.createDecorationsCollection([]);
     bpDecorations.current = editor.createDecorationsCollection([]);
 
@@ -40,14 +41,19 @@ export default function Editor({
     });
 
     editor.onMouseDown((e) => {
-      const line = e.target.position?.lineNumber;
-      if (!line) return;
+      if (
+        e.target.type === monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN ||
+        e.target.type === monaco.editor.MouseTargetType.GUTTER_LINE_NUMBERS
+      ) {
+        const line = e.target.position?.lineNumber;
+        if (!line) return;
 
-      const updated = new Set(breakpoints);
+        const updated = new Set(breakpoints);
+        if (updated.has(line)) updated.delete(line);
+        else updated.add(line);
 
-      if (updated.has(line)) updated.delete(line);
-      else updated.add(line);
-      onBreakpointsChange(Array.from(updated));
+        onBreakpointsChange(Array.from(updated));
+      }
     });
 
     editor.focus();
@@ -99,6 +105,30 @@ export default function Editor({
       })),
     );
   }, [breakpoints]);
+
+  // Erros aparecem como markers
+  useEffect(() => {
+    const editor = editorRef.current;
+    const monaco = monacoRef.current;
+    if (!editor || !monaco) return;
+    const model = editor.getModel();
+    if (!model) return;
+
+    const markers: Monaco.editor.IMarkerData[] = errors.map((err) => {
+      const match = err.match(/\[Linha (\d+)/);
+      const line = match ? parseInt(match[1]) : 1;
+      return {
+        severity: monaco.MarkerSeverity.Error,
+        message: err,
+        startLineNumber: line,
+        startColumn: 1,
+        endLineNumber: line,
+        endColumn: model.getLineMaxColumn(line),
+      };
+    });
+
+    monaco.editor.setModelMarkers(model, "visualg", markers);
+  }, [errors]);
 
   const handleChange: OnChange = (val) => onChange(val ?? "");
 
