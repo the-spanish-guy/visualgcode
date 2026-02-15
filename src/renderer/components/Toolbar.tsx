@@ -1,7 +1,11 @@
 import styles from "../styles/toolbar.module.css";
 
-export default function Toolbar() {
+interface Props {
+  isRunning: boolean;
+  onRun: () => void;
+}
 
+export default function Toolbar({ isRunning, onRun }: Props) {
   return (
     <div className={styles.toolbar}>
       <div className={styles.brand}>
@@ -11,7 +15,7 @@ export default function Toolbar() {
       </div>
 
       <div className={styles.actions}>
-        <button className={styles.btnRun}>
+        <button className={styles.btnRun} onClick={onRun}>
           <span className={styles.btnIcon}>▶</span>
           Executar
         </button>
@@ -19,10 +23,11 @@ export default function Toolbar() {
           <span className={styles.btnIcon}>⬡</span>
           Debug
         </button>
-      <button className={styles.btnStop}>
-        <span className={styles.btnIcon}>■</span>
-        Parar
-      </button>
+
+        <button className={styles.btnStop}>
+          <span className={styles.btnIcon}>■</span>
+          Parar
+        </button>
       </div>
     </div>
   );
