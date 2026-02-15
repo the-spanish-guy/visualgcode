@@ -7,7 +7,7 @@ import Toolbar from "./components/Toolbar";
 import VariablesPanel from "./components/VariablesPanel";
 import { DebugController, type DebugMode } from "./DebugController";
 import { runCode } from "./runner";
-import styles from "./styles/app.module.css";
+import styles from "./styles/App.module.css";
 
 const STARTER_CODE = `algoritmo "Meu Programa"
 

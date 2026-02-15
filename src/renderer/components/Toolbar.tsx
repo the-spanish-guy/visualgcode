@@ -1,5 +1,5 @@
 import type { DebugMode } from "../DebugController";
-import styles from "../styles/toolbar.module.css";
+import styles from "../styles/Toolbar.module.css";
 
 interface Props {
   isRunning: boolean;

@@ -1,5 +1,5 @@
 import type { DebugMode } from "../DebugController";
-import styles from "../styles/statusbar.module.css";
+import styles from "../styles/StatusBar.module.css";
 
 interface Props {
   line: number;

@@ -1,7 +1,7 @@
 import MonacoEditor, { type OnChange, type OnMount } from "@monaco-editor/react";
 import type * as Monaco from "monaco-editor";
 import { useEffect, useRef } from "react";
-import styles from "../styles/editor.module.css";
+import styles from "../styles/Editor.module.css";
 import { snippets } from "./editor";
 
 interface Props {

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import styles from "../styles/terminal.module.css";
+import styles from "../styles/Terminal.module.css";
 
 interface Props {
   lines: string[];
