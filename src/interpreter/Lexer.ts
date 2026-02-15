@@ -158,17 +158,32 @@ export class Lexer {
 
     if (!this.isAtEnd() && this.current() === "-") {
       this.advance(); // consome "-"
-      this.tokens.push({ type: TokenType.ASSIGN, value: "<-", line: this.line, col: startCol });
+      this.tokens.push({
+        value: "<-",
+        col: startCol,
+        line: this.line,
+        type: TokenType.ASSIGN,
+      });
       return;
     }
     if (!this.isAtEnd() && this.current() === "=") {
       this.advance();
-      this.tokens.push({ type: TokenType.LESS_EQUAL, value: "<=", line: this.line, col: startCol });
+      this.tokens.push({
+        value: "<=",
+        col: startCol,
+        line: this.line,
+        type: TokenType.LESS_EQUAL,
+      });
       return;
     }
     if (!this.isAtEnd() && this.current() === ">") {
       this.advance();
-      this.tokens.push({ type: TokenType.NOT_EQUAL, value: "<>", line: this.line, col: startCol });
+      this.tokens.push({
+        value: "<>",
+        col: startCol,
+        line: this.line,
+        type: TokenType.NOT_EQUAL,
+      });
       return;
     }
 
@@ -182,10 +197,10 @@ export class Lexer {
     if (!this.isAtEnd() && this.current() === "=") {
       this.advance();
       this.tokens.push({
-        type: TokenType.GREATER_EQUAL,
         value: ">=",
-        line: this.line,
         col: startCol,
+        line: this.line,
+        type: TokenType.GREATER_EQUAL,
       });
       return;
     }
