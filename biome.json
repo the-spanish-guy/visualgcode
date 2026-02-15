@@ -7,10 +7,11 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "ignore": [
-      "dist/**",
-      "release/**",
-      "node_modules/**"
+    "includes": [
+      "./src/**/*",
+      "!dist/**",
+      "!release/**",
+      "!node_modules/**"
     ]
   },
   "formatter": {
@@ -61,16 +62,11 @@
       "arrowParentheses": "always"
     }
   },
-  "typescript": {
-    "formatter": {
-      "quoteStyle": "double",
-      "trailingCommas": "all",
-      "semicolons": "always"
-    }
-  },
   "overrides": [
     {
-      "include": ["src/interpreter/**"],
+      "includes": [
+        "src/interpreter/**"
+      ],
       "linter": {
         "rules": {
           "suspicious": {
