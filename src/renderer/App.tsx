@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from "react";
 import { CancelSignal } from "../interpreter/Evaluator";
 import Editor from "./components/Editor";
+import Terminal from "./components/Terminal";
 import Toolbar from "./components/Toolbar";
 import { runCode } from "./runner";
 import styles from "./styles/app.module.css";
@@ -77,18 +78,47 @@ export default function App() {
       cancelSignal.current,
     );
 
-    console.log(output);
-
     if (result.errors.length > 0) setErrors(result.errors);
     setIsRunning(false);
     setDebugMode("idle");
   }, [code]);
 
+  const handleTerminalInput = useCallback((value: string) => {
+    if (inputResolve.current) {
+      setOutput((prev) => [...prev, value]);
+      inputResolve.current(value);
+      inputResolve.current = null;
+      setWaitingInput(false);
+    }
+  }, []);
+
+  const handleClear = useCallback(() => {
+    setOutput([]);
+    setErrors([]);
+  }, []);
+
   return (
     <div className={styles.root}>
       <Toolbar isRunning={isRunning} onRun={handleRun} />
 
-      <Editor value={code} onChange={setCode} onCursorChange={setCursorInfo} />
+      <div className={styles.workarea}>
+        <div className={styles.mainRow}>
+          <div className={styles.editorPane}>
+            <Editor value={code} onChange={setCode} onCursorChange={setCursorInfo} />
+          </div>
+        </div>
+
+        <div className={styles.bottomPane}>
+          <Terminal
+            lines={output}
+            isRunning={isRunning}
+            waitingInput={waitingInput}
+            onInput={handleTerminalInput}
+            onClear={handleClear}
+            errors={errors}
+          />
+        </div>
+      </div>
     </div>
   );
 }
