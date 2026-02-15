@@ -89,7 +89,6 @@ export class Lexer {
 
     while (!this.isAtEnd() && this.current() !== '"') {
       if (this.current() === "\n") {
-        console.log('awui?')
         throw new LexerError("String não fechada", this.line, this.col);
       }
       str += this.advance();
