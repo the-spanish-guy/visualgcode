@@ -52,7 +52,9 @@
 
 .btnRun,
 .btnStop,
-.btnDebug {
+.btnDebug,
+.btnStep,
+.btnContinue {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -88,6 +90,38 @@
 .btnDebug:hover {
   background: rgba(91, 164, 245, 0.1);
   border-color: rgba(91, 164, 245, 0.5);
+}
+
+.btnStep {
+  background: var(--bg-elevated);
+  color: var(--yellow);
+  border: 1px solid rgba(255, 209, 102, 0.25);
+  padding: 6px 12px;
+}
+
+.btnStep:hover:not(:disabled) {
+  background: rgba(255, 209, 102, 0.1);
+}
+
+.btnStep:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btnContinue {
+  background: var(--bg-elevated);
+  color: var(--green);
+  border: 1px solid rgba(61, 220, 151, 0.25);
+  padding: 6px 12px;
+}
+
+.btnContinue:hover:not(:disabled) {
+  background: rgba(61, 220, 151, 0.1);
+}
+
+.btnContinue:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .btnStop {

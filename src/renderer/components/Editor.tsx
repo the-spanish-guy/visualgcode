@@ -1,6 +1,6 @@
 import MonacoEditor, { type OnChange, type OnMount } from "@monaco-editor/react";
 import type * as Monaco from "monaco-editor";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import styles from "../styles/editor.module.css";
 import { snippets } from "./editor";
 
@@ -8,9 +8,19 @@ interface Props {
   value: string;
   onChange: (val: string) => void;
   onCursorChange: (pos: { line: number; col: number }) => void;
+  onBreakpointsChange: (lines: number[]) => void;
+  currentLine: number | null;
+  breakpoints: Set<number>;
 }
 
-export default function Editor({ value, onChange, onCursorChange }: Props) {
+export default function Editor({
+  value,
+  onChange,
+  onCursorChange,
+  onBreakpointsChange,
+  currentLine,
+  breakpoints,
+}: Props) {
   const editorRef = useRef<Monaco.editor.IStandaloneCodeEditor | null>(null);
   const monacoRef = useRef<typeof Monaco | null>(null);
   const decorations = useRef<Monaco.editor.IEditorDecorationsCollection | null>(null);
@@ -29,8 +39,66 @@ export default function Editor({ value, onChange, onCursorChange }: Props) {
       onCursorChange({ line: e.position.lineNumber, col: e.position.column });
     });
 
+    editor.onMouseDown((e) => {
+      const line = e.target.position?.lineNumber;
+      if (!line) return;
+
+      const updated = new Set(breakpoints);
+
+      if (updated.has(line)) updated.delete(line);
+      else updated.add(line);
+      onBreakpointsChange(Array.from(updated));
+    });
+
     editor.focus();
   };
+
+  // Atualizando highlight da linha atual
+  useEffect(() => {
+    const editor = editorRef.current;
+    const monaco = monacoRef.current;
+    if (!editor || !monaco || !decorations.current) return;
+
+    if (currentLine === null) {
+      decorations.current.clear();
+      return;
+    }
+
+    decorations.current.set([
+      {
+        range: new monaco.Range(currentLine, 1, currentLine, 1),
+        options: {
+          isWholeLine: true,
+          className: "debug-current-line",
+          glyphMarginClassName: "debug-arrow",
+          overviewRulerLane: monaco.editor.OverviewRulerLane.Left,
+          overviewRulerColor: "#ff6b2b",
+        },
+      },
+    ]);
+
+    // Scroll para a linha atual
+    editor.revealLineInCenterIfOutsideViewport(currentLine);
+  }, [currentLine]);
+
+  // Atualizando a decoracao dos breakpoints
+  useEffect(() => {
+    const editor = editorRef.current;
+    const monaco = monacoRef.current;
+    if (!editor || !monaco || !bpDecorations.current) return;
+
+    bpDecorations.current.set(
+      Array.from(breakpoints).map((line) => ({
+        range: new monaco.Range(line, 1, line, 1),
+        options: {
+          isWholeLine: false,
+          glyphMarginClassName: "debug-breakpoint",
+          overviewRulerLane: monaco.editor.OverviewRulerLane.Left,
+          overviewRulerColor: "#ff4d6a",
+        },
+      })),
+    );
+  }, [breakpoints]);
 
   const handleChange: OnChange = (val) => onChange(val ?? "");
 

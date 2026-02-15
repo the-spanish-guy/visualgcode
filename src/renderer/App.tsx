@@ -1,8 +1,9 @@
 import { useCallback, useRef, useState } from "react";
-import { CancelSignal } from "../interpreter/Evaluator";
+import { CancelSignal, type VarSnapshot } from "../interpreter/Evaluator";
 import Editor from "./components/Editor";
 import Terminal from "./components/Terminal";
 import Toolbar from "./components/Toolbar";
+import { DebugController, type DebugMode } from "./DebugController";
 import { runCode } from "./runner";
 import styles from "./styles/app.module.css";
 
@@ -31,8 +32,6 @@ inicio
 fimalgoritmo
 `;
 
-export type DebugMode = "idle" | "running" | "debugging" | "paused";
-
 export default function App() {
   const [code, setCode] = useState(STARTER_CODE);
   const [output, setOutput] = useState<string[]>([]);
@@ -41,12 +40,15 @@ export default function App() {
   const [cursorInfo, setCursorInfo] = useState({ line: 1, col: 1 });
   const [errors, setErrors] = useState<string[]>([]);
 
+  // Debug state
   const [debugMode, setDebugMode] = useState<DebugMode>("idle");
   const [currentLine, setCurrentLine] = useState<number | null>(null);
+  const [variables, setVariables] = useState<VarSnapshot[]>([]);
+  const [breakpoints, setBreakpoints] = useState<Set<number>>(new Set());
 
   const inputResolve = useRef<((val: string) => void) | null>(null);
   const cancelSignal = useRef<CancelSignal>(new CancelSignal());
-  const debugCtrl = useRef<any | null>(null);
+  const debugCtrl = useRef<DebugController | null>(null);
 
   const appendOutput = (text: string) => {
     setOutput((prev) => {
@@ -89,6 +91,44 @@ export default function App() {
     setDebugMode("idle");
   }, [code]);
 
+  const handleDebug = useCallback(async () => {
+    cancelSignal.current = new CancelSignal();
+
+    const ctrl = new DebugController((state) => {
+      if (state.mode !== undefined) setDebugMode(state.mode);
+      if (state.currentLine !== undefined) setCurrentLine(state.currentLine);
+      if (state.variables !== undefined) setVariables(state.variables);
+    }, breakpoints);
+
+    debugCtrl.current = ctrl;
+    setIsRunning(true);
+    setOutput([]);
+    setErrors([]);
+    setDebugMode("debugging");
+    setVariables([]);
+
+    const result = await runCode(
+      code,
+      { onOutput: appendOutput, onInput: makeInputCallback },
+      cancelSignal.current,
+      ctrl.onStep,
+    );
+
+    if (result.errors.length > 0) setErrors(result.errors);
+    setIsRunning(false);
+    setDebugMode("idle");
+    setCurrentLine(null);
+    debugCtrl.current = null;
+  }, [code, breakpoints]);
+
+  const handleStep = useCallback(() => {
+    debugCtrl.current?.step();
+  }, []);
+
+  const handleContinue = useCallback(() => {
+    debugCtrl.current?.continue();
+  }, []);
+
   const handleStop = useCallback(() => {
     cancelSignal.current.cancel();
     debugCtrl.current?.stop();
@@ -118,14 +158,34 @@ export default function App() {
     setErrors([]);
   }, []);
 
+  const handleBreakpointsChange = useCallback((lines: number[]) => {
+    setBreakpoints(new Set(lines));
+    debugCtrl.current?.updateBreakpoints(lines);
+  }, []);
+
   return (
     <div className={styles.root}>
-      <Toolbar isRunning={isRunning} debugMode={debugMode} onRun={handleRun} onStop={handleStop} />
+      <Toolbar
+        isRunning={isRunning}
+        debugMode={debugMode}
+        onRun={handleRun}
+        onDebug={handleDebug}
+        onStep={handleStep}
+        onContinue={handleContinue}
+        onStop={handleStop}
+      />
 
       <div className={styles.workarea}>
         <div className={styles.mainRow}>
           <div className={styles.editorPane}>
-            <Editor value={code} onChange={setCode} onCursorChange={setCursorInfo} />
+            <Editor
+              value={code}
+              onChange={setCode}
+              onCursorChange={setCursorInfo}
+              onBreakpointsChange={handleBreakpointsChange}
+              breakpoints={breakpoints}
+              currentLine={currentLine}
+            />
           </div>
         </div>
 
