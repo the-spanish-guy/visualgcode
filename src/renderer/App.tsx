@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from "react";
 import { CancelSignal, type VarSnapshot } from "../interpreter/Evaluator";
 import Editor from "./components/Editor";
+import StatusBar from "./components/StatusBar";
 import Terminal from "./components/Terminal";
 import Toolbar from "./components/Toolbar";
 import { DebugController, type DebugMode } from "./DebugController";
@@ -201,6 +202,14 @@ export default function App() {
           />
         </div>
       </div>
+
+      <StatusBar
+        line={cursorInfo.line}
+        col={cursorInfo.col}
+        isRunning={isRunning}
+        errors={errors.length}
+        debugMode={debugMode}
+      />
     </div>
   );
 }
