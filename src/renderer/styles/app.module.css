@@ -6,3 +6,31 @@
   background: var(--bg-void);
   overflow: hidden;
 }
+
+.workarea {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+
+.mainRow {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.editorPane {
+  flex: 1;
+  overflow: hidden;
+  border-bottom: 1px solid var(--border-dim);
+}
+
+.bottomPane {
+  height: var(--panel-h);
+  min-height: 140px;
+  max-height: 50vh;
+  overflow: hidden;
+  background: var(--bg-deep);
+  border-top: 1px solid var(--border-dim);
+}

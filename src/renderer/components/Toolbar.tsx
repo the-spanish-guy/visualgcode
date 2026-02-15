@@ -1,11 +1,17 @@
+import type { DebugMode } from "../App";
 import styles from "../styles/toolbar.module.css";
 
 interface Props {
   isRunning: boolean;
+  debugMode: DebugMode;
   onRun: () => void;
+  onStop: () => void;
 }
 
-export default function Toolbar({ isRunning, onRun }: Props) {
+export default function Toolbar({ isRunning, debugMode, onRun, onStop }: Props) {
+  const isDebugging = debugMode === "debugging" || debugMode === "paused";
+  const idle = !isRunning && !isDebugging;
+
   return (
     <div className={styles.toolbar}>
       <div className={styles.brand}>
@@ -15,19 +21,25 @@ export default function Toolbar({ isRunning, onRun }: Props) {
       </div>
 
       <div className={styles.actions}>
-        <button className={styles.btnRun} onClick={onRun}>
-          <span className={styles.btnIcon}>▶</span>
-          Executar
-        </button>
-        <button className={styles.btnDebug}>
-          <span className={styles.btnIcon}>⬡</span>
-          Debug
-        </button>
+        {idle && (
+          <>
+            <button className={styles.btnRun} onClick={onRun}>
+              <span className={styles.btnIcon}>▶</span>
+              Executar
+            </button>
+            <button className={styles.btnDebug}>
+              <span className={styles.btnIcon}>⬡</span>
+              Debug
+            </button>
+          </>
+        )}
 
-        <button className={styles.btnStop}>
-          <span className={styles.btnIcon}>■</span>
-          Parar
-        </button>
+        {isRunning && !isDebugging && (
+          <button className={styles.btnStop} onClick={onStop}>
+            <span className={styles.btnIcon}>■</span>
+            Parar
+          </button>
+        )}
       </div>
     </div>
   );

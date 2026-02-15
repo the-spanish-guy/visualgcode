@@ -30,6 +30,9 @@ inicio
 
 fimalgoritmo
 `;
+
+export type DebugMode = "idle" | "running" | "debugging" | "paused";
+
 export default function App() {
   const [code, setCode] = useState(STARTER_CODE);
   const [output, setOutput] = useState<string[]>([]);
@@ -38,10 +41,12 @@ export default function App() {
   const [cursorInfo, setCursorInfo] = useState({ line: 1, col: 1 });
   const [errors, setErrors] = useState<string[]>([]);
 
-  const [debugMode, setDebugMode] = useState<any>("idle");
+  const [debugMode, setDebugMode] = useState<DebugMode>("idle");
   const [currentLine, setCurrentLine] = useState<number | null>(null);
+
   const inputResolve = useRef<((val: string) => void) | null>(null);
   const cancelSignal = useRef<CancelSignal>(new CancelSignal());
+  const debugCtrl = useRef<any | null>(null);
 
   const appendOutput = (text: string) => {
     setOutput((prev) => {
@@ -69,6 +74,7 @@ export default function App() {
     cancelSignal.current = new CancelSignal();
     setIsRunning(true);
     setOutput([]);
+    setErrors([]);
     setCurrentLine(null);
     setDebugMode("running");
 
@@ -82,6 +88,21 @@ export default function App() {
     setIsRunning(false);
     setDebugMode("idle");
   }, [code]);
+
+  const handleStop = useCallback(() => {
+    cancelSignal.current.cancel();
+    debugCtrl.current?.stop();
+    debugCtrl.current = null;
+    if (inputResolve.current) {
+      inputResolve.current("");
+      inputResolve.current = null;
+    }
+    setIsRunning(false);
+    setWaitingInput(false);
+    setDebugMode("idle");
+    setCurrentLine(null);
+    setOutput((prev) => [...prev, "", "⬛ Execução interrompida."]);
+  }, []);
 
   const handleTerminalInput = useCallback((value: string) => {
     if (inputResolve.current) {
@@ -99,7 +120,7 @@ export default function App() {
 
   return (
     <div className={styles.root}>
-      <Toolbar isRunning={isRunning} onRun={handleRun} />
+      <Toolbar isRunning={isRunning} debugMode={debugMode} onRun={handleRun} onStop={handleStop} />
 
       <div className={styles.workarea}>
         <div className={styles.mainRow}>
