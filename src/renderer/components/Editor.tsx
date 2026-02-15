@@ -2,6 +2,7 @@ import MonacoEditor, { OnChange, OnMount } from "@monaco-editor/react";
 import type * as Monaco from "monaco-editor";
 import { useRef } from "react";
 import styles from "../styles/editor.module.css";
+import { snippets } from "./editor";
 
 interface Props {
   value: string;
@@ -20,6 +21,8 @@ export default function Editor({
   const handleMount: OnMount = (editor, monaco) => {
     editorRef.current = editor;
     monacoRef.current = monaco;
+
+    registerVisuAlgLanguage(monaco);
 
     decorations.current   = editor.createDecorationsCollection([]);
     bpDecorations.current = editor.createDecorationsCollection([]);
@@ -72,4 +75,134 @@ export default function Editor({
       />
     </div>
   );
+}
+
+/**
+ * Registro da linguagem no monaco editor
+ * - Tokenizer para syntax highlighting
+ * - Provedor de snippets para autocomplete
+ * - Tema customizado
+ * @param monaco 
+ * @returns 
+ */
+function registerVisuAlgLanguage(monaco: typeof Monaco) {
+  // Evita re-registro
+  const langs = monaco.languages.getLanguages();
+  if (langs.some(l => l.id === "visualg")) return;
+
+  monaco.languages.register({ id: "visualg", extensions: [".alg"] });
+
+  // Tokenizer (syntax highlighting)
+  monaco.languages.setMonarchTokensProvider("visualg", {
+    ignoreCase: true,
+    keywords: [
+      "algoritmo", "fimalgoritmo", "var", "inicio",
+      "se", "entao", "senao", "fimse",
+      "para", "de", "ate", "faca", "fimpara", "passo",
+      "enquanto", "fimenquanto",
+      "repita",
+      "procedimento", "fimprocedimento",
+      "funcao", "fimfuncao", "retorne",
+      "e", "ou", "nao",
+      "div", "mod",
+    ],
+    types: ["inteiro", "real", "caractere", "logico"],
+    builtins: [
+      "escreva", "escreval", "leia",
+      "abs", "int", "sqrt", "quad", "exp", "log", "logn",
+      "sen", "cos", "tan", "pi", "rand", "randi",
+      "compr", "copia", "maiusc", "minusc", "pos",
+      "real", "inteiro", "caracpnum", "numcarac",
+    ],
+    constants: ["verdadeiro", "falso"],
+    tokenizer: {
+      root: [
+        // Comentários
+        [/\/\/.*$/, "comment"],
+        [/\{/, "comment", "@comment"],
+        // Strings
+        [/"([^"\\]|\\.)*$/, "string.invalid"],
+        [/"/, "string", "@string"],
+        // Números
+        [/\d+\.\d+/, "number.float"],
+        [/\d+/, "number"],
+        // Operadores
+        [/<-/, "keyword.operator"],
+        [/<>|<=|>=|<|>|=/, "operator"],
+        [/[+\-*/]/, "operator"],
+        // Identificadores e palavras-chave
+        [/[a-zA-Z_]\w*/, {
+          cases: {
+            "@keywords":  "keyword",
+            "@types":     "type",
+            "@builtins":  "support.function",
+            "@constants": "constant",
+            "@default":   "identifier",
+          },
+        }],
+        // Pontuação
+        [/[(),:]/, "delimiter"],
+      ],
+      comment: [
+        [/[^}]+/, "comment"],
+        [/\}/, "comment", "@pop"],
+      ],
+      string: [
+        [/[^\\"]+/, "string"],
+        [/\\./, "string.escape"],
+        [/"/, "string", "@pop"],
+      ],
+    },
+  });
+
+  // Autocomplete
+  monaco.languages.registerCompletionItemProvider("visualg", {
+    provideCompletionItems: (model, position) => {
+      const word = model.getWordUntilPosition(position);
+      const range = {
+        startLineNumber: position.lineNumber,
+        endLineNumber:   position.lineNumber,
+        startColumn:     word.startColumn,
+        endColumn:       word.endColumn,
+      };
+
+      const suggestions: Monaco.languages.CompletionItem[] = snippets(monaco, range);
+
+      return { suggestions };
+    },
+  });
+
+  /**
+   * Tema customizado
+   * TODO: Separar isso num arquivo de tema(s) posteriormente
+   */
+  monaco.editor.defineTheme("visualg-dark", {
+    base: "vs-dark",
+    inherit: true,
+    rules: [
+      { token: "keyword",          foreground: "ff6b2b", fontStyle: "bold" },
+      { token: "keyword.operator", foreground: "5ba4f5" },
+      { token: "type",             foreground: "3ddc97" },
+      { token: "support.function", foreground: "ffd166" },
+      { token: "constant",         foreground: "c792ea" },
+      { token: "string",           foreground: "a8d8a8" },
+      { token: "number",           foreground: "79d4f1" },
+      { token: "number.float",     foreground: "79d4f1" },
+      { token: "comment",          foreground: "3f5068", fontStyle: "italic" },
+      { token: "operator",         foreground: "7a90aa" },
+      { token: "identifier",       foreground: "e2eaf5" },
+      { token: "delimiter",        foreground: "5b6d82" },
+    ],
+    colors: {
+      "editor.background":            "#0d1117",
+      "editor.foreground":            "#e2eaf5",
+      "editor.lineHighlightBackground": "#161c2a",
+      "editor.selectionBackground":   "#253042",
+      "editorLineNumber.foreground":  "#2e3d54",
+      "editorLineNumber.activeForeground": "#7a90aa",
+      "editorGutter.background":      "#0d1117",
+      "editorCursor.foreground":      "#ff6b2b",
+      "editor.findMatchBackground":   "#ff6b2b44",
+    },
+  });
 }
