@@ -2,32 +2,39 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: var(--toolbar-h);
-  padding: 0 16px;
+  height: 44px;
+  padding: 0 12px;
   background: var(--bg-panel);
   border-bottom: 1px solid var(--border-dim);
   flex-shrink: 0;
-  -webkit-app-region: drag; /* permite arrastar janela no Mac */
+  gap: 12px;
+}
+
+/* ── Lado esquerdo: marca + aba ── */
+.left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
 }
 
 .brand {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
 .logo {
   font-size: 18px;
   color: var(--accent);
-  line-height: 1;
 }
 
 .name {
   font-family: var(--font-ui);
   font-weight: 800;
-  font-size: 15px;
+  font-size: 14px;
   letter-spacing: 0.5px;
-  color: var(--text-primary);
 }
 
 .badge {
@@ -39,15 +46,109 @@
   background: var(--accent-dim);
   border: 1px solid var(--accent-glow);
   padding: 1px 5px;
-  border-radius: var(--radius-sm);
-  text-transform: uppercase;
+  border-radius: 4px;
 }
 
-.actions {
+/* ── Aba de arquivo ── */
+.fileTabs {
+  display: flex;
+  align-items: center;
+  height: 44px;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 14px;
+  height: 100%;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-primary);
+  border-right: 1px solid var(--border-dim);
+  border-left: 1px solid var(--border-dim);
+  background: var(--bg-deep);
+  position: relative;
+}
+
+.tab::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--accent);
+}
+
+.tabName {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+.dirtyDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+
+/* ── Lado direito: arquivos + execução ── */
+.right {
   display: flex;
   align-items: center;
   gap: 8px;
-  -webkit-app-region: no-drag;
+}
+
+/* Botões de ícone (arquivo) */
+.fileActions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.iconBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 5px;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.iconBtn:hover {
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+}
+
+.iconBtnDirty {
+  color: var(--accent);
+}
+
+.iconBtnDirty:hover {
+  color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.divider {
+  width: 1px;
+  height: 20px;
+  background: var(--border-dim);
+}
+
+/* Botões de execução */
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .btnRun,
@@ -58,12 +159,12 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 14px;
+  padding: 6px 12px;
   border: none;
-  border-radius: var(--radius-md);
+  border-radius: 6px;
   font-family: var(--font-ui);
   font-weight: 600;
-  font-size: 13px;
+  font-size: 12px;
   cursor: pointer;
   transition: all 0.15s ease;
 }
@@ -89,21 +190,20 @@
 
 .btnDebug:hover {
   background: rgba(91, 164, 245, 0.1);
-  border-color: rgba(91, 164, 245, 0.5);
 }
 
 .btnStep {
   background: var(--bg-elevated);
   color: var(--yellow);
   border: 1px solid rgba(255, 209, 102, 0.25);
-  padding: 6px 12px;
 }
 
 .btnStep:hover:not(:disabled) {
   background: rgba(255, 209, 102, 0.1);
 }
 
-.btnStep:disabled {
+.btnStep:disabled,
+.btnContinue:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
@@ -112,16 +212,10 @@
   background: var(--bg-elevated);
   color: var(--green);
   border: 1px solid rgba(61, 220, 151, 0.25);
-  padding: 6px 12px;
 }
 
 .btnContinue:hover:not(:disabled) {
   background: rgba(61, 220, 151, 0.1);
-}
-
-.btnContinue:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
 }
 
 .btnStop {
@@ -135,5 +229,5 @@
 }
 
 .btnIcon {
-  font-size: 11px;
+  font-size: 10px;
 }
