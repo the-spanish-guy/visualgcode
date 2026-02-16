@@ -36,7 +36,10 @@ fimalgoritmo
 
 export default function App() {
   const [code, setCode] = useState(STARTER_CODE);
-  const [output, setOutput] = useState<string[]>([]);
+  const [output, setOutput] = useState<{ lines: string[]; lineOpen: boolean }>({
+    lines: [],
+    lineOpen: false,
+  });
   const [isRunning, setIsRunning] = useState(false);
   const [waitingInput, setWaitingInput] = useState(false);
   const [cursorInfo, setCursorInfo] = useState({ line: 1, col: 1 });
@@ -52,32 +55,45 @@ export default function App() {
   const cancelSignal = useRef<CancelSignal>(new CancelSignal());
   const debugCtrl = useRef<DebugController | null>(null);
 
-  const appendOutput = (text: string) => {
+  const appendOutput = useCallback((text: string) => {
     setOutput((prev) => {
-      const lines = text.split("\n");
-      const updated = [...prev];
-      lines.forEach((line, i) => {
-        if (i === 0 && updated.length > 0) {
-          updated[updated.length - 1] += line;
+      const lines = [...prev.lines];
+      const parts = text.split("\n");
+      const endsWithNewline = text.endsWith("\n");
+
+      parts.forEach((part, i) => {
+        if (i === 0 && prev.lineOpen && lines.length > 0) {
+          lines[lines.length - 1] += part;
         } else {
-          updated.push(line);
+          lines.push(part);
         }
       });
-      if (updated[updated.length - 1] === "") updated.pop();
-      return updated;
-    });
-  };
 
-  const makeInputCallback = () =>
-    new Promise<string>((resolve) => {
-      setWaitingInput(true);
-      inputResolve.current = resolve;
+      /**
+       * escreval("Olá\n") -> ["Olá", ""]
+       * Remove o "" vazio final gerado pelo split em textos que terminam com \n
+       */
+      if (endsWithNewline && lines[lines.length - 1] === "") {
+        lines.pop();
+      }
+
+      return { lines, lineOpen: !endsWithNewline };
     });
+  }, []);
+
+  const makeInputCallback = useCallback(
+    () =>
+      new Promise<string>((resolve) => {
+        setWaitingInput(true);
+        inputResolve.current = resolve;
+      }),
+    [],
+  );
 
   const handleRun = useCallback(async () => {
     cancelSignal.current = new CancelSignal();
     setIsRunning(true);
-    setOutput([]);
+    setOutput({ lines: [], lineOpen: false });
     setErrors([]);
     setCurrentLine(null);
     setDebugMode("running");
@@ -104,7 +120,7 @@ export default function App() {
 
     debugCtrl.current = ctrl;
     setIsRunning(true);
-    setOutput([]);
+    setOutput({ lines: [], lineOpen: false });
     setErrors([]);
     setDebugMode("debugging");
     setVariables([]);
@@ -143,12 +159,20 @@ export default function App() {
     setWaitingInput(false);
     setDebugMode("idle");
     setCurrentLine(null);
-    setOutput((prev) => [...prev, "", "⬛ Execução interrompida."]);
+    setOutput((prev) => ({ ...prev, lines: [...prev.lines, "", "⬛ Execução interrompida."] }));
   }, []);
 
   const handleTerminalInput = useCallback((value: string) => {
     if (inputResolve.current) {
-      setOutput((prev) => [...prev, value]);
+      setOutput((prev) => {
+        const lines = [...prev.lines];
+        if (prev.lineOpen && lines.length > 0) {
+          lines[lines.length - 1] += value;
+        } else {
+          lines.push(value);
+        }
+        return { lines, lineOpen: false };
+      });
       inputResolve.current(value);
       inputResolve.current = null;
       setWaitingInput(false);
@@ -156,7 +180,7 @@ export default function App() {
   }, []);
 
   const handleClear = useCallback(() => {
-    setOutput([]);
+    setOutput({ lines: [], lineOpen: false });
     setErrors([]);
   }, []);
 
@@ -198,7 +222,7 @@ export default function App() {
 
         <div className={styles.bottomPane}>
           <Terminal
-            lines={output}
+            lines={output.lines}
             errors={errors}
             isRunning={isRunning}
             waitingInput={waitingInput}
