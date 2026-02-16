@@ -220,6 +220,13 @@ export default function App() {
         return;
       }
 
+      // Esc - Para parar a execução ou debugging
+      if (e.key === "Escape") {
+        e.preventDefault();
+        if (isRunning) handleStop();
+        return;
+      }
+
       if (!ctrl) return;
       if (e.key === "s" && e.shiftKey) {
         e.preventDefault();
@@ -257,6 +264,7 @@ export default function App() {
   }, [
     activeId,
     debugMode,
+    isRunning,
     cursorInfo.line,
     activeTab.breakpoints,
     newTab,
@@ -264,6 +272,7 @@ export default function App() {
     handleRun,
     handleSave,
     handleStep,
+    handleStop,
     handleOpen,
     handleSaveAs,
     handleContinue,
