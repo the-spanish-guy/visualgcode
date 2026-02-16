@@ -108,3 +108,65 @@ ipcMain.handle("open-file-dialog", async (_event) => {
     return { success: false, error: (err as Error).message };
   }
 });
+
+// explorador de arquivos
+interface FileNode {
+  name: string;
+  path: string;
+  isDir: boolean;
+  children?: FileNode[];
+}
+
+function readDirRecursive(dirPath: string, depth = 0): FileNode[] {
+  if (depth > 5) return [];
+  const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+
+  return entries
+    .filter((e) => !e.name.startsWith("."))
+    .sort((a, b) => {
+      if (a.isDirectory() !== b.isDirectory()) return a.isDirectory() ? -1 : 1;
+      return a.name.localeCompare(b.name);
+    })
+    .map((entry) => {
+      const fullPath = path.join(dirPath, entry.name);
+      if (entry.isDirectory()) {
+        return {
+          name: entry.name,
+          path: fullPath,
+          isDir: true,
+          children: readDirRecursive(fullPath, depth + 1),
+        };
+      }
+      return { name: entry.name, path: fullPath, isDir: false };
+    });
+}
+
+// Abre diálogo para escolher pasta de trabalho
+ipcMain.handle("open-folder-dialog", async (_event) => {
+  const win = BrowserWindow.getFocusedWindow();
+  if (!win) return { success: false, error: "Nenhuma janela ativa" };
+
+  const { canceled, filePaths } = await dialog.showOpenDialog(win, {
+    title: "Abrir pasta de trabalho",
+    properties: ["openDirectory"],
+  });
+
+  if (canceled || filePaths.length === 0) return { success: false, canceled: true };
+
+  const folderPath = filePaths[0];
+  const folderName = path.basename(folderPath);
+  const tree = readDirRecursive(folderPath);
+
+  return { success: true, folderPath, folderName, tree };
+});
+
+// Lê arquivo ao clicar no explorador
+ipcMain.handle("read-file", async (_event, filePath: string) => {
+  try {
+    const content = fs.readFileSync(filePath, "utf-8");
+    const fileName = path.basename(filePath);
+    return { success: true, filePath, fileName, content };
+  } catch (err) {
+    return { success: false, error: (err as Error).message };
+  }
+});

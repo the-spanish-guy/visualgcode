@@ -20,6 +20,18 @@
   overflow: hidden;
 }
 
+/* ─── Sidebar do explorador ─── */
+
+.sidebar {
+  width: 220px;
+  min-width: 160px;
+  max-width: 360px;
+  flex-shrink: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
 .editorPane {
   flex: 1;
   overflow: hidden;

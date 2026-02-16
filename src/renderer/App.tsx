@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CancelSignal, type VarSnapshot } from "../interpreter/Evaluator";
 import Editor from "./components/Editor";
+import Explorer, { type FileNode } from "./components/Explorer";
 import StatusBar from "./components/StatusBar";
 import TabBar from "./components/TabBar";
 import Terminal from "./components/Terminal";
@@ -39,6 +40,13 @@ export default function App() {
   const [currentLine, setCurrentLine] = useState<number | null>(null);
   const [variables, setVariables] = useState<VarSnapshot[]>([]);
 
+  // Explorador de arquivos
+  const [workspace, setWorkspace] = useState<{
+    folderName: string;
+    folderPath: string;
+    tree: FileNode[];
+  } | null>(null);
+
   const inputResolve = useRef<((val: string) => void) | null>(null);
   const cancelSignal = useRef<CancelSignal>(new CancelSignal());
   const debugCtrl = useRef<DebugController | null>(null);
@@ -61,6 +69,25 @@ export default function App() {
     if (!result.success || result.canceled) return;
     openFileInTab(result.fileName!, result.filePath!, result.content!);
   }, [openFileInTab]);
+
+  const handleOpenFolder = useCallback(async () => {
+    const result = await window.electronAPI.openFolderDialog();
+    if (!result.success || result.canceled) return;
+    setWorkspace({
+      folderName: result.folderName!,
+      folderPath: result.folderPath!,
+      tree: result.tree!,
+    });
+  }, []);
+
+  const handleExplorerFileOpen = useCallback(
+    async (filePath: string) => {
+      const result = await window.electronAPI.readFile(filePath);
+      if (!result.success) return;
+      openFileInTab(result.fileName!, result.filePath!, result.content!);
+    },
+    [openFileInTab],
+  );
 
   const appendOutput = useCallback((text: string) => {
     setOutput((prev) => {
@@ -297,6 +324,7 @@ export default function App() {
         onDebug={handleDebug}
         onSaveAs={handleSaveAs}
         onContinue={handleContinue}
+        onOpenFolder={handleOpenFolder}
       />
 
       <TabBar
@@ -309,6 +337,17 @@ export default function App() {
 
       <div className={styles.workarea}>
         <div className={styles.mainRow}>
+          {workspace && (
+            <div className={styles.sidebar}>
+              <Explorer
+                tree={workspace.tree}
+                folderName={workspace.folderName}
+                activeFilePath={activeTab.filePath}
+                onFileOpen={handleExplorerFileOpen}
+              />
+            </div>
+          )}
+
           <div className={styles.editorPane}>
             <Editor
               tabKey={{ id: activeId, initialContent: activeTab.code }}

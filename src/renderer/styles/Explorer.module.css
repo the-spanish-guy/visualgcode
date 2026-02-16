@@ -1,0 +1,111 @@
+.explorer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg-panel);
+  border-right: 1px solid var(--border-dim);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border-dim);
+  flex-shrink: 0;
+}
+
+.folderIcon {
+  font-size: 13px;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.folderName {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tree {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 4px 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-dim) transparent;
+}
+
+.node {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 24px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  padding-right: 8px;
+  transition: background 0.1s;
+  border-radius: 0;
+}
+
+.node:hover {
+  background: var(--bg-elevated);
+}
+
+.icon {
+  font-size: 11px;
+  flex-shrink: 0;
+  width: 14px;
+  text-align: center;
+}
+
+.label {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+
+.dir .icon  { color: var(--accent); }
+.dir .label { color: var(--text-secondary); }
+
+.alg .icon  { color: var(--accent); opacity: 0.7; }
+.alg .label { color: var(--text-primary); }
+
+.alg:hover .label { color: var(--accent); }
+
+.active {
+  background: var(--bg-elevated) !important;
+}
+.active .label { color: var(--accent) !important; }
+.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--accent);
+}
+
+.disabled .label { color: var(--text-dim); cursor: default; }
+.disabled:hover  { background: none; }
+
+.empty {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  font-style: italic;
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
