@@ -341,4 +341,6 @@ function registerVisuAlgLanguage(monaco: typeof Monaco) {
       "editor.findMatchBackground": "#ff6b2b44",
     },
   });
+
+  monaco.editor.setTheme("visualg-dark");
 }
