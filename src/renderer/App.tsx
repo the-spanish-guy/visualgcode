@@ -62,45 +62,6 @@ export default function App() {
     openFileInTab(result.fileName!, result.filePath!, result.content!);
   }, [openFileInTab]);
 
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      const ctrl = e.ctrlKey || e.metaKey;
-      if (!ctrl) return;
-      if (e.key === "s" && e.shiftKey) {
-        e.preventDefault();
-        handleSaveAs();
-        return;
-      }
-      if (e.key === "s") {
-        e.preventDefault();
-        handleSave();
-        return;
-      }
-      if (e.key === "o") {
-        e.preventDefault();
-        handleOpen();
-        return;
-      }
-      if (e.key === "n") {
-        e.preventDefault();
-        newTab();
-        return;
-      }
-      if (e.key === "t") {
-        e.preventDefault();
-        newTab();
-        return;
-      }
-      if (e.key === "w") {
-        e.preventDefault();
-        closeTab(activeId);
-        return;
-      }
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [handleSave, handleSaveAs, handleOpen, newTab, closeTab, activeId]);
-
   const appendOutput = useCallback((text: string) => {
     setOutput((prev) => {
       const lines = [...prev.lines];
@@ -222,6 +183,70 @@ export default function App() {
     setOutput({ lines: [], lineOpen: false });
     setErrors([]);
   }, []);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const ctrl = e.ctrlKey || e.metaKey;
+
+      // F5 — Executar (idle) ou Continuar (pausado)
+      if (e.key === "F5" && !e.shiftKey) {
+        e.preventDefault();
+        if (debugMode === "paused") {
+          handleContinue();
+          return;
+        }
+        if (debugMode === "idle") {
+          handleRun();
+          return;
+        }
+        return;
+      }
+
+      if (!ctrl) return;
+      if (e.key === "s" && e.shiftKey) {
+        e.preventDefault();
+        handleSaveAs();
+        return;
+      }
+      if (e.key === "s") {
+        e.preventDefault();
+        handleSave();
+        return;
+      }
+      if (e.key === "o") {
+        e.preventDefault();
+        handleOpen();
+        return;
+      }
+      if (e.key === "n") {
+        e.preventDefault();
+        newTab();
+        return;
+      }
+      if (e.key === "t") {
+        e.preventDefault();
+        newTab();
+        return;
+      }
+      if (e.key === "w") {
+        e.preventDefault();
+        closeTab(activeId);
+        return;
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [
+    activeId,
+    debugMode,
+    newTab,
+    closeTab,
+    handleRun,
+    handleSave,
+    handleOpen,
+    handleSaveAs,
+    handleContinue,
+  ]);
 
   const isDebugging = debugMode === "debugging" || debugMode === "paused";
 
