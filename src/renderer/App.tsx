@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { CancelSignal, type VarSnapshot } from "../interpreter/Evaluator";
 import Editor from "./components/Editor";
 import StatusBar from "./components/StatusBar";
@@ -8,6 +8,7 @@ import VariablesPanel from "./components/VariablesPanel";
 import { DebugController, type DebugMode } from "./DebugController";
 import { runCode } from "./runner";
 import styles from "./styles/App.module.css";
+import { useFile } from "./useFile";
 
 const STARTER_CODE = `algoritmo "Meu Programa"
 
@@ -54,6 +55,60 @@ export default function App() {
   const inputResolve = useRef<((val: string) => void) | null>(null);
   const cancelSignal = useRef<CancelSignal>(new CancelSignal());
   const debugCtrl = useRef<DebugController | null>(null);
+
+  const { fileState, markDirty, handleNew, handleOpen, handleSave, handleSaveAs } = useFile();
+
+  const handleCodeChange = useCallback(
+    (val: string) => {
+      setCode(val);
+      markDirty();
+    },
+    [markDirty],
+  );
+
+  const handleOpenFile = useCallback(async () => {
+    const result = await handleOpen();
+    if (result) setCode(result.code);
+  }, [handleOpen]);
+
+  const handleNewFile = useCallback(async () => {
+    const ok = await handleNew();
+    if (ok) setCode(STARTER_CODE);
+  }, [handleNew]);
+
+  /**
+   * Definindo alguns atalhos de teclado
+   * TODO: talvez seja interessante extrair isso pra um hook separado, tipo useShortcuts() ou algo assim
+   */
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const ctrl = e.ctrlKey || e.metaKey;
+      if (!ctrl) return;
+
+      if (e.key === "s" && e.shiftKey) {
+        e.preventDefault();
+        handleSaveAs(code);
+        return;
+      }
+      if (e.key === "s") {
+        e.preventDefault();
+        handleSave(code);
+        return;
+      }
+      if (e.key === "o") {
+        e.preventDefault();
+        handleOpenFile();
+        return;
+      }
+      if (e.key === "n") {
+        e.preventDefault();
+        handleNewFile();
+        return;
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [code, handleSave, handleSaveAs, handleOpenFile, handleNewFile]);
 
   const appendOutput = useCallback((text: string) => {
     setOutput((prev) => {
@@ -196,11 +251,17 @@ export default function App() {
       <Toolbar
         isRunning={isRunning}
         debugMode={debugMode}
+        isDirty={fileState.isDirty}
+        fileName={fileState.fileName}
         onRun={handleRun}
         onStep={handleStep}
         onStop={handleStop}
         onDebug={handleDebug}
+        onNew={handleNewFile}
+        onOpen={handleOpenFile}
         onContinue={handleContinue}
+        onSave={() => handleSave(code)}
+        onSaveAs={() => handleSaveAs(code)}
       />
 
       <div className={styles.workarea}>
@@ -211,7 +272,7 @@ export default function App() {
               errors={errors}
               currentLine={currentLine}
               breakpoints={breakpoints}
-              onChange={setCode}
+              onChange={handleCodeChange}
               onCursorChange={setCursorInfo}
               onBreakpointsChange={handleBreakpointsChange}
             />
