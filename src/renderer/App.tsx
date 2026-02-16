@@ -202,6 +202,24 @@ export default function App() {
         return;
       }
 
+      // F9 — Toggle breakpoint na linha atual do cursor
+      if (e.key === "F9") {
+        e.preventDefault();
+        const line = cursorInfo.line;
+        const updated = new Set(activeTab.breakpoints);
+        if (updated.has(line)) updated.delete(line);
+        else updated.add(line);
+        updateBreakpoints(activeId, Array.from(updated));
+        return;
+      }
+
+      // F10 — Próximo passo (apenas quando pausado)
+      if (e.key === "F10") {
+        e.preventDefault();
+        if (debugMode === "paused") handleStep();
+        return;
+      }
+
       if (!ctrl) return;
       if (e.key === "s" && e.shiftKey) {
         e.preventDefault();
@@ -239,13 +257,17 @@ export default function App() {
   }, [
     activeId,
     debugMode,
+    cursorInfo.line,
+    activeTab.breakpoints,
     newTab,
     closeTab,
     handleRun,
     handleSave,
+    handleStep,
     handleOpen,
     handleSaveAs,
     handleContinue,
+    updateBreakpoints,
   ]);
 
   const isDebugging = debugMode === "debugging" || debugMode === "paused";
