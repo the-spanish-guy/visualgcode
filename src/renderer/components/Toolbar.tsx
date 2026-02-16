@@ -23,8 +23,8 @@ export default function Toolbar({
   isRunning,
   debugMode,
   onNew,
-  onOpen,
   onRun,
+  onOpen,
   onStop,
   onStep,
   onSave,
@@ -43,13 +43,6 @@ export default function Toolbar({
           <span className={styles.logo}>▸</span>
           <span className={styles.name}>VisuAlg</span>
           <span className={styles.badge}>IDE</span>
-        </div>
-
-        <div className={styles.fileTabs}>
-          <div className={styles.tab}>
-            {isDirty && <span className={styles.dirtyDot} title="Alterações não salvas" />}
-            <span className={styles.tabName}>{fileName}</span>
-          </div>
         </div>
       </div>
 

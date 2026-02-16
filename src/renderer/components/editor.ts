@@ -3,6 +3,15 @@ import type { IRange, languages } from "monaco-editor";
 
 export const snippets = (monaco: Monaco, range: IRange): languages.CompletionItem[] => [
   {
+    label: "algoritmo",
+    kind: monaco.languages.CompletionItemKind.Snippet,
+    insertText:
+      'algoritmo "${1:NomeDoPrograma}"\n\nvar\n   ${2:variavel}: ${3|inteiro,real,caractere,logico|}\n\ninicio\n   ${4}\n\nfimalgoritmo',
+    insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+    documentation: "Estrutura completa do algoritmo",
+    range,
+  },
+  {
     label: "escreva",
     kind: monaco.languages.CompletionItemKind.Snippet,
     insertText: "escreva(${1:variavel})",
@@ -48,15 +57,6 @@ export const snippets = (monaco: Monaco, range: IRange): languages.CompletionIte
     insertText: "repita\n   ${1}\nate ${2:condicao}",
     insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
     documentation: "Laço repita",
-    range,
-  },
-  {
-    label: "algoritmo",
-    kind: monaco.languages.CompletionItemKind.Snippet,
-    insertText:
-      'algoritmo "${1:NomeDoPrograma}"\n\nvar\n   ${2:variavel}: ${3|inteiro,real,caractere,logico|}\n\ninicio\n   ${4}\n\nfimalgoritmo',
-    insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-    documentation: "Estrutura completa do algoritmo",
     range,
   },
 ];

@@ -1,11 +1,16 @@
-import MonacoEditor, { type OnChange, type OnMount } from "@monaco-editor/react";
+import MonacoEditor, { type OnMount } from "@monaco-editor/react";
 import type * as Monaco from "monaco-editor";
 import { useEffect, useRef } from "react";
 import styles from "../styles/Editor.module.css";
 import { snippets } from "./editor";
 
+export interface TabKey {
+  id: string;
+  initialContent: string;
+}
+
 interface Props {
-  value: string;
+  tabKey: TabKey;
   errors: string[];
   breakpoints: Set<number>;
   currentLine: number | null;
@@ -15,7 +20,7 @@ interface Props {
 }
 
 export default function Editor({
-  value,
+  tabKey,
   errors,
   currentLine,
   breakpoints,
@@ -23,21 +28,84 @@ export default function Editor({
   onCursorChange,
   onBreakpointsChange,
 }: Props) {
+  const { id: tabId, initialContent } = tabKey;
+
   const editorRef = useRef<Monaco.editor.IStandaloneCodeEditor | null>(null);
   const monacoRef = useRef<typeof Monaco | null>(null);
   const decorations = useRef<Monaco.editor.IEditorDecorationsCollection | null>(null);
   const bpDecorations = useRef<Monaco.editor.IEditorDecorationsCollection | null>(null);
+  const models = useRef<Map<string, Monaco.editor.ITextModel>>(new Map());
+
+  const onChangeRef = useRef(onChange);
+  const onCursorChangeRef = useRef(onCursorChange);
+  const onBreakpointsChangeRef = useRef(onBreakpointsChange);
+  const breakpointsRef = useRef(breakpoints);
+  onChangeRef.current = onChange;
+  onCursorChangeRef.current = onCursorChange;
+  onBreakpointsChangeRef.current = onBreakpointsChange;
+
+  useEffect(() => {
+    breakpointsRef.current = breakpoints;
+  }, [breakpoints]);
+
+  // Suprime onChange durante operações internas do Monaco
+  const suppressChange = useRef(false);
+
+  /**
+   * O monaco agora exibe o conteúdo pel model e não mais pelo value que era passado.
+   * Por isso a troca de model a baixo, para garantir o conteúdo correto ao trocar de aba, sem correr o risco de closure stale.
+   * Cada aba tem seu model associado pelo id da aba (tabId) e os modelos ficam armazenados num Map.
+   * Na troca de aba, o model correspondente é setado no editor.
+   */
+  useEffect(() => {
+    const editor = editorRef.current;
+    const monaco = monacoRef.current;
+    if (!editor || !monaco) return;
+
+    let model = models.current.get(tabId);
+    if (!model) {
+      const uri = monaco.Uri.parse(`inmemory:///${tabId}.alg`);
+      const stale = monaco.editor.getModel(uri);
+      if (stale) stale.dispose();
+
+      suppressChange.current = true;
+      model = monaco.editor.createModel(initialContent, "visualg", uri);
+      suppressChange.current = false;
+      models.current.set(tabId, model);
+    }
+
+    suppressChange.current = true;
+    editor.setModel(model);
+    suppressChange.current = false;
+
+    decorations.current = editor.createDecorationsCollection([]);
+    bpDecorations.current = editor.createDecorationsCollection([]);
+  }, [tabId]);
 
   const handleMount: OnMount = (editor, monaco) => {
     editorRef.current = editor;
     monacoRef.current = monaco;
 
     registerVisuAlgLanguage(monaco);
+
+    const uri = monaco.Uri.parse(`inmemory:///${tabId}.alg`);
+    const existing = monaco.editor.getModel(uri);
+
+    suppressChange.current = true;
+    const model = existing ?? monaco.editor.createModel(initialContent, "visualg", uri);
+    models.current.set(tabId, model);
+    editor.setModel(model);
+    suppressChange.current = false;
+
     decorations.current = editor.createDecorationsCollection([]);
     bpDecorations.current = editor.createDecorationsCollection([]);
 
     editor.onDidChangeCursorPosition((e) => {
-      onCursorChange({ line: e.position.lineNumber, col: e.position.column });
+      onCursorChangeRef.current({ line: e.position.lineNumber, col: e.position.column });
+    });
+
+    editor.onDidChangeModelContent(() => {
+      if (!suppressChange.current) onChangeRef.current(editor.getValue());
     });
 
     editor.onMouseDown((e) => {
@@ -48,11 +116,11 @@ export default function Editor({
         const line = e.target.position?.lineNumber;
         if (!line) return;
 
-        const updated = new Set(breakpoints);
+        const updated = new Set(breakpointsRef.current);
         if (updated.has(line)) updated.delete(line);
         else updated.add(line);
 
-        onBreakpointsChange(Array.from(updated));
+        onBreakpointsChangeRef.current(Array.from(updated));
       }
     });
 
@@ -83,7 +151,6 @@ export default function Editor({
       },
     ]);
 
-    // Scroll para a linha atual
     editor.revealLineInCenterIfOutsideViewport(currentLine);
   }, [currentLine]);
 
@@ -130,8 +197,6 @@ export default function Editor({
     monaco.editor.setModelMarkers(model, "visualg", markers);
   }, [errors]);
 
-  const handleChange: OnChange = (val) => onChange(val ?? "");
-
   return (
     <div className={styles.wrapper}>
       <style>{`
@@ -142,8 +207,6 @@ export default function Editor({
       <MonacoEditor
         height="100%"
         language="visualg"
-        value={value}
-        onChange={handleChange}
         onMount={handleMount}
         theme="visualg-dark"
         options={{
@@ -180,10 +243,9 @@ export default function Editor({
  * @param monaco
  * @returns
  */
-function registerVisuAlgLanguage(monaco: typeof Monaco) {
-  // Evita re-registro
-  const langs = monaco.languages.getLanguages();
-  if (langs.some((l) => l.id === "visualg")) return;
+function registerVisuAlgLanguage(monaco: typeof Monaco): void {
+  const already = monaco.languages.getLanguages().some((l) => l.id === "visualg");
+  if (already) return;
 
   monaco.languages.register({ id: "visualg", extensions: [".alg"] });
 
@@ -242,8 +304,6 @@ function registerVisuAlgLanguage(monaco: typeof Monaco) {
       "maiusc",
       "minusc",
       "pos",
-      "real",
-      "inteiro",
       "caracpnum",
       "numcarac",
     ],
