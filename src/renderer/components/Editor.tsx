@@ -9,12 +9,21 @@ export interface TabKey {
   initialContent: string;
 }
 
+export interface CompletionVar {
+  name: string;
+  type: string;
+}
+
+// Ref global — lida pelo completion provider que é registrado uma única vez
+const completionVarsRef = { current: [] as CompletionVar[] };
+
 interface Props {
   tabKey: TabKey;
   errors: string[];
   breakpoints: Set<number>;
   currentLine: number | null;
   onChange: (val: string) => void;
+  completionVars: CompletionVar[];
   onBreakpointsChange: (lines: number[]) => void;
   onCursorChange: (pos: { line: number; col: number }) => void;
 }
@@ -24,10 +33,13 @@ export default function Editor({
   errors,
   currentLine,
   breakpoints,
+  completionVars,
   onChange,
   onCursorChange,
   onBreakpointsChange,
 }: Props) {
+  // Atualiza ref global a cada render — provider sempre lê valor atual
+  completionVarsRef.current = completionVars;
   const { id: tabId, initialContent } = tabKey;
 
   const editorRef = useRef<Monaco.editor.IStandaloneCodeEditor | null>(null);
@@ -362,9 +374,21 @@ function registerVisuAlgLanguage(monaco: typeof Monaco): void {
         endColumn: word.endColumn,
       };
 
-      const suggestions: Monaco.languages.CompletionItem[] = snippets(monaco, range);
+      const localSnippets: Monaco.languages.CompletionItem[] = snippets(monaco, range);
 
-      return { suggestions };
+      // Variáveis declaradas na aba atual — lidas da ref global, sempre atualizadas
+      const varSuggestions: Monaco.languages.CompletionItem[] = completionVarsRef.current.map(
+        (v) => ({
+          label: v.name,
+          kind: monaco.languages.CompletionItemKind.Variable,
+          insertText: v.name,
+          documentation: `${v.type} ${v.name}`,
+          detail: v.type,
+          range,
+        }),
+      );
+
+      return { suggestions: [...localSnippets, ...varSuggestions] };
     },
   });
 

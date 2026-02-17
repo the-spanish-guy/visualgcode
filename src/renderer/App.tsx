@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CancelSignal, type VarSnapshot } from "../interpreter/Evaluator";
-import Editor from "./components/Editor";
+import Editor, { type CompletionVar } from "./components/Editor";
 import Explorer, { type FileNode } from "./components/Explorer";
 import StatusBar from "./components/StatusBar";
 import TabBar from "./components/TabBar";
@@ -8,6 +8,7 @@ import Terminal from "./components/Terminal";
 import Toolbar from "./components/Toolbar";
 import VariablesPanel from "./components/VariablesPanel";
 import { DebugController, type DebugMode } from "./DebugController";
+import { parseVars } from "./parseVars";
 import { runCode } from "./runner";
 import styles from "./styles/App.module.css";
 import { useTabs } from "./useTabs";
@@ -324,6 +325,7 @@ export default function App() {
     updateBreakpoints,
   ]);
 
+  const completionVars: CompletionVar[] = parseVars(activeTab.code);
   const isDebugging = debugMode === "debugging" || debugMode === "paused";
 
   return (
@@ -371,10 +373,11 @@ export default function App() {
 
           <div className={styles.editorPane}>
             <Editor
-              tabKey={{ id: activeId, initialContent: activeTab.code }}
+              completionVars={completionVars}
               errors={errors}
               currentLine={currentLine}
               breakpoints={activeTab.breakpoints}
+              tabKey={{ id: activeId, initialContent: activeTab.code }}
               onCursorChange={setCursorInfo}
               onChange={(val) => updateCode(activeId, val)}
               onBreakpointsChange={(lines) => updateBreakpoints(activeId, lines)}
