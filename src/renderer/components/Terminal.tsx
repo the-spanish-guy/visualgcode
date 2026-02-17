@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { VarSnapshot } from "../../interpreter/Evaluator";
+import { explainError } from "../explainError";
 import styles from "../styles/Terminal.module.css";
 import TraceTable from "./TraceTable";
 
@@ -100,11 +101,15 @@ export default function Terminal({
             </div>
           ))}
 
-          {errors.map((err, i) => (
-            <div key={`err-${i}`} className={styles.errorLine}>
-              {err}
-            </div>
-          ))}
+          {errors.map((err, i) => {
+            const explanation = explainError(err);
+            return (
+              <div key={`err-${i}`}>
+                <div className={styles.errorLine}>{err}</div>
+                {explanation && <div className={styles.errorHint}>→ {explanation}</div>}
+              </div>
+            );
+          })}
 
           {waitingInput && (
             <div className={styles.inputLine}>
