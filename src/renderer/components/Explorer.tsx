@@ -83,13 +83,6 @@ function TreeNode({
 export default function Explorer({ folderName, tree, activeFilePath, onFileOpen }: Props) {
   return (
     <div className={styles.explorer}>
-      <div className={styles.header}>
-        <span className={styles.folderIcon}>⌂</span>
-        <span className={styles.folderName} title={folderName}>
-          {folderName}
-        </span>
-      </div>
-
       <div className={styles.tree}>
         {tree.map((node) => (
           <TreeNode
