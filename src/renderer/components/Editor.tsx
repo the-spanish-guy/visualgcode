@@ -1,8 +1,8 @@
 import MonacoEditor, { type OnMount } from "@monaco-editor/react";
 import type * as Monaco from "monaco-editor";
 import { useEffect, useRef } from "react";
+import { snippets } from "../editor";
 import styles from "../styles/Editor.module.css";
-import { snippets } from "./editor";
 
 export interface TabKey {
   id: string;
