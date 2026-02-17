@@ -4,14 +4,41 @@ import type { Tab } from "../useTabs";
 interface Props {
   tabs: Tab[];
   activeId: string;
+  workspaceName: string | null;
+  explorerOpen: boolean;
   onNew: () => void;
   onClose: (id: string) => void;
   onSwitch: (id: string) => void;
+  onToggleExplorer: () => void;
 }
 
-export default function TabBar({ tabs, activeId, onSwitch, onClose, onNew }: Props) {
+export default function TabBar({
+  tabs,
+  activeId,
+  workspaceName,
+  explorerOpen,
+  onNew,
+  onClose,
+  onSwitch,
+  onToggleExplorer,
+}: Props) {
   return (
     <div className={styles.bar}>
+      <button
+        className={`${styles.explorerToggle} ${explorerOpen ? styles.explorerOpen : ""}`}
+        onClick={onToggleExplorer}
+        title={
+          workspaceName
+            ? explorerOpen
+              ? "Fechar explorador"
+              : "Abrir explorador"
+            : "Abrir pasta de trabalho"
+        }
+      >
+        <span className={styles.explorerIcon}>⌂</span>
+        {workspaceName && <span className={styles.explorerName}>{workspaceName}</span>}
+      </button>
+
       <div className={styles.tabs}>
         {tabs.map((tab) => (
           <div

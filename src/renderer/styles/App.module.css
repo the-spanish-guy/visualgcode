@@ -24,12 +24,13 @@
 
 .sidebar {
   width: 220px;
-  min-width: 160px;
+  min-width: 0;
   max-width: 360px;
   flex-shrink: 0;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  transition: width 0.2s ease;
 }
 
 .editorPane {

@@ -46,6 +46,7 @@ export default function App() {
     folderPath: string;
     tree: FileNode[];
   } | null>(null);
+  const [explorerOpen, setExplorerOpen] = useState(false);
 
   const inputResolve = useRef<((val: string) => void) | null>(null);
   const cancelSignal = useRef<CancelSignal>(new CancelSignal());
@@ -78,7 +79,24 @@ export default function App() {
       folderPath: result.folderPath!,
       tree: result.tree!,
     });
+    setExplorerOpen(true);
   }, []);
+
+  const handleToggleExplorer = useCallback(async () => {
+    if (!workspace) {
+      // Sem pasta — abre diálogo para escolher
+      const result = await window.electronAPI.openFolderDialog();
+      if (!result.success || result.canceled) return;
+      setWorkspace({
+        folderName: result.folderName!,
+        folderPath: result.folderPath!,
+        tree: result.tree!,
+      });
+      setExplorerOpen(true);
+    } else {
+      setExplorerOpen((o) => !o);
+    }
+  }, [workspace]);
 
   const handleExplorerFileOpen = useCallback(
     async (filePath: string) => {
@@ -330,23 +348,26 @@ export default function App() {
       <TabBar
         tabs={tabs}
         activeId={activeId}
+        workspaceName={workspace?.folderName ?? null}
+        explorerOpen={explorerOpen}
         onNew={newTab}
         onClose={closeTab}
         onSwitch={switchTab}
+        onToggleExplorer={handleToggleExplorer}
       />
 
       <div className={styles.workarea}>
         <div className={styles.mainRow}>
-          {workspace && (
-            <div className={styles.sidebar}>
+          <div className={styles.sidebar} style={{ width: workspace && explorerOpen ? 220 : 0 }}>
+            {workspace && (
               <Explorer
                 tree={workspace.tree}
                 folderName={workspace.folderName}
                 activeFilePath={activeTab.filePath}
                 onFileOpen={handleExplorerFileOpen}
               />
-            </div>
-          )}
+            )}
+          </div>
 
           <div className={styles.editorPane}>
             <Editor

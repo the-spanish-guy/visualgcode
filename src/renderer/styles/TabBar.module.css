@@ -11,6 +11,65 @@
 
 .bar::-webkit-scrollbar { display: none; }
 
+/* ─── Toggle do explorador ─── */
+
+.explorerToggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 100%;
+  padding: 0 10px 0 12px;
+  border: none;
+  border-right: 1px solid var(--border-dim);
+  background: transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.explorerToggle:hover {
+  background: var(--bg-elevated);
+}
+
+.explorerToggle.explorerOpen {
+  background: rgba(255, 107, 43, 0.08);
+}
+
+.explorerIcon {
+  font-size: 13px;
+  color: var(--text-dim);
+  transition: color 0.15s;
+}
+
+.explorerToggle.explorerOpen .explorerIcon {
+  color: var(--accent);
+}
+
+.explorerToggle:hover .explorerIcon {
+  color: var(--text-secondary);
+}
+
+.explorerToggle.explorerOpen:hover .explorerIcon {
+  color: var(--accent);
+}
+
+.explorerName {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  transition: color 0.15s;
+  white-space: nowrap;
+}
+
+.explorerToggle.explorerOpen .explorerName {
+  color: var(--accent);
+}
+
+/* ─── Abas ─── */
+
 .tabs {
   display: flex;
   align-items: stretch;
