@@ -1,23 +1,30 @@
 import { useEffect, useRef, useState } from "react";
+import type { VarSnapshot } from "../../interpreter/Evaluator";
 import styles from "../styles/Terminal.module.css";
+import TraceTable from "./TraceTable";
 
 interface Props {
   lines: string[];
+  errors: string[];
   isRunning: boolean;
   waitingInput: boolean;
-  onInput: (val: string) => void;
+  traceSnapshots: VarSnapshot[][];
   onClear: () => void;
-  errors: string[];
+  onClearTrace: () => void;
+  onInput: (val: string) => void;
 }
 
 export default function Terminal({
+  errors,
   lines,
   isRunning,
   waitingInput,
+  traceSnapshots,
   onInput,
   onClear,
-  errors,
+  onClearTrace,
 }: Props) {
+  const [activeTab, setActiveTab] = useState<"saida" | "rastreamento">("saida");
   const [inputVal, setInputVal] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -32,6 +39,10 @@ export default function Terminal({
     if (waitingInput) inputRef.current?.focus();
   }, [waitingInput]);
 
+  useEffect(() => {
+    if (traceSnapshots.length === 1) setActiveTab("rastreamento");
+  }, [traceSnapshots.length]);
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && waitingInput) {
       onInput(inputVal);
@@ -41,14 +52,25 @@ export default function Terminal({
 
   return (
     <div className={styles.terminal}>
-      {/* Header */}
       <div className={styles.header}>
-        <div className={styles.headerLeft}>
-          <span className={styles.dot} style={{ background: "#ff4d6a" }} />
-          <span className={styles.dot} style={{ background: "#ffd166" }} />
-          <span className={styles.dot} style={{ background: "#3ddc97" }} />
-          <span className={styles.title}>Saída</span>
+        <div className={styles.tabs}>
+          <button
+            className={`${styles.tab} ${activeTab === "saida" ? styles.tabActive : ""}`}
+            onClick={() => setActiveTab("saida")}
+          >
+            Saída
+          </button>
+          <button
+            className={`${styles.tab} ${activeTab === "rastreamento" ? styles.tabActive : ""}`}
+            onClick={() => setActiveTab("rastreamento")}
+          >
+            Rastreamento
+            {traceSnapshots.length > 0 && (
+              <span className={styles.badge}>{traceSnapshots.length}</span>
+            )}
+          </button>
         </div>
+
         <div className={styles.headerRight}>
           {isRunning && (
             <span className={styles.running}>
@@ -56,49 +78,54 @@ export default function Terminal({
               executando
             </span>
           )}
-          <button className={styles.clearBtn} onClick={onClear} title="Limpar saída">
-            ✕
-          </button>
+          {activeTab === "saida" && (
+            <button className={styles.clearBtn} onClick={onClear} title="Limpar saída">
+              ✕
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Output */}
-      <div className={styles.output}>
-        {lines.length === 0 && !isRunning && (
-          <span className={styles.placeholder}>Pressione ▶ Executar para rodar o programa...</span>
-        )}
+      {activeTab === "saida" ? (
+        <div className={styles.output}>
+          {lines.length === 0 && !isRunning && (
+            <span className={styles.placeholder}>
+              Pressione ▶ Executar para rodar o programa...
+            </span>
+          )}
 
-        {lines.map((line, i) => (
-          <div key={i} className={styles.line}>
-            {line}
-          </div>
-        ))}
+          {lines.map((line, i) => (
+            <div key={i} className={styles.line}>
+              {line}
+            </div>
+          ))}
 
-        {/* Erros */}
-        {errors.map((err, i) => (
-          <div key={`err-${i}`} className={styles.errorLine}>
-            {err}
-          </div>
-        ))}
+          {errors.map((err, i) => (
+            <div key={`err-${i}`} className={styles.errorLine}>
+              {err}
+            </div>
+          ))}
 
-        {/* Input inline */}
-        {waitingInput && (
-          <div className={styles.inputLine}>
-            <span className={styles.prompt}>›</span>
-            <input
-              ref={inputRef}
-              className={styles.input}
-              value={inputVal}
-              onChange={(e) => setInputVal(e.target.value)}
-              onKeyDown={handleKeyDown}
-              autoFocus
-              spellCheck={false}
-            />
-          </div>
-        )}
+          {waitingInput && (
+            <div className={styles.inputLine}>
+              <span className={styles.prompt}>›</span>
+              <input
+                ref={inputRef}
+                className={styles.input}
+                value={inputVal}
+                onChange={(e) => setInputVal(e.target.value)}
+                onKeyDown={handleKeyDown}
+                autoFocus
+                spellCheck={false}
+              />
+            </div>
+          )}
 
-        <div ref={bottomRef} />
-      </div>
+          <div ref={bottomRef} />
+        </div>
+      ) : (
+        <TraceTable snapshots={traceSnapshots} onClear={onClearTrace} />
+      )}
     </div>
   );
 }

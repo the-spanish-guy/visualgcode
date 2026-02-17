@@ -40,6 +40,7 @@ export default function App() {
   const [debugMode, setDebugMode] = useState<DebugMode>("idle");
   const [currentLine, setCurrentLine] = useState<number | null>(null);
   const [variables, setVariables] = useState<VarSnapshot[]>([]);
+  const [traceSnapshots, setTraceSnapshots] = useState<VarSnapshot[][]>([]);
 
   // Explorador de arquivos
   const [workspace, setWorkspace] = useState<{
@@ -166,7 +167,10 @@ export default function App() {
     const ctrl = new DebugController((state) => {
       if (state.mode !== undefined) setDebugMode(state.mode);
       if (state.currentLine !== undefined) setCurrentLine(state.currentLine);
-      if (state.variables !== undefined) setVariables(state.variables);
+      if (state.variables !== undefined) {
+        setVariables(state.variables);
+        setTraceSnapshots((prev) => [...prev, state.variables!]);
+      }
     }, activeTab.breakpoints);
 
     debugCtrl.current = ctrl;
@@ -175,6 +179,7 @@ export default function App() {
     setErrors([]);
     setDebugMode("debugging");
     setVariables([]);
+    setTraceSnapshots([]);
 
     const result = await runCode(
       activeTab.code,
@@ -393,8 +398,10 @@ export default function App() {
             lines={output.lines}
             isRunning={isRunning}
             waitingInput={waitingInput}
+            traceSnapshots={traceSnapshots}
             onClear={handleClear}
             onInput={handleTerminalInput}
+            onClearTrace={() => setTraceSnapshots([])}
           />
         </div>
       </div>
