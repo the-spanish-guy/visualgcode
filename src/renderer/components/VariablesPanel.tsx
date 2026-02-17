@@ -14,44 +14,33 @@ const TYPE_COLORS: Record<string, string> = {
   logico: "#c792ea",
 };
 
+const TYPE_DEFAULTS: Record<string, string> = {
+  inteiro: "0",
+  real: "0",
+  caractere: "",
+  logico: "falso",
+};
+
 interface VarInfo extends VarSnapshot {
-  initialValue: string | number | boolean;
+  defaultValue: string;
 }
 
 export default function VariablesPanel({ variables, isVisible }: Props) {
-  // Guarda snapshot anterior para detectar mudanças
-  const testeVarInfo = useRef<Map<string, VarInfo>>(new Map());
+  const varInfo = useRef<Map<string, VarInfo>>(new Map());
 
   if (!isVisible) return null;
 
-  const DEFAULTS: Record<string, string | number | boolean> = {
-    inteiro: 0,
-    real: 0,
-    caractere: "",
-    logico: "falso",
-  };
+  // Registra o valor default de cada variável
   variables.forEach((v) => {
-    const values: VarInfo = {
+    varInfo.current.set(v.name, {
       ...v,
-      initialValue: String(DEFAULTS[v.type]).toLowerCase(),
-    };
-    testeVarInfo.current.set(v.name, values);
+      defaultValue: TYPE_DEFAULTS[v.type] ?? "0",
+    });
   });
 
-  const handleClassName = (v: VarSnapshot, c: "linha" | "valor") => {
-    const base = styles.value;
-    const baseRow = styles.row;
-    const current = testeVarInfo.current.get(v.name);
-
-    if (c === "linha") {
-      if (v.value.toLowerCase() !== current?.initialValue) return `${baseRow} ${styles.rowChanged}`;
-      return baseRow;
-    }
-
-    if (v.value.toLowerCase() !== current?.initialValue)
-      return `${styles.value} ${styles.valueChanged}`;
-
-    return `${base}`;
+  const isChanged = (v: VarSnapshot): boolean => {
+    const info = varInfo.current.get(v.name);
+    return String(v.value).toLowerCase() !== info?.defaultValue;
   };
 
   return (
@@ -74,15 +63,20 @@ export default function VariablesPanel({ variables, isVisible }: Props) {
               </tr>
             </thead>
             <tbody>
-              {variables.map((v) => (
-                <tr key={v.name} className={handleClassName(v, "linha")}>
-                  <td className={styles.name}>{v.name}</td>
-                  <td className={styles.type} style={{ color: TYPE_COLORS[v.type] ?? "#7a90aa" }}>
-                    {v.type}
-                  </td>
-                  <td className={handleClassName(v, "valor")}>{String(v.value)}</td>
-                </tr>
-              ))}
+              {variables.map((v) => {
+                const changed = isChanged(v);
+                return (
+                  <tr key={v.name} className={`${styles.row} ${changed ? styles.rowChanged : ""}`}>
+                    <td className={styles.name}>{v.name}</td>
+                    <td className={styles.type} style={{ color: TYPE_COLORS[v.type] ?? "#7a90aa" }}>
+                      {v.type}
+                    </td>
+                    <td className={`${styles.value} ${changed ? styles.valueChanged : ""}`}>
+                      {String(v.value)}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}
