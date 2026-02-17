@@ -423,6 +423,8 @@ function registerVisuAlgLanguage(monaco: typeof Monaco): void {
       "editorGutter.background": "#0d1117",
       "editorCursor.foreground": "#ff6b2b",
       "editor.findMatchBackground": "#ff6b2b44",
+      "editorHoverWidget.background": "#0d1117",
+      "editorHoverWidget.border": "#f14c4c",
     },
   });
 
