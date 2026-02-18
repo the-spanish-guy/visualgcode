@@ -17,7 +17,10 @@ function createWindow(): void {
       contextIsolation: true,
       nodeIntegration: false,
     },
+
+    ...(process.platform !== "darwin" ? { titleBarOverlay: true } : {}),
   });
+  win.setMenuBarVisibility(false);
 
   if (isDev) {
     win.loadURL("http://localhost:5173");
