@@ -1,5 +1,5 @@
 {
-  "name": "VisuAlg IDE",
+  "name": "VisuAlg-IDE",
   "version": "1.0.0",
   "description": "VisuAlg IDE moderna — Electron + React + Monaco",
   "author": "the-spanish-guy",
@@ -33,7 +33,7 @@
       "target": [
         {
           "target": "portable",
-          "arch": ["x64", "x86"]
+          "arch": ["x64", "ia32"]
         }
       ],
       "icon": "build/icon.ico"
