@@ -11,7 +11,7 @@ jobs:
     
     strategy:
       matrix:
-        os: [windows-latest, ubuntu-latest, macos-latest]
+        os: [windows-latest, ubuntu-latest]
     
     steps:
       - name: Checkout
@@ -36,14 +36,6 @@ jobs:
       - name: Build Linux AppImage
         if: matrix.os == 'ubuntu-latest'
         run: npm run dist:linux
-      
-      # - name: Build macOS DMG
-      #   if: matrix.os == 'macos-latest'
-      #   run: npm run dist
-      #   env:
-      #     # Se tiver certificado Apple, descomente:
-      #     # CSC_LINK: ${{ secrets.MAC_CERT_BASE64 }}
-      #     # CSC_KEY_PASSWORD: ${{ secrets.MAC_CERT_PASSWORD }}
       
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
