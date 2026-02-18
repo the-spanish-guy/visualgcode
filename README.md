@@ -1,5 +1,5 @@
 <div align="center">
-<img src="docs/images/icon2.svg" width="128" height="128" alt="VisuAlg IDE Logo"/>
+<img src="docs/images/icon.svg" width="128" height="128" alt="VisuAlg IDE Logo"/>
 
 # VisuAlg IDE
 
