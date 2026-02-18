@@ -1,5 +1,6 @@
 {
   "name": "VisuAlg-IDE",
+  "productName": "VisuAlg IDE",
   "version": "1.0.0",
   "description": "VisuAlg IDE moderna — Electron + React + Monaco",
   "author": "the-spanish-guy",
@@ -31,18 +32,20 @@
     ],
     "win": {
       "target": [
-        {
-          "target": "portable",
-          "arch": ["x64", "ia32"]
-        }
+        "nsis",
+        "portable"
       ],
-      "icon": "build/icon.ico"
+      "icon": "build/icon.ico",
+      "sign": null
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true
+    },
+    "portable": {
+      "artifactName": "${productName}-${version}-Portable.${ext}"
     },
     "mac": {
       "target": "dmg",
