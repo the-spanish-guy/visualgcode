@@ -1,15 +1,59 @@
 {
-  "name": "visualg",
+  "name": "VisuAlg IDE",
   "version": "1.0.0",
   "description": "VisuAlg IDE moderna — Electron + React + Monaco",
+  "author": "the-spanish-guy",
   "main": "dist/main/main.js",
   "scripts": {
     "dev:renderer": "vite",
     "dev:main": "tsc -p tsconfig.main.json --watch",
     "dev": "concurrently \"npm run dev:renderer\" \"npm run dev:main\" \"wait-on http://localhost:5173 && electron .\"",
+    "build:renderer": "vite build",
+    "build:main": "tsc -p tsconfig.main.json",
+    "build": "npm run build:renderer && npm run build:main",
+    "pack": "npm run build && electron-builder --dir",
+    "dist": "npm run build && electron-builder",
+    "dist:win": "npm run build && electron-builder --win",
+    "dist:linux": "npm run build && electron-builder --linux",
     "lint": "biome lint ./src",
     "format": "biome format --write ./src",
     "check": "biome check --write ./src"
+  },
+  "build": {
+    "appId": "com.visualg.ide",
+    "productName": "VisuAlg IDE",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": ["x64", "x86"]
+        }
+      ],
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "build/icon.icns",
+      "category": "public.app-category.developer-tools"
+    },
+    "linux": {
+      "target": ["AppImage"],
+      "icon": "build/icon.png",
+      "category": "Development"
+    }
   },
   "devDependencies": {
     "@types/node": "25.2.3",
