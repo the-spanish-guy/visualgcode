@@ -3,13 +3,14 @@ name: Build & Release
 on:
   push:
     tags:
-      - 'v*.*.*'  # Dispara ao criar tag v1.0.0, v1.2.3, etc.
+      - 'v*.*.*'
 
 jobs:
-  release:
+  build:
     runs-on: ${{ matrix.os }}
     
     strategy:
+      fail-fast: false  # Continua mesmo se um OS falhar
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
     
@@ -29,36 +30,66 @@ jobs:
       - name: Build application
         run: npm run build
       
-      - name: Build Windows installer
+      - name: Build Windows
         if: matrix.os == 'windows-latest'
         run: npm run dist:win
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
-      - name: Build Linux AppImage
+      - name: Build Linux
         if: matrix.os == 'ubuntu-latest'
         run: npm run dist:linux
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
-      - name: Build macOS DMG
+      - name: Build macOS
         if: matrix.os == 'macos-latest'
         run: npm run dist
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
-      - name: Upload artifacts
+      - name: Upload Windows artifacts
+        if: matrix.os == 'windows-latest'
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.os }}-build
+          name: windows-installers
           path: |
             release/*.exe
-            release/*.AppImage
-            release/*.dmg
           retention-days: 5
       
-      - name: Create GitHub Release
+      - name: Upload Linux artifacts
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-installers
+          path: |
+            release/*.AppImage
+          retention-days: 5
+      
+      - name: Upload macOS artifacts
+        if: matrix.os == 'macos-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-installers
+          path: |
+            release/*.dmg
+          retention-days: 5
+  
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+      
+      - name: Create Release
         uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/')
         with:
           files: |
-            release/*.exe
-            release/*.AppImage
-            release/*.dmg
+            windows-installers/*
+            linux-installers/*
+            macos-installers/*
           draft: false
           prerelease: false
         env:
