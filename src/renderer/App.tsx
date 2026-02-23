@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CancelSignal, type VarSnapshot } from "../interpreter/Evaluator";
+import type { StaticWarning } from "../interpreter/StaticAnalyzer";
 import Editor, { type CompletionVar } from "./components/Editor";
 import Explorer, { type FileNode } from "./components/Explorer";
 import StatusBar from "./components/StatusBar";
@@ -35,6 +36,7 @@ export default function App() {
   const [waitingInput, setWaitingInput] = useState(false);
   const [cursorInfo, setCursorInfo] = useState({ line: 1, col: 1 });
   const [errors, setErrors] = useState<string[]>([]);
+  const [warnings, setWarnings] = useState<StaticWarning[]>([]);
 
   // Debug state
   const [debugMode, setDebugMode] = useState<DebugMode>("idle");
@@ -157,6 +159,8 @@ export default function App() {
     );
 
     if (result.errors.length > 0) setErrors(result.errors);
+    if (result.warnings.length > 0) setWarnings(result.warnings);
+
     setIsRunning(false);
     setDebugMode("idle");
   }, [activeTab.code, appendOutput, makeInputCallback]);
@@ -380,6 +384,7 @@ export default function App() {
             <Editor
               completionVars={completionVars}
               errors={errors}
+              warnings={warnings}
               currentLine={currentLine}
               breakpoints={activeTab.breakpoints}
               tabKey={{ id: activeId, initialContent: activeTab.code }}
@@ -411,6 +416,7 @@ export default function App() {
         isRunning={isRunning}
         debugMode={debugMode}
         errors={errors.length}
+        warnings={warnings.length}
         line={cursorInfo.line}
       />
     </div>

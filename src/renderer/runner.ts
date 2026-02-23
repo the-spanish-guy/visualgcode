@@ -1,9 +1,11 @@
 import { type CancelSignal, Evaluator, type StepCallback } from "../interpreter/Evaluator";
 import { Lexer } from "../interpreter/Lexer";
 import { Parser } from "../interpreter/Parser";
+import { analyzeAST, type StaticWarning } from "../interpreter/StaticAnalyzer";
 
 export interface RunResult {
   errors: string[];
+  warnings: StaticWarning[];
 }
 
 export interface RunCallbacks {
@@ -18,10 +20,12 @@ export async function runCode(
   onStep?: StepCallback,
 ): Promise<RunResult> {
   const errors: string[] = [];
+  const warnings: StaticWarning[] = [];
 
   try {
     const tokens = new Lexer(code).tokenize();
     const ast = new Parser(tokens).parse();
+    warnings.push(...analyzeAST(ast));
     const evaluator = new Evaluator(callbacks.onOutput, callbacks.onInput, cancelSignal, onStep);
 
     await evaluator.run(ast);
@@ -31,5 +35,5 @@ export async function runCode(
     }
   }
 
-  return { errors };
+  return { errors, warnings };
 }

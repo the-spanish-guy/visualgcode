@@ -6,10 +6,11 @@ interface Props {
   col: number;
   isRunning: boolean;
   errors: number;
+  warnings: number;
   debugMode: DebugMode;
 }
 
-export default function StatusBar({ line, col, isRunning, errors, debugMode }: Props) {
+export default function StatusBar({ line, col, isRunning, errors, debugMode, warnings }: Props) {
   const label =
     debugMode === "paused"
       ? "⏸ Pausado"
@@ -29,7 +30,13 @@ export default function StatusBar({ line, col, isRunning, errors, debugMode }: P
       <div className={styles.right}>
         {errors > 0 && (
           <span className={styles.errors}>
-            ✕ {errors} erro{errors > 1 ? "s" : ""}
+            <i className="nf nf-cod-error"></i> {errors} erro{errors > 1 ? "s" : ""}
+          </span>
+        )}
+
+        {warnings > 0 && (
+          <span className={styles.warnings}>
+            <i className="nf nf-cod-warning"></i> {warnings} warning{warnings > 1 ? "s" : ""}
           </span>
         )}
         <span className={styles.cursor}>

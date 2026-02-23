@@ -1,6 +1,7 @@
 import MonacoEditor, { type OnMount } from "@monaco-editor/react";
 import type * as Monaco from "monaco-editor";
 import { useEffect, useRef } from "react";
+import type { StaticWarning } from "../../interpreter/StaticAnalyzer";
 import { snippets } from "../editor";
 import styles from "../styles/Editor.module.css";
 
@@ -21,6 +22,7 @@ interface Props {
   tabKey: TabKey;
   errors: string[];
   breakpoints: Set<number>;
+  warnings: StaticWarning[];
   currentLine: number | null;
   onChange: (val: string) => void;
   completionVars: CompletionVar[];
@@ -31,6 +33,7 @@ interface Props {
 export default function Editor({
   tabKey,
   errors,
+  warnings,
   currentLine,
   breakpoints,
   completionVars,
@@ -193,7 +196,7 @@ export default function Editor({
     const model = editor.getModel();
     if (!model) return;
 
-    const markers: Monaco.editor.IMarkerData[] = errors.map((err) => {
+    const errorMarkers = errors.map((err) => {
       const match = err.match(/\[Linha (\d+)/);
       const line = match ? parseInt(match[1]) : 1;
       return {
@@ -206,8 +209,22 @@ export default function Editor({
       };
     });
 
+    const warningMarkers = warnings.map((w) => {
+      return {
+        severity: monaco.MarkerSeverity.Warning,
+        message: w.message,
+        startColumn: 1,
+        startLineNumber: w.line,
+        endLineNumber: w.line,
+        endColumn: 999,
+        source: "Variável não usada",
+      };
+    });
+
+    const markers: Monaco.editor.IMarkerData[] = [...errorMarkers, ...warningMarkers];
+
     monaco.editor.setModelMarkers(model, "visualg", markers);
-  }, [errors]);
+  }, [errors, warnings]);
 
   return (
     <div className={styles.wrapper}>
