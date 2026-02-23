@@ -21,6 +21,7 @@ const completionVarsRef = { current: [] as CompletionVar[] };
 interface Props {
   tabKey: TabKey;
   errors: string[];
+  fontSize: number;
   breakpoints: Set<number>;
   warnings: StaticWarning[];
   currentLine: number | null;
@@ -34,6 +35,7 @@ export default function Editor({
   tabKey,
   errors,
   warnings,
+  fontSize,
   currentLine,
   breakpoints,
   completionVars,
@@ -226,6 +228,11 @@ export default function Editor({
     monaco.editor.setModelMarkers(model, "visualg", markers);
   }, [errors, warnings]);
 
+  // controla o tamanho da fonte
+  useEffect(() => {
+    editorRef.current?.updateOptions({ fontSize });
+  }, [fontSize]);
+
   return (
     <div className={styles.wrapper}>
       <style>{`
@@ -239,8 +246,8 @@ export default function Editor({
         onMount={handleMount}
         theme="visualg-dark"
         options={{
-          fontSize: 14,
-          lineHeight: 22,
+          fontSize,
+          lineHeight: fontSize * 1.58,
           fontFamily: "'JetBrains Mono', monospace",
           fontLigatures: true,
           minimap: { enabled: false },

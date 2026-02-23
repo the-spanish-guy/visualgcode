@@ -14,6 +14,11 @@ import { runCode } from "./runner";
 import styles from "./styles/App.module.css";
 import { useTabs } from "./useTabs";
 
+const FONT_SIZE_KEY = "visualg:fontSize";
+const FONT_SIZE_MIN = 10;
+const FONT_SIZE_MAX = 28;
+const FONT_SIZE_DEFAULT = 14;
+
 export default function App() {
   const {
     tabs,
@@ -37,6 +42,15 @@ export default function App() {
   const [cursorInfo, setCursorInfo] = useState({ line: 1, col: 1 });
   const [errors, setErrors] = useState<string[]>([]);
   const [warnings, setWarnings] = useState<StaticWarning[]>([]);
+
+  // controla zomm in/out/reset
+  const [fontSize, setFontSize] = useState<number>(() => {
+    const saved = localStorage.getItem(FONT_SIZE_KEY);
+    const parsed = saved ? parseInt(saved) : NaN;
+    return isNaN(parsed)
+      ? FONT_SIZE_DEFAULT
+      : Math.min(FONT_SIZE_MAX, Math.max(FONT_SIZE_MIN, parsed));
+  });
 
   // Debug state
   const [debugMode, setDebugMode] = useState<DebugMode>("idle");
@@ -240,6 +254,10 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    localStorage.setItem(FONT_SIZE_KEY, String(fontSize));
+  }, [fontSize]);
+
+  useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       const ctrl = e.ctrlKey || e.metaKey;
 
@@ -313,6 +331,22 @@ export default function App() {
         closeTab(activeId);
         return;
       }
+      if (e.key === "+" || e.key === "=") {
+        e.preventDefault();
+        setFontSize((prev) => Math.min(FONT_SIZE_MAX, prev + 1));
+        return;
+      }
+      if (e.key === "-") {
+        e.preventDefault();
+        setFontSize((prev) => Math.max(FONT_SIZE_MIN, prev - 1));
+        return;
+      }
+      // Ctrl+0 reseta para o padrão
+      if (e.key === "0") {
+        e.preventDefault();
+        setFontSize(FONT_SIZE_DEFAULT);
+        return;
+      }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
@@ -384,6 +418,7 @@ export default function App() {
             <Editor
               completionVars={completionVars}
               errors={errors}
+              fontSize={fontSize} // ← adicionar
               warnings={warnings}
               currentLine={currentLine}
               breakpoints={activeTab.breakpoints}
