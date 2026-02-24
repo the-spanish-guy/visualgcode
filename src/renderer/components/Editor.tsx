@@ -22,6 +22,7 @@ interface Props {
   tabKey: TabKey;
   errors: string[];
   fontSize: number;
+  theme: "dark" | "light";
   breakpoints: Set<number>;
   warnings: StaticWarning[];
   currentLine: number | null;
@@ -32,6 +33,7 @@ interface Props {
 }
 
 export default function Editor({
+  theme,
   tabKey,
   errors,
   warnings,
@@ -99,11 +101,17 @@ export default function Editor({
     bpDecorations.current = editor.createDecorationsCollection([]);
   }, [tabId]);
 
+  useEffect(() => {
+    const monaco = monacoRef.current;
+    if (!monaco) return;
+    monaco.editor.setTheme(theme === "light" ? "visualg-light" : "visualg-dark");
+  }, [theme]);
+
   const handleMount: OnMount = (editor, monaco) => {
     editorRef.current = editor;
     monacoRef.current = monaco;
 
-    registerVisuAlgLanguage(monaco);
+    registerVisuAlgLanguage(monaco, theme);
 
     const uri = monaco.Uri.parse(`inmemory:///${tabId}.alg`);
     const existing = monaco.editor.getModel(uri);
@@ -279,7 +287,7 @@ export default function Editor({
  * @param monaco
  * @returns
  */
-function registerVisuAlgLanguage(monaco: typeof Monaco): void {
+function registerVisuAlgLanguage(monaco: typeof Monaco, initialTheme: "dark" | "light"): void {
   const already = monaco.languages.getLanguages().some((l) => l.id === "visualg");
   if (already) return;
 
@@ -451,6 +459,37 @@ function registerVisuAlgLanguage(monaco: typeof Monaco): void {
       "editorHoverWidget.border": "#f14c4c",
     },
   });
+  monaco.editor.defineTheme("visualg-light", {
+    base: "vs", // base clara do Monaco
+    inherit: true,
+    rules: [
+      { token: "keyword", foreground: "c04000", fontStyle: "bold" },
+      { token: "keyword.operator", foreground: "1a6abf" },
+      { token: "type", foreground: "0a7a50" },
+      { token: "support.function", foreground: "8a6000" },
+      { token: "constant", foreground: "7a00aa" },
+      { token: "string", foreground: "1a7040" },
+      { token: "number", foreground: "1a5abf" },
+      { token: "number.float", foreground: "1a5abf" },
+      { token: "comment", foreground: "8899aa", fontStyle: "italic" },
+      { token: "operator", foreground: "556677" },
+      { token: "identifier", foreground: "1a2232" },
+      { token: "delimiter", foreground: "445566" },
+    ],
+    colors: {
+      "editor.background": "#f0f4f8",
+      "editor.foreground": "#1a2232",
+      "editor.lineHighlightBackground": "#e4e9f0",
+      "editor.selectionBackground": "#c8d8f0",
+      "editorLineNumber.foreground": "#a8b4c8",
+      "editorLineNumber.activeForeground": "#3a4f6a",
+      "editorGutter.background": "#f0f4f8",
+      "editorCursor.foreground": "#e85a1a",
+      "editor.findMatchBackground": "#e85a1a44",
+      "editorHoverWidget.background": "#e4e9f0",
+      "editorHoverWidget.border": "#d93050",
+    },
+  });
 
-  monaco.editor.setTheme("visualg-dark");
+  monaco.editor.setTheme(initialTheme === "light" ? "visualg-light" : "visualg-dark");
 }

@@ -25,6 +25,8 @@ const TIMER_DELAY_MIN = 100;
 const TIMER_DELAY_MAX = 2000;
 const TIMER_DELAY_DEFAULT = 500;
 
+const THEME_KEY = "visualg:theme";
+
 export default function App() {
   const {
     tabs,
@@ -38,6 +40,13 @@ export default function App() {
     openFileInTab,
     markSaved,
   } = useTabs();
+
+  const [theme, setTheme] = useState<"dark" | "light">(() => {
+    const saved = localStorage.getItem(THEME_KEY);
+    if (saved === "light" || saved === "dark") return saved;
+    // Respeita preferência do sistema operacional
+    return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+  });
 
   const [output, setOutput] = useState<{ lines: string[]; lineOpen: boolean }>({
     lines: [],
@@ -446,12 +455,23 @@ export default function App() {
     updateBreakpoints,
   ]);
 
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem(THEME_KEY, theme);
+    // Monaco é atualizado pelo Editor via prop (ver Editor.tsx patch abaixo)
+  }, [theme]);
+
+  const handleThemeToggle = useCallback(() => {
+    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
+  }, [theme]);
+
   const completionVars: CompletionVar[] = parseVars(activeTab.code);
   const isDebugging = debugMode === "debugging" || debugMode === "paused" || debugMode === "timer";
 
   return (
     <div className={styles.root}>
       <Toolbar
+        theme={theme}
         isRunning={isRunning}
         debugMode={debugMode}
         timerDelay={timerDelay}
@@ -469,6 +489,7 @@ export default function App() {
         timerPaused={timerPaused}
         onContinue={handleContinue}
         onOpenFolder={handleOpenFolder}
+        onThemeToggle={handleThemeToggle}
         onTimerDelayChange={setTimerDelay}
       />
 
@@ -499,6 +520,7 @@ export default function App() {
           <div className={styles.editorPane}>
             <Editor
               completionVars={completionVars}
+              theme={theme}
               errors={errors}
               fontSize={fontSize} // ← adicionar
               warnings={warnings}
