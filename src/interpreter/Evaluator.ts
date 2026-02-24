@@ -92,7 +92,11 @@ export interface VarSnapshot {
   value: string; // já stringificado para exibição
 }
 
-export type StepCallback = (line: number, vars: VarSnapshot[]) => Promise<void>;
+export type StepCallback = (
+  line: number,
+  vars: VarSnapshot[],
+  callStack: string[],
+) => Promise<void>;
 
 // ─── Evaluator async ──────────────────────────────────────────────────────────
 
@@ -102,6 +106,7 @@ export class Evaluator {
   private functions: Map<string, FunctionNode> = new Map();
   private cancel: CancelSignal;
   private breakpoints: Set<number> = new Set();
+  private callStack: string[] = [];
 
   constructor(
     private onOutput: (text: string) => void,
@@ -189,7 +194,7 @@ export class Evaluator {
     if (line && this.onStep) {
       const isBreakpoint = this.breakpoints.has(line);
       // Sempre pausa em step-by-step; só pausa em breakpoints se não estiver em step mode
-      await this.onStep(line, this.snapshot(env));
+      await this.onStep(line, this.snapshot(env), [...this.callStack]);
       if (this.cancel.cancelled) return;
     }
 
@@ -296,7 +301,13 @@ export class Evaluator {
 
     const localEnv = new Environment(this.globals);
     await this.bindParams(proc.params, node.args, localEnv, env, node.line);
-    await this.execStatements(proc.body, localEnv);
+
+    this.callStack.push(node.name);
+    try {
+      await this.execStatements(proc.body, localEnv);
+    } finally {
+      this.callStack.pop();
+    }
   }
 
   // ─── Avaliação de expressões ──────────────────────────────────────────────
@@ -388,10 +399,14 @@ export class Evaluator {
     const localEnv = new Environment(this.globals);
     await this.bindParams(func.params, node.args, localEnv, env, node.line);
 
-    const result = await this.execStatements(func.body, localEnv);
-    if (result instanceof ReturnSignal) return result.value;
-
-    throw new RuntimeError(`Função '${node.name}' não retornou valor`, node.line);
+    this.callStack.push(node.name);
+    try {
+      const result = await this.execStatements(func.body, localEnv);
+      if (result instanceof ReturnSignal) return result.value;
+      throw new RuntimeError(`Função '${node.name}' não retornou valor`, node.line);
+    } finally {
+      this.callStack.pop();
+    }
   }
 
   // ─── Funções nativas ──────────────────────────────────────────────────────

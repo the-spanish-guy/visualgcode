@@ -4,6 +4,7 @@ export type DebugMode = "idle" | "running" | "debugging" | "paused";
 
 export interface DebugState {
   mode: DebugMode;
+  callStack: string[];
   currentLine: number | null;
   variables: VarSnapshot[];
   breakpoints: Set<number>;
@@ -18,9 +19,9 @@ export class DebugController {
     private breakpoints: Set<number> = new Set(),
   ) {}
 
-  readonly onStep: StepCallback = async (line, vars) => {
+  readonly onStep: StepCallback = async (line, vars, callStack) => {
     if (this.continueMode && !this.breakpoints.has(line)) {
-      this.onStateChange({ currentLine: line, variables: vars });
+      this.onStateChange({ currentLine: line, variables: vars, callStack });
       return;
     }
 
@@ -29,6 +30,7 @@ export class DebugController {
       mode: "paused",
       currentLine: line,
       variables: vars,
+      callStack,
     });
 
     await new Promise<void>((resolve) => {

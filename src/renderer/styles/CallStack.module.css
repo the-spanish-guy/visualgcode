@@ -1,0 +1,76 @@
+/* ─── src/renderer/styles/CallStack.module.css ──────────────────────────────── */
+/* Visual consistente com o VariablesPanel existente                             */
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  width: 200px;
+  min-width: 200px;
+  background: var(--bg-panel);
+  border-left: 1px solid var(--border-dim);
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-dim);
+  background: var(--bg-elevated);
+}
+
+.title {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  padding: 6px 0;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.frame {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-secondary);
+  transition: background 0.1s;
+}
+
+.frame.active {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.arrow {
+  color: var(--accent);
+  font-size: 10px;
+  flex-shrink: 0;
+  width: 10px;
+}
+
+.name {
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.name.muted {
+  color: var(--text-dim);
+  font-style: italic;
+}
+
+.frame.active .name {
+  color: var(--yellow);
+}

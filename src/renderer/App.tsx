@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CancelSignal, type VarSnapshot } from "../interpreter/Evaluator";
 import type { StaticWarning } from "../interpreter/StaticAnalyzer";
+import CallStack from "./components/CallStack";
 import Editor, { type CompletionVar } from "./components/Editor";
 import Explorer, { type FileNode } from "./components/Explorer";
 import StatusBar from "./components/StatusBar";
@@ -53,6 +54,7 @@ export default function App() {
   });
 
   // Debug state
+  const [callStack, setCallStack] = useState<string[]>([]);
   const [debugMode, setDebugMode] = useState<DebugMode>("idle");
   const [currentLine, setCurrentLine] = useState<number | null>(null);
   const [variables, setVariables] = useState<VarSnapshot[]>([]);
@@ -185,6 +187,7 @@ export default function App() {
     const ctrl = new DebugController((state) => {
       if (state.mode !== undefined) setDebugMode(state.mode);
       if (state.currentLine !== undefined) setCurrentLine(state.currentLine);
+      if (state.callStack !== undefined) setCallStack(state.callStack);
       if (state.variables !== undefined) {
         setVariables(state.variables);
         setTraceSnapshots((prev) => [...prev, state.variables!]);
@@ -210,6 +213,7 @@ export default function App() {
     setIsRunning(false);
     setDebugMode("idle");
     setCurrentLine(null);
+    setCallStack([]);
     debugCtrl.current = null;
   }, [activeTab.code, activeTab.breakpoints, appendOutput, makeInputCallback]);
 
@@ -430,6 +434,7 @@ export default function App() {
           </div>
 
           <VariablesPanel variables={variables} isVisible={isDebugging} />
+          <CallStack callStack={callStack} isVisible={isDebugging} />
         </div>
 
         <div className={styles.bottomPane}>
