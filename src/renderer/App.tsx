@@ -20,6 +20,11 @@ const FONT_SIZE_MIN = 10;
 const FONT_SIZE_MAX = 28;
 const FONT_SIZE_DEFAULT = 14;
 
+const TIMER_DELAY_KEY = "visualg:timerDelay";
+const TIMER_DELAY_MIN = 100;
+const TIMER_DELAY_MAX = 2000;
+const TIMER_DELAY_DEFAULT = 500;
+
 export default function App() {
   const {
     tabs,
@@ -59,6 +64,14 @@ export default function App() {
   const [currentLine, setCurrentLine] = useState<number | null>(null);
   const [variables, setVariables] = useState<VarSnapshot[]>([]);
   const [traceSnapshots, setTraceSnapshots] = useState<VarSnapshot[][]>([]);
+  const [timerDelay, setTimerDelay] = useState<number>(() => {
+    const saved = localStorage.getItem(TIMER_DELAY_KEY);
+    const parsed = saved ? parseInt(saved) : NaN;
+    return isNaN(parsed)
+      ? TIMER_DELAY_DEFAULT
+      : Math.min(TIMER_DELAY_MAX, Math.max(TIMER_DELAY_MIN, parsed));
+  });
+  const [timerPaused, setTimerPaused] = useState(false);
 
   // Explorador de arquivos
   const [workspace, setWorkspace] = useState<{
@@ -217,6 +230,49 @@ export default function App() {
     debugCtrl.current = null;
   }, [activeTab.code, activeTab.breakpoints, appendOutput, makeInputCallback]);
 
+  const handleTimer = useCallback(async () => {
+    cancelSignal.current = new CancelSignal();
+
+    const ctrl = new DebugController(
+      (state) => {
+        if (state.mode !== undefined) setDebugMode(state.mode);
+        if (state.currentLine !== undefined) setCurrentLine(state.currentLine);
+        if (state.callStack !== undefined) setCallStack(state.callStack);
+        if (state.timerPaused !== undefined) setTimerPaused(state.timerPaused);
+        if (state.variables !== undefined) {
+          setVariables(state.variables);
+          setTraceSnapshots((prev) => [...prev, state.variables!]);
+        }
+      },
+      activeTab.breakpoints,
+      timerDelay, // ← passa o delay, diferença do handleDebug
+    );
+
+    debugCtrl.current = ctrl;
+    setIsRunning(true);
+    setOutput({ lines: [], lineOpen: false });
+    setErrors([]);
+    setDebugMode("timer"); // ← modo timer em vez de "debugging"
+    setVariables([]);
+    setTraceSnapshots([]);
+    setCallStack([]);
+    setTimerPaused(false);
+
+    const result = await runCode(
+      activeTab.code,
+      { onOutput: appendOutput, onInput: makeInputCallback },
+      cancelSignal.current,
+      ctrl.onStep,
+    );
+
+    if (result.errors.length > 0) setErrors(result.errors);
+    setIsRunning(false);
+    setDebugMode("idle");
+    setCurrentLine(null);
+    setCallStack([]);
+    debugCtrl.current = null;
+  }, [activeTab.code, activeTab.breakpoints, timerDelay, appendOutput, makeInputCallback]);
+
   const handleStep = useCallback(() => debugCtrl.current?.step(), []);
   const handleContinue = useCallback(() => debugCtrl.current?.continue(), []);
 
@@ -262,18 +318,36 @@ export default function App() {
   }, [fontSize]);
 
   useEffect(() => {
+    localStorage.setItem(TIMER_DELAY_KEY, String(timerDelay));
+  }, [timerDelay]);
+
+  useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       const ctrl = e.ctrlKey || e.metaKey;
 
       // F5 — Executar (idle) ou Continuar (pausado)
       if (e.key === "F5" && !e.shiftKey) {
         e.preventDefault();
-        if (debugMode === "paused") {
+        if (debugMode === "paused" || debugMode === "timer") {
           handleContinue();
           return;
         }
         if (debugMode === "idle") {
           handleRun();
+          return;
+        }
+        return;
+      }
+
+      // Shift+F5 — iniciar/parar timer
+      if (e.key === "F5" && e.shiftKey) {
+        e.preventDefault();
+        if (debugMode === "idle") {
+          handleTimer();
+          return;
+        }
+        if (isRunning) {
+          handleStop();
           return;
         }
         return;
@@ -293,7 +367,7 @@ export default function App() {
       // F10 — Próximo passo (apenas quando pausado)
       if (e.key === "F10") {
         e.preventDefault();
-        if (debugMode === "paused") handleStep();
+        if (debugMode === "paused" || debugMode === "timer") handleStep();
         return;
       }
 
@@ -373,13 +447,14 @@ export default function App() {
   ]);
 
   const completionVars: CompletionVar[] = parseVars(activeTab.code);
-  const isDebugging = debugMode === "debugging" || debugMode === "paused";
+  const isDebugging = debugMode === "debugging" || debugMode === "paused" || debugMode === "timer";
 
   return (
     <div className={styles.root}>
       <Toolbar
         isRunning={isRunning}
         debugMode={debugMode}
+        timerDelay={timerDelay}
         isDirty={activeTab.isDirty}
         fileName={activeTab.fileName}
         onNew={newTab}
@@ -388,10 +463,13 @@ export default function App() {
         onSave={handleSave}
         onStep={handleStep}
         onStop={handleStop}
+        onTimer={handleTimer}
         onDebug={handleDebug}
         onSaveAs={handleSaveAs}
+        timerPaused={timerPaused}
         onContinue={handleContinue}
         onOpenFolder={handleOpenFolder}
+        onTimerDelayChange={setTimerDelay}
       />
 
       <TabBar

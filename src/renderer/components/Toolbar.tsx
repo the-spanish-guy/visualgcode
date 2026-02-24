@@ -5,6 +5,7 @@ interface Props {
   fileName: string;
   isDirty: boolean;
   isRunning: boolean;
+  timerDelay: number;
   debugMode: DebugMode;
   onNew: () => void;
   onRun: () => void;
@@ -13,9 +14,12 @@ interface Props {
   onStep: () => void;
   onStop: () => void;
   onDebug: () => void;
+  onTimer: () => void;
+  timerPaused: boolean;
   onSaveAs: () => void;
   onContinue: () => void;
   onOpenFolder: () => void;
+  onTimerDelayChange: (delay: number) => void;
 }
 
 export default function Toolbar({
@@ -23,6 +27,8 @@ export default function Toolbar({
   fileName,
   isRunning,
   debugMode,
+  timerDelay,
+  timerPaused,
   onNew,
   onRun,
   onOpen,
@@ -31,12 +37,15 @@ export default function Toolbar({
   onSave,
   onSaveAs,
   onDebug,
+  onTimer,
   onContinue,
   onOpenFolder,
+  onTimerDelayChange,
 }: Props) {
   const isDebugging = debugMode === "debugging" || debugMode === "paused";
+  const isTimer = debugMode === "timer";
   const isPaused = debugMode === "paused";
-  const idle = !isRunning && !isDebugging;
+  const idle = !isRunning && !isDebugging && !isTimer;
 
   return (
     <div className={styles.toolbar}>
@@ -135,19 +144,27 @@ export default function Toolbar({
         <div className={styles.actions}>
           {idle && (
             <>
-              <button className={styles.btnRun} onClick={onRun}>
+              <button className={styles.btnRun} onClick={onRun} title="Executar (F5)">
                 <span className={styles.btnIcon}>▶</span>
                 Executar
               </button>
-              <button className={styles.btnDebug} onClick={onDebug}>
+              <button className={styles.btnDebug} onClick={onDebug} title="Debug (F8)">
                 <span className={styles.btnIcon}>⬡</span>
                 Debug
+              </button>
+              <button
+                className={styles.btnTimer}
+                onClick={onTimer}
+                title="Executar com timer (Shift+F5)"
+              >
+                <span className={styles.btnIcon}>⏱</span>
+                Timer
               </button>
             </>
           )}
 
-          {isRunning && !isDebugging && (
-            <button className={styles.btnStop} onClick={onStop}>
+          {isRunning && !isDebugging && !isTimer && (
+            <button className={styles.btnStop} onClick={onStop} title="Parar (Esc)">
               <span className={styles.btnIcon}>■</span>
               Parar
             </button>
@@ -173,13 +190,59 @@ export default function Toolbar({
                 <span className={styles.btnIcon}>▶▶</span>
                 Continuar
               </button>
-              <button className={styles.btnStop} onClick={onStop}>
+              <button className={styles.btnStop} onClick={onStop} title="Parar (Esc)">
+                <span className={styles.btnIcon}>■</span>
+                Parar
+              </button>
+            </>
+          )}
+
+          {isTimer && (
+            <>
+              {timerPaused && ( // ← usa timerPaused em vez de isPaused
+                <>
+                  <button className={styles.btnStep} onClick={onStep} title="Próximo passo (F10)">
+                    <span className={styles.btnIcon}>↷</span>
+                    Passo
+                  </button>
+                  <button
+                    className={styles.btnContinue}
+                    onClick={onContinue}
+                    title="Continuar timer (F5)"
+                  >
+                    <span className={styles.btnIcon}>▶▶</span>
+                    Continuar
+                  </button>
+                </>
+              )}
+              <button className={styles.btnStop} onClick={onStop} title="Parar (Esc)">
                 <span className={styles.btnIcon}>■</span>
                 Parar
               </button>
             </>
           )}
         </div>
+
+        {(idle || isTimer) && (
+          <>
+            <div className={styles.divider} />
+            <div className={styles.timerControl}>
+              <span className={styles.timerIcon}>⏱</span>
+              <input
+                type="range"
+                min={100}
+                max={2000}
+                step={100}
+                value={timerDelay}
+                disabled={isTimer}
+                onChange={(e) => onTimerDelayChange(Number(e.target.value))}
+                className={styles.timerSlider}
+                title={`Delay do timer: ${timerDelay}ms`}
+              />
+              <span className={styles.timerLabel}>{timerDelay}ms</span>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
