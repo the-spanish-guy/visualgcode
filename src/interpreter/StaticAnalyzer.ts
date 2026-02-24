@@ -29,7 +29,7 @@ export class StaticAnalyzer {
   }
 
   private analyzeSubprogram(node: ProcedureNode | FunctionNode): void {
-    this.analyzeScope(node.params, node.body);
+    this.analyzeScope([...node.params, ...node.locals], node.body);
   }
 
   private analyzeScope(declarations: VarDeclarationNode[], body: ASTNode[]): void {

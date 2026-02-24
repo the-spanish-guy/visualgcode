@@ -302,6 +302,10 @@ export class Evaluator {
     const localEnv = new Environment(this.globals);
     await this.bindParams(proc.params, node.args, localEnv, env, node.line);
 
+    for (const decl of proc.locals) {
+      this.declareVars(decl, localEnv);
+    }
+
     this.callStack.push(node.name);
     try {
       await this.execStatements(proc.body, localEnv);
@@ -398,6 +402,10 @@ export class Evaluator {
 
     const localEnv = new Environment(this.globals);
     await this.bindParams(func.params, node.args, localEnv, env, node.line);
+
+    for (const decl of func.locals) {
+      this.declareVars(decl, localEnv);
+    }
 
     this.callStack.push(node.name);
     try {

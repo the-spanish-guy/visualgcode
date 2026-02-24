@@ -99,6 +99,7 @@ export interface ProcedureNode {
   kind: "Procedure";
   name: string;
   params: VarDeclarationNode[];
+  locals: VarDeclarationNode[];
   body: ASTNode[];
   line: number;
 }
@@ -107,6 +108,7 @@ export interface FunctionNode {
   kind: "Function";
   name: string;
   params: VarDeclarationNode[];
+  locals: VarDeclarationNode[];
   returnType: VizType;
   body: ASTNode[];
   line: number;

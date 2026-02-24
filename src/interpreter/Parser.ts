@@ -123,28 +123,28 @@ export class Parser {
 
   private parseProcedure(): ProcedureNode {
     const line = this.current().line;
-    this.advance(); // consome "procedimento"
+    this.advance();
     const name = this.expect(TokenType.IDENTIFIER, "Esperado nome do procedimento").value;
     const params = this.parseParams();
-    const declarations = this.parseVarBlock();
+    const locals = this.parseVarBlock();
     this.expect(TokenType.INICIO, "Esperado 'inicio'");
     const body = this.parseStatements([TokenType.FIMPROCEDIMENTO]);
     this.expect(TokenType.FIMPROCEDIMENTO, "Esperado 'fimprocedimento'");
-    return { kind: "Procedure", name, params: [...params, ...declarations], body, line };
+    return { kind: "Procedure", name, params, locals, body, line };
   }
 
   private parseFunction(): FunctionNode {
     const line = this.current().line;
-    this.advance(); // consome "funcao"
+    this.advance();
     const name = this.expect(TokenType.IDENTIFIER, "Esperado nome da função").value;
     const params = this.parseParams();
     this.expect(TokenType.COLON, "Esperado ':' para tipo de retorno");
     const returnType = this.parseType();
-    const declarations = this.parseVarBlock();
+    const locals = this.parseVarBlock();
     this.expect(TokenType.INICIO, "Esperado 'inicio'");
     const body = this.parseStatements([TokenType.FIMFUNCAO]);
     this.expect(TokenType.FIMFUNCAO, "Esperado 'fimfuncao'");
-    return { kind: "Function", name, params: [...params, ...declarations], returnType, body, line };
+    return { kind: "Function", name, params, locals, returnType, body, line };
   }
 
   private parseParams(): VarDeclarationNode[] {
