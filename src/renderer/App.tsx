@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { CancelSignal, type VarSnapshot } from "../interpreter/Evaluator";
 import type { StaticWarning } from "../interpreter/StaticAnalyzer";
 import CallStack from "./components/CallStack";
-import Editor, { type CompletionVar } from "./components/Editor";
+import Editor, { type CompletionVar, type EditorHandle } from "./components/Editor";
 import Explorer, { type FileNode } from "./components/Explorer";
 import StatusBar from "./components/StatusBar";
 import TabBar from "./components/TabBar";
@@ -93,6 +93,8 @@ export default function App() {
   const inputResolve = useRef<((val: string) => void) | null>(null);
   const cancelSignal = useRef<CancelSignal>(new CancelSignal());
   const debugCtrl = useRef<DebugController | null>(null);
+
+  const editorRef = useRef<EditorHandle>(null);
 
   const handleSave = useCallback(async () => {
     if (!activeTab.filePath) return handleSaveAs();
@@ -322,6 +324,10 @@ export default function App() {
     setErrors([]);
   }, []);
 
+  const handleProblemClick = useCallback((line: number) => {
+    editorRef.current?.goToLine(line);
+  }, []);
+
   useEffect(() => {
     localStorage.setItem(FONT_SIZE_KEY, String(fontSize));
   }, [fontSize]);
@@ -519,6 +525,7 @@ export default function App() {
 
           <div className={styles.editorPane}>
             <Editor
+              ref={editorRef}
               completionVars={completionVars}
               theme={theme}
               errors={errors}
@@ -541,12 +548,14 @@ export default function App() {
           <Terminal
             errors={errors}
             lines={output.lines}
+            warnings={warnings}
             isRunning={isRunning}
             waitingInput={waitingInput}
             traceSnapshots={traceSnapshots}
             onClear={handleClear}
             onInput={handleTerminalInput}
             onClearTrace={() => setTraceSnapshots([])}
+            onProblemClick={handleProblemClick}
           />
         </div>
       </div>

@@ -199,3 +199,23 @@
   border-radius: 8px;
   border: 1px solid rgba(255, 107, 43, 0.3);
 }
+
+.badgeError {
+  background: rgba(255, 77, 106, 0.2);
+  color: var(--red);
+  border-color: rgba(255, 77, 106, 0.35);
+}
+
+.badgeWarning {
+  background: rgba(255, 209, 102, 0.15);
+  color: var(--yellow);
+  border-color: rgba(255, 209, 102, 0.3);
+}
+
+.tabProblems {
+  color: var(--text-muted);
+}
+
+.tabProblems:hover {
+  color: var(--red);
+}

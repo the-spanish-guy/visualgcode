@@ -1,6 +1,6 @@
 import MonacoEditor, { type OnMount } from "@monaco-editor/react";
 import type * as Monaco from "monaco-editor";
-import { useEffect, useRef } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 import type { StaticWarning } from "../../interpreter/StaticAnalyzer";
 import { snippets } from "../editor";
 import styles from "../styles/Editor.module.css";
@@ -13,6 +13,10 @@ export interface TabKey {
 export interface CompletionVar {
   name: string;
   type: string;
+}
+
+export interface EditorHandle {
+  goToLine: (line: number) => void;
 }
 
 // Ref global — lida pelo completion provider que é registrado uma única vez
@@ -32,19 +36,32 @@ interface Props {
   onCursorChange: (pos: { line: number; col: number }) => void;
 }
 
-export default function Editor({
-  theme,
-  tabKey,
-  errors,
-  warnings,
-  fontSize,
-  currentLine,
-  breakpoints,
-  completionVars,
-  onChange,
-  onCursorChange,
-  onBreakpointsChange,
-}: Props) {
+const Editor = forwardRef<EditorHandle, Props>(function Editor(
+  {
+    theme,
+    tabKey,
+    errors,
+    warnings,
+    fontSize,
+    currentLine,
+    breakpoints,
+    completionVars,
+    onChange,
+    onCursorChange,
+    onBreakpointsChange,
+  }: Props,
+  ref,
+) {
+  useImperativeHandle(ref, () => ({
+    goToLine(line: number) {
+      const editor = editorRef.current;
+      if (!editor) return;
+      editor.revealLineInCenter(line);
+      editor.setPosition({ lineNumber: line, column: 1 });
+      editor.focus();
+    },
+  }));
+
   // Atualiza ref global a cada render — provider sempre lê valor atual
   completionVarsRef.current = completionVars;
   const { id: tabId, initialContent } = tabKey;
@@ -277,7 +294,9 @@ export default function Editor({
       />
     </div>
   );
-}
+});
+
+export default Editor;
 
 /**
  * Registro da linguagem no monaco editor

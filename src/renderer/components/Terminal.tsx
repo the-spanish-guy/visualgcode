@@ -1,34 +1,42 @@
 import { useEffect, useRef, useState } from "react";
 import type { VarSnapshot } from "../../interpreter/Evaluator";
+import type { StaticWarning } from "../../interpreter/StaticAnalyzer";
 import { explainError } from "../explainError";
 import styles from "../styles/Terminal.module.css";
+import ProblemsPanel from "./ProblemsPanel";
 import TraceTable from "./TraceTable";
 
 interface Props {
   lines: string[];
   errors: string[];
+  warnings: StaticWarning[];
   isRunning: boolean;
   waitingInput: boolean;
   traceSnapshots: VarSnapshot[][];
   onClear: () => void;
   onClearTrace: () => void;
   onInput: (val: string) => void;
+  onProblemClick: (line: number) => void;
 }
 
 export default function Terminal({
-  errors,
   lines,
+  errors,
+  warnings,
   isRunning,
   waitingInput,
   traceSnapshots,
   onInput,
   onClear,
   onClearTrace,
+  onProblemClick,
 }: Props) {
-  const [activeTab, setActiveTab] = useState<"saida" | "rastreamento">("saida");
+  const [activeTab, setActiveTab] = useState<"saida" | "rastreamento" | "problemas">("saida");
   const [inputVal, setInputVal] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const problemCount = errors.length + warnings.length;
 
   // Auto-scroll pra baixo
   useEffect(() => {
@@ -43,6 +51,11 @@ export default function Terminal({
   useEffect(() => {
     if (traceSnapshots.length === 1) setActiveTab("rastreamento");
   }, [traceSnapshots.length]);
+
+  // Muda para problemas quando surgem erros/warnings (só se não estiver rodando)
+  useEffect(() => {
+    if (problemCount > 0 && !isRunning) setActiveTab("problemas");
+  }, [problemCount]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && waitingInput) {
@@ -61,6 +74,7 @@ export default function Terminal({
           >
             Saída
           </button>
+
           <button
             className={`${styles.tab} ${activeTab === "rastreamento" ? styles.tabActive : ""}`}
             onClick={() => setActiveTab("rastreamento")}
@@ -68,6 +82,20 @@ export default function Terminal({
             Rastreamento
             {traceSnapshots.length > 0 && (
               <span className={styles.badge}>{traceSnapshots.length}</span>
+            )}
+          </button>
+
+          <button
+            className={`${styles.tab} ${activeTab === "problemas" ? styles.tabActive : ""} ${problemCount > 0 ? styles.tabProblems : ""}`}
+            onClick={() => setActiveTab("problemas")}
+          >
+            Problemas
+            {problemCount > 0 && (
+              <span
+                className={`${styles.badge} ${errors.length > 0 ? styles.badgeError : styles.badgeWarning}`}
+              >
+                {problemCount}
+              </span>
             )}
           </button>
         </div>
@@ -87,7 +115,7 @@ export default function Terminal({
         </div>
       </div>
 
-      {activeTab === "saida" ? (
+      {activeTab === "saida" && (
         <div className={styles.output}>
           {lines.length === 0 && !isRunning && (
             <span className={styles.placeholder}>
@@ -128,8 +156,14 @@ export default function Terminal({
 
           <div ref={bottomRef} />
         </div>
-      ) : (
+      )}
+
+      {activeTab === "rastreamento" && (
         <TraceTable snapshots={traceSnapshots} onClear={onClearTrace} />
+      )}
+
+      {activeTab === "problemas" && (
+        <ProblemsPanel errors={errors} warnings={warnings} onProblemClick={onProblemClick} />
       )}
     </div>
   );
