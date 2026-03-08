@@ -1,10 +1,12 @@
 import type {
+  ArrayType,
   ASTNode,
   AssignNode,
   CallNode,
   ForNode,
   FunctionNode,
   IfNode,
+  PrimitiveType,
   ProcedureNode,
   ProgramNode,
   ReadNode,
@@ -88,7 +90,12 @@ export class Parser {
 
   private parseType(): VizType {
     const token = this.current();
-    const typeMap: Partial<Record<TokenType, VizType>> = {
+
+    if (token.type === TokenType.VETOR) {
+      return this.parseArrayType();
+    }
+
+    const typeMap: Partial<Record<TokenType, PrimitiveType>> = {
       [TokenType.TYPE_INTEIRO]: "inteiro",
       [TokenType.TYPE_REAL]: "real",
       [TokenType.TYPE_CARACTERE]: "caractere",
@@ -106,6 +113,24 @@ export class Parser {
 
     this.advance();
     return type;
+  }
+
+  private parseArrayType(): ArrayType {
+    this.expect(TokenType.VETOR, "Esperado 'vetor'");
+    this.expect(TokenType.LBRACKET, "Esperado '[' após 'vetor'");
+
+    const start = this.expect(TokenType.NUMBER, "Esperado número inicial do intervalo").value;
+    this.expect(TokenType.DOTDOT, "Esperado '..' no intervalo");
+    const end = this.expect(TokenType.NUMBER, "Esperado número final do intervalo").value;
+
+    this.expect(TokenType.RBRACKET, "Esperado ']' após intervalo");
+    this.expect(TokenType.DE, "Esperado 'de' após ']'");
+
+    const elementType = this.parseType() as PrimitiveType;
+
+    const size = Number(end) - Number(start) + 1;
+
+    return { kind: "array", elementType, start: Number(start), size };
   }
 
   // ─── Subprogramas ─────────────────────────────────────────────────────────────
@@ -209,12 +234,22 @@ export class Parser {
     const token = this.current();
     const name = this.advance().value; // consome o IDENTIFIER
 
+    // Acesso a vetor para atribuição: nome[índice] <- expr
+    if (this.check(TokenType.LBRACKET)) {
+      this.advance(); // consome '['
+      const index = this.parseExpression();
+      this.expect(TokenType.RBRACKET, "Esperado ']' após índice");
+      this.expect(TokenType.ASSIGN, "Esperado '<-' após índice");
+      const value = this.parseExpression();
+      return { kind: "Assign", name, index, value, line: token.line };
+    }
+
     // Chamada de procedimento: nome(args)
     if (this.check(TokenType.LPAREN)) {
       return this.parseCallArgs(name, token.line);
     }
 
-    // Atribuição: nome <- expr
+    // Atribuição simples: nome <- expr
     this.expect(TokenType.ASSIGN, `Esperado '<-' após '${name}'`);
     const value = this.parseExpression();
     return { kind: "Assign", name, value, line: token.line };
@@ -258,9 +293,19 @@ export class Parser {
     const line = this.current().line;
     this.advance(); // consome "leia"
     this.expect(TokenType.LPAREN, "Esperado '(' após leia");
+
     const name = this.expect(TokenType.IDENTIFIER, "Esperado nome de variável").value;
+
+    // Verifica se é acesso a vetor: leia(v[1])
+    let index: ASTNode | undefined;
+    if (this.check(TokenType.LBRACKET)) {
+      this.advance(); // consome '['
+      index = this.parseExpression();
+      this.expect(TokenType.RBRACKET, "Esperado ']' após índice");
+    }
+
     this.expect(TokenType.RPAREN, "Esperado ')'");
-    return { kind: "Read", name, line };
+    return { kind: "Read", name, index, line };
   }
 
   private parseIf(): IfNode {
@@ -470,13 +515,26 @@ export class Parser {
       return { kind: "BooleanLiteral", value: token.value === "verdadeiro", line: token.line };
     }
 
-    // Identificador ou chamada de função
+    // Identificador, chamada de função ou acesso a vetor
     if (this.check(TokenType.IDENTIFIER)) {
+      const name = this.current().value;
+      const line = this.current().line;
       this.advance();
-      if (this.check(TokenType.LPAREN)) {
-        return this.parseCallArgs(token.value, token.line);
+
+      // Acesso a vetor: identificador[índice]
+      if (this.check(TokenType.LBRACKET)) {
+        this.advance(); // consome '['
+        const index = this.parseExpression();
+        this.expect(TokenType.RBRACKET, "Esperado ']' após índice");
+        return { kind: "ArrayAccess", name, index, line };
       }
-      return { kind: "Identifier", name: token.value, line: token.line };
+
+      // Chamada de função
+      if (this.check(TokenType.LPAREN)) {
+        return this.parseCallArgs(name, line);
+      }
+
+      return { kind: "Identifier", name, line };
     }
 
     // Expressão entre parênteses

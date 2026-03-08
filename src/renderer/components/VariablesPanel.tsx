@@ -25,22 +25,42 @@ interface VarInfo extends VarSnapshot {
   defaultValue: string;
 }
 
+function isVetorialType(type: string): boolean {
+  return type.startsWith("vetor[");
+}
+
+function formatVetorValue(value: string): string {
+  try {
+    const parsed = JSON.parse(value);
+    if (parsed && typeof parsed === "object" && "data" in parsed) {
+      const arr = parsed.data as unknown[];
+      return `[${arr.map((v) => JSON.stringify(v)).join(", ")}]`;
+    }
+  } catch {
+    // Se não conseguir fazer parse, retorna o valor original
+  }
+  return value;
+}
+
 export default function VariablesPanel({ variables, isVisible }: Props) {
   const varInfo = useRef<Map<string, VarInfo>>(new Map());
 
   if (!isVisible) return null;
 
-  // Registra o valor default de cada variável
   variables.forEach((v) => {
+    const isVet = isVetorialType(v.type);
+    const defaultVal = isVet ? "[]" : (TYPE_DEFAULTS[v.type] ?? "0");
     varInfo.current.set(v.name, {
       ...v,
-      defaultValue: TYPE_DEFAULTS[v.type] ?? "0",
+      defaultValue: defaultVal,
     });
   });
 
   const isChanged = (v: VarSnapshot): boolean => {
     const info = varInfo.current.get(v.name);
-    return String(v.value).toLowerCase() !== info?.defaultValue;
+    const displayValue = isVetorialType(v.type) ? formatVetorValue(v.value) : String(v.value);
+    const defaultValue = isVetorialType(v.type) ? "[]" : (info?.defaultValue ?? "0");
+    return displayValue.toLowerCase() !== defaultValue.toLowerCase();
   };
 
   return (
@@ -65,14 +85,19 @@ export default function VariablesPanel({ variables, isVisible }: Props) {
             <tbody>
               {variables.map((v) => {
                 const changed = isChanged(v);
+                const isVet = isVetorialType(v.type);
+                const displayValue = isVet ? formatVetorValue(v.value) : String(v.value);
                 return (
                   <tr key={v.name} className={`${styles.row} ${changed ? styles.rowChanged : ""}`}>
                     <td className={styles.name}>{v.name}</td>
-                    <td className={styles.type} style={{ color: TYPE_COLORS[v.type] ?? "#7a90aa" }}>
+                    <td
+                      className={styles.type}
+                      style={{ color: isVet ? "#ff9f68" : (TYPE_COLORS[v.type] ?? "#7a90aa") }}
+                    >
                       {v.type}
                     </td>
                     <td className={`${styles.value} ${changed ? styles.valueChanged : ""}`}>
-                      {String(v.value)}
+                      {displayValue}
                     </td>
                   </tr>
                 );

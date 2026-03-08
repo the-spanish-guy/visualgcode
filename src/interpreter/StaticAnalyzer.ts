@@ -63,11 +63,13 @@ export class StaticAnalyzer {
     switch (node.kind) {
       case "Assign":
         this.markUsed(node.name, used);
+        if (node.index) this.walkExpr(node.index, used);
         this.walkExpr(node.value, used);
         break;
 
       case "Read":
         this.markUsed(node.name, used);
+        if (node.index) this.walkExpr(node.index, used);
         break;
 
       case "Write":
@@ -119,6 +121,11 @@ export class StaticAnalyzer {
     switch (node.kind) {
       case "Identifier":
         this.markUsed(node.name, used);
+        break;
+
+      case "ArrayAccess":
+        this.markUsed(node.name, used);
+        this.walkExpr(node.index, used);
         break;
 
       case "BinaryOp":

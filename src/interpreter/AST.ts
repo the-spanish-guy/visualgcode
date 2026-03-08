@@ -1,6 +1,15 @@
 // ─── Tipos base ───────────────────────────────────────────────────────────────
 
-export type VizType = "inteiro" | "real" | "caractere" | "logico";
+export type PrimitiveType = "inteiro" | "real" | "caractere" | "logico";
+
+export interface ArrayType {
+  kind: "array";
+  elementType: PrimitiveType;
+  start: number; // índice inicial (ex: 3 em vetor[3..10])
+  size: number; // end - start + 1
+}
+
+export type VizType = PrimitiveType | ArrayType;
 
 export type ASTNode =
   | ProgramNode
@@ -9,6 +18,7 @@ export type ASTNode =
   | BinaryOpNode
   | UnaryOpNode
   | IdentifierNode
+  | ArrayAccessNode
   | NumberLiteralNode
   | StringLiteralNode
   | BooleanLiteralNode
@@ -34,7 +44,7 @@ export interface ProgramNode {
 
 export interface VarDeclarationNode {
   kind: "VarDeclaration";
-  names: string[]; // várias vars podem ser declaradas juntas: a, b, c: inteiro
+  names: string[];
   type: VizType;
   line: number;
 }
@@ -44,6 +54,7 @@ export interface VarDeclarationNode {
 export interface AssignNode {
   kind: "Assign";
   name: string;
+  index?: ASTNode; // presente quando é atribuição a elemento de vetor
   value: ASTNode;
   line: number;
 }
@@ -58,6 +69,7 @@ export interface WriteNode {
 export interface ReadNode {
   kind: "Read";
   name: string;
+  index?: ASTNode; // presente quando é leitura em elemento de vetor
   line: number;
 }
 
@@ -147,6 +159,13 @@ export interface UnaryOpNode {
 export interface IdentifierNode {
   kind: "Identifier";
   name: string;
+  line: number;
+}
+
+export interface ArrayAccessNode {
+  kind: "ArrayAccess";
+  name: string;
+  index: ASTNode;
   line: number;
 }
 

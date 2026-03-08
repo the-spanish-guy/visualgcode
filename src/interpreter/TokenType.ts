@@ -48,6 +48,12 @@ export enum TokenType {
   TYPE_REAL = "TYPE_REAL",
   TYPE_CARACTERE = "TYPE_CARACTERE",
   TYPE_LOGICO = "TYPE_LOGICO",
+  VETOR = "VETOR",
+
+  // Arrays
+  LBRACKET = "LBRACKET",
+  RBRACKET = "RBRACKET",
+  DOTDOT = "DOTDOT",
 
   // I/O
   ESCREVA = "ESCREVA",

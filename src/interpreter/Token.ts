@@ -20,6 +20,7 @@ export const KEYWORDS: Record<string, TokenType> = {
   real: TokenType.TYPE_REAL,
   caractere: TokenType.TYPE_CARACTERE,
   logico: TokenType.TYPE_LOGICO,
+  vetor: TokenType.VETOR,
 
   // I/O
   escreva: TokenType.ESCREVA,

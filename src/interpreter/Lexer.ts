@@ -66,6 +66,14 @@ export class Lexer {
       case ",":
         this.advance();
         return this.pushToken(TokenType.COMMA, ",");
+      case "[":
+        this.advance();
+        return this.pushToken(TokenType.LBRACKET, "[");
+      case "]":
+        this.advance();
+        return this.pushToken(TokenType.RBRACKET, "]");
+      case ".":
+        return this.readDotDot();
       case "=":
         this.advance();
         return this.pushToken(TokenType.EQUAL, "=");
@@ -206,6 +214,19 @@ export class Lexer {
     }
 
     this.tokens.push({ type: TokenType.GREATER, value: ">", line: this.line, col: startCol });
+  }
+
+  private readDotDot(): void {
+    const startCol = this.col;
+    this.advance(); // consome "."
+
+    if (!this.isAtEnd() && this.current() === ".") {
+      this.advance(); // consome o segundo "."
+      this.tokens.push({ type: TokenType.DOTDOT, value: "..", line: this.line, col: startCol });
+      return;
+    }
+
+    throw new LexerError(`Era esperado '.' após '.'`, this.line, this.col);
   }
 
   // ─── Utilitários ───────────────────────────────────────────────────────────

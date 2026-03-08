@@ -1,4 +1,6 @@
 import type {
+  ArrayAccessNode,
+  ArrayType,
   ASTNode,
   AssignNode,
   BinaryOpNode,
@@ -9,6 +11,7 @@ import type {
   IdentifierNode,
   IfNode,
   NumberLiteralNode,
+  PrimitiveType,
   ProcedureNode,
   ProgramNode,
   ReadNode,
@@ -17,13 +20,21 @@ import type {
   StringLiteralNode,
   UnaryOpNode,
   VarDeclarationNode,
+  VizType,
   WhileNode,
   WriteNode,
 } from "./AST";
 
 // ─── Tipos de runtime ─────────────────────────────────────────────────────────
 
-type VizValue = number | string | boolean;
+interface VizArray {
+  elementType: PrimitiveType;
+  start: number;
+  size: number;
+  data: (number | string | boolean)[];
+}
+
+type VizValue = number | string | boolean | VizArray;
 
 interface Variable {
   type: string;
@@ -71,6 +82,38 @@ class Environment {
       return;
     }
     throw new RuntimeError(`Variável '${name}' não declarada`, line);
+  }
+
+  setArrayElement(name: string, index: number, value: VizValue, line: number): void {
+    const variable = this.get(name, line);
+    const arr = variable.value as VizArray;
+    if (!arr || typeof arr !== "object" || !("data" in arr)) {
+      throw new RuntimeError(`'${name}' não é um vetor`, line);
+    }
+    const internalIndex = index - arr.start;
+    if (internalIndex < 0 || internalIndex >= arr.size) {
+      throw new RuntimeError(
+        `Índice ${index} fora dos limites do vetor '${name}' (${arr.start}..${arr.start + arr.size - 1})`,
+        line,
+      );
+    }
+    arr.data[internalIndex] = value as number | string | boolean;
+  }
+
+  getArrayElement(name: string, index: number, line: number): VizValue {
+    const variable = this.get(name, line);
+    const arr = variable.value as VizArray;
+    if (!arr || typeof arr !== "object" || !("data" in arr)) {
+      throw new RuntimeError(`'${name}' não é um vetor`, line);
+    }
+    const internalIndex = index - arr.start;
+    if (internalIndex < 0 || internalIndex >= arr.size) {
+      throw new RuntimeError(
+        `Índice ${index} fora dos limites do vetor '${name}' (${arr.start}..${arr.start + arr.size - 1})`,
+        line,
+      );
+    }
+    return arr.data[internalIndex];
   }
 }
 
@@ -156,12 +199,24 @@ export class Evaluator {
 
   private declareVars(decl: VarDeclarationNode, env: Environment): void {
     const defaultValue = this.defaultFor(decl.type);
+    const typeStr =
+      typeof decl.type === "string"
+        ? decl.type
+        : `vetor[${(decl.type as ArrayType).start}..${(decl.type as ArrayType).start + (decl.type as ArrayType).size - 1}] de ${(decl.type as ArrayType).elementType}`;
     for (const name of decl.names) {
-      env.declare(name, decl.type, defaultValue);
+      env.declare(name, typeStr, defaultValue);
     }
   }
 
-  private defaultFor(type: string): VizValue {
+  private defaultFor(type: VizType): VizValue {
+    if (typeof type === "object" && type.kind === "array") {
+      return {
+        elementType: type.elementType,
+        start: type.start,
+        size: type.size,
+        data: new Array(type.size).fill(this.defaultFor(type.elementType)),
+      };
+    }
     switch (type) {
       case "inteiro":
         return 0;
@@ -224,6 +279,19 @@ export class Evaluator {
 
   private async execAssign(node: AssignNode, env: Environment): Promise<void> {
     const value = await this.evalExpr(node.value, env);
+
+    // Atribuição a elemento de vetor: v[1] <- 10
+    if (node.index) {
+      const indexValue = await this.evalExpr(node.index, env);
+      const index = Number(indexValue);
+      if (isNaN(index)) {
+        throw new RuntimeError(`Índice deve ser um número`, node.line);
+      }
+      env.setArrayElement(node.name, index, value, node.line);
+      return;
+    }
+
+    // Atribuição simples: x <- 10
     const variable = env.get(node.name, node.line);
     env.set(node.name, this.coerce(value, variable.type, node.line), node.line);
   }
@@ -235,14 +303,28 @@ export class Evaluator {
   }
 
   private async execRead(node: ReadNode, env: Environment): Promise<void> {
-    const variable = env.get(node.name, node.line);
-
     // A execução fica PAUSADA aqui até o usuário digitar no terminal.
     // A Promise só resolve quando o componente Terminal chama onInput().
     const raw = await this.onInput();
 
     if (this.cancel.cancelled) return;
 
+    // Leitura em elemento de vetor: leia(v[1])
+    if (node.index) {
+      const indexValue = await this.evalExpr(node.index, env);
+      const index = Number(indexValue);
+      if (isNaN(index)) {
+        throw new RuntimeError(`Índice deve ser um número`, node.line);
+      }
+      const variable = env.get(node.name, node.line);
+      const arr = variable.value as VizArray;
+      const value = this.parseInput(raw, arr.elementType, node.line);
+      env.setArrayElement(node.name, index, value, node.line);
+      return;
+    }
+
+    // Leitura simples: leia(x)
+    const variable = env.get(node.name, node.line);
     env.set(node.name, this.parseInput(raw, variable.type, node.line), node.line);
   }
 
@@ -326,6 +408,15 @@ export class Evaluator {
         return (node as BooleanLiteralNode).value;
       case "Identifier":
         return env.get((node as IdentifierNode).name, (node as IdentifierNode).line).value;
+      case "ArrayAccess": {
+        const arrNode = node as ArrayAccessNode;
+        const indexValue = await this.evalExpr(arrNode.index, env);
+        const index = Number(indexValue);
+        if (isNaN(index)) {
+          throw new RuntimeError(`Índice deve ser um número`, arrNode.line);
+        }
+        return env.getArrayElement(arrNode.name, index, arrNode.line);
+      }
       case "BinaryOp":
         return this.evalBinaryOp(node as BinaryOpNode, env);
       case "UnaryOp":
@@ -487,7 +578,11 @@ export class Evaluator {
     const flat: { name: string; type: string }[] = [];
     for (const p of params) {
       if (p.kind !== "VarDeclaration") continue;
-      for (const name of p.names) flat.push({ name, type: p.type });
+      const typeStr =
+        typeof p.type === "string"
+          ? p.type
+          : `vetor[${(p.type as ArrayType).start}..${(p.type as ArrayType).start + (p.type as ArrayType).size - 1}] de ${(p.type as ArrayType).elementType}`;
+      for (const name of p.names) flat.push({ name, type: typeStr });
     }
 
     if (flat.length !== args.length) {
