@@ -2,6 +2,7 @@ import type {
   ArrayType,
   AssignNode,
   ASTNode,
+  BreakNode,
   CallNode,
   CaseClause,
   ForNode,
@@ -265,6 +266,8 @@ export class Parser {
         return this.parseReturn();
       case TokenType.ESCOLHA:
         return this.parseSwitch();
+      case TokenType.INTERROMPA:
+        return this.parseBreak();
       default:
         throw new ParseError(`Comando inesperado '${token.value}'`, token.line, token.col);
     }
@@ -478,6 +481,12 @@ export class Parser {
     this.expect(TokenType.FIMESCOLHA, "Esperado 'fimescolha'");
 
     return { kind: "Switch", expression, cases, otherwise, line };
+  }
+
+  private parseBreak(): BreakNode {
+    const line = this.current().line;
+    this.advance(); // consome "interrompa"
+    return { kind: "Break", line };
   }
 
   // ─── Expressões ───────────────────────────────────────────────────────────────

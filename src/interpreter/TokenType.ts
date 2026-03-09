@@ -92,4 +92,5 @@ export enum TokenType {
 
   // Controle
   EOF = "EOF",
+  INTERROMPA = "INTERROMPA",
 }

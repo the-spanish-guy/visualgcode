@@ -121,6 +121,9 @@ export class StaticAnalyzer {
         for (const s of node.otherwise) this.walkStatement(s, used);
         break;
 
+      case "Break":
+        break;
+
       default:
         break;
     }

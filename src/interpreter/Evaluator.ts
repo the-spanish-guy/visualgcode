@@ -57,6 +57,8 @@ class ReturnSignal {
   constructor(public value: VizValue) {}
 }
 
+class BreakSignal {}
+
 export class RuntimeError extends Error {
   constructor(
     message: string,
@@ -315,15 +317,22 @@ export class Evaluator {
 
   // ─── Execução de statements ───────────────────────────────────────────────
 
-  private async execStatements(nodes: ASTNode[], env: Environment): Promise<void | ReturnSignal> {
+  private async execStatements(
+    nodes: ASTNode[],
+    env: Environment,
+  ): Promise<void | ReturnSignal | BreakSignal> {
     for (const node of nodes) {
       if (this.cancel.cancelled) return;
       const result = await this.execStatement(node, env);
       if (result instanceof ReturnSignal) return result;
+      if (result instanceof BreakSignal) return result;
     }
   }
 
-  private async execStatement(node: ASTNode, env: Environment): Promise<void | ReturnSignal> {
+  private async execStatement(
+    node: ASTNode,
+    env: Environment,
+  ): Promise<void | ReturnSignal | BreakSignal> {
     if (this.cancel.cancelled) return;
 
     const line = (node as any).line as number | undefined;
@@ -353,6 +362,8 @@ export class Evaluator {
         return this.execCallStatement(node as CallNode, env);
       case "Switch":
         return this.execSwitch(node as SwitchNode, env);
+      case "Break":
+        return new BreakSignal();
       default:
         throw new RuntimeError(`Nó desconhecido: ${(node as any).kind}`, 0);
     }
@@ -431,14 +442,17 @@ export class Evaluator {
     env.set(node.name, this.parseInput(raw, variable.type, node.line), node.line);
   }
 
-  private async execIf(node: IfNode, env: Environment): Promise<void | ReturnSignal> {
+  private async execIf(node: IfNode, env: Environment): Promise<void | ReturnSignal | BreakSignal> {
     const condition = await this.evalExpr(node.condition, env);
     if (typeof condition !== "boolean")
       throw new RuntimeError("Condição do 'se' deve ser lógica", node.line);
     return this.execStatements(condition ? node.then : node.else, env);
   }
 
-  private async execFor(node: ForNode, env: Environment): Promise<void | ReturnSignal> {
+  private async execFor(
+    node: ForNode,
+    env: Environment,
+  ): Promise<void | ReturnSignal | BreakSignal> {
     const from = (await this.evalExpr(node.from, env)) as number;
     const to = (await this.evalExpr(node.to, env)) as number;
     const step = node.step ? ((await this.evalExpr(node.step, env)) as number) : 1;
@@ -452,24 +466,33 @@ export class Evaluator {
 
       const result = await this.execStatements(node.body, env);
       if (result instanceof ReturnSignal) return result;
+      if (result instanceof BreakSignal) break;
 
       env.set(node.variable, current + step, node.line);
     }
   }
 
-  private async execWhile(node: WhileNode, env: Environment): Promise<void | ReturnSignal> {
+  private async execWhile(
+    node: WhileNode,
+    env: Environment,
+  ): Promise<void | ReturnSignal | BreakSignal> {
     while (!this.cancel.cancelled) {
       const condition = await this.evalExpr(node.condition, env);
       if (!condition) break;
       const result = await this.execStatements(node.body, env);
       if (result instanceof ReturnSignal) return result;
+      if (result instanceof BreakSignal) break;
     }
   }
 
-  private async execRepeat(node: RepeatNode, env: Environment): Promise<void | ReturnSignal> {
+  private async execRepeat(
+    node: RepeatNode,
+    env: Environment,
+  ): Promise<void | ReturnSignal | BreakSignal> {
     while (!this.cancel.cancelled) {
       const result = await this.execStatements(node.body, env);
       if (result instanceof ReturnSignal) return result;
+      if (result instanceof BreakSignal) break;
       const condition = await this.evalExpr(node.condition, env);
       if (condition) break;
     }
@@ -492,6 +515,7 @@ export class Evaluator {
       this.callStack.pop();
     }
   }
+
   private async execSwitch(node: SwitchNode, env: Environment): Promise<void | ReturnSignal> {
     const value = await this.evalExpr(node.expression, env);
 
@@ -499,14 +523,18 @@ export class Evaluator {
       for (const caseVal of clause.values) {
         const match = await this.evalExpr(caseVal, env);
         if (value === match) {
-          return this.execStatements(clause.body, env);
+          const result = await this.execStatements(clause.body, env);
+          // BreakSignal encerra o escolha sem propagar; ReturnSignal sobe
+          if (result instanceof ReturnSignal) return result;
+          return;
         }
       }
     }
 
     // Nenhum caso correspondeu — executa outrocaso se existir
     if (node.otherwise.length > 0) {
-      return this.execStatements(node.otherwise, env);
+      const result = await this.execStatements(node.otherwise, env);
+      if (result instanceof ReturnSignal) return result;
     }
   }
 

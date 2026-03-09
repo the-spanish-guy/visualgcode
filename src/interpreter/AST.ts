@@ -36,6 +36,7 @@ export type ASTNode =
   | WhileNode
   | RepeatNode
   | SwitchNode
+  | BreakNode
   | ProcedureNode
   | FunctionNode
   | ReturnNode
@@ -125,6 +126,11 @@ export interface SwitchNode {
   expression: ASTNode;
   cases: CaseClause[];
   otherwise: ASTNode[]; // bloco outrocaso (pode ser [])
+  line: number;
+}
+
+export interface BreakNode {
+  kind: "Break";
   line: number;
 }
 
