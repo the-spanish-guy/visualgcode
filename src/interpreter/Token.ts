@@ -62,4 +62,9 @@ export const KEYWORDS: Record<string, TokenType> = {
   funcao: TokenType.FUNCAO,
   fimfuncao: TokenType.FIMFUNCAO,
   retorne: TokenType.RETORNE,
+
+  escolha: TokenType.ESCOLHA,
+  caso: TokenType.CASO,
+  outrocaso: TokenType.OUTROCASO,
+  fimescolha: TokenType.FIMESCOLHA,
 };

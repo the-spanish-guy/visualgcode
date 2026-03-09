@@ -19,6 +19,7 @@ import type {
   RepeatNode,
   ReturnNode,
   StringLiteralNode,
+  SwitchNode,
   UnaryOpNode,
   VarDeclarationNode,
   VizType,
@@ -350,6 +351,8 @@ export class Evaluator {
         return this.execReturn(node as ReturnNode, env);
       case "Call":
         return this.execCallStatement(node as CallNode, env);
+      case "Switch":
+        return this.execSwitch(node as SwitchNode, env);
       default:
         throw new RuntimeError(`Nó desconhecido: ${(node as any).kind}`, 0);
     }
@@ -487,6 +490,23 @@ export class Evaluator {
       await this.execStatements(proc.body, localEnv);
     } finally {
       this.callStack.pop();
+    }
+  }
+  private async execSwitch(node: SwitchNode, env: Environment): Promise<void | ReturnSignal> {
+    const value = await this.evalExpr(node.expression, env);
+
+    for (const clause of node.cases) {
+      for (const caseVal of clause.values) {
+        const match = await this.evalExpr(caseVal, env);
+        if (value === match) {
+          return this.execStatements(clause.body, env);
+        }
+      }
+    }
+
+    // Nenhum caso correspondeu — executa outrocaso se existir
+    if (node.otherwise.length > 0) {
+      return this.execStatements(node.otherwise, env);
     }
   }
 

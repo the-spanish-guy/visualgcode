@@ -35,6 +35,7 @@ export type ASTNode =
   | ForNode
   | WhileNode
   | RepeatNode
+  | SwitchNode
   | ProcedureNode
   | FunctionNode
   | ReturnNode
@@ -111,6 +112,19 @@ export interface RepeatNode {
   kind: "Repeat";
   body: ASTNode[];
   condition: ASTNode;
+  line: number;
+}
+
+export interface CaseClause {
+  values: ASTNode[]; // lista de valores: "caso 1, 2, 3"
+  body: ASTNode[];
+}
+
+export interface SwitchNode {
+  kind: "Switch";
+  expression: ASTNode;
+  cases: CaseClause[];
+  otherwise: ASTNode[]; // bloco outrocaso (pode ser [])
   line: number;
 }
 

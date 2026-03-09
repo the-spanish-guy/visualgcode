@@ -66,6 +66,12 @@ export enum TokenType {
   SENAO = "SENAO",
   FIMSE = "FIMSE",
 
+  // Escolha/Caso
+  ESCOLHA = "ESCOLHA",
+  CASO = "CASO",
+  OUTROCASO = "OUTROCASO",
+  FIMESCOLHA = "FIMESCOLHA",
+
   // Laços
   PARA = "PARA",
   DE = "DE",

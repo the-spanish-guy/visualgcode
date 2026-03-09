@@ -112,6 +112,15 @@ export class StaticAnalyzer {
       case "Function":
         break;
 
+      case "Switch":
+        this.walkExpr(node.expression, used);
+        for (const clause of node.cases) {
+          for (const val of clause.values) this.walkExpr(val, used);
+          for (const s of clause.body) this.walkStatement(s, used);
+        }
+        for (const s of node.otherwise) this.walkStatement(s, used);
+        break;
+
       default:
         break;
     }

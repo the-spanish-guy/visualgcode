@@ -3,6 +3,7 @@ import type {
   AssignNode,
   ASTNode,
   CallNode,
+  CaseClause,
   ForNode,
   FunctionNode,
   IfNode,
@@ -13,6 +14,7 @@ import type {
   ReadNode,
   RepeatNode,
   ReturnNode,
+  SwitchNode,
   VarDeclarationNode,
   VizType,
   WhileNode,
@@ -261,6 +263,8 @@ export class Parser {
         return this.parseRepeat();
       case TokenType.RETORNE:
         return this.parseReturn();
+      case TokenType.ESCOLHA:
+        return this.parseSwitch();
       default:
         throw new ParseError(`Comando inesperado '${token.value}'`, token.line, token.col);
     }
@@ -429,6 +433,51 @@ export class Parser {
     this.advance(); // consome "retorne"
     const value = this.parseExpression();
     return { kind: "Return", value, line };
+  }
+
+  private parseSwitch(): SwitchNode {
+    const line = this.current().line;
+    this.advance(); // consome "escolha"
+
+    const expression = this.parseExpression();
+
+    const cases: CaseClause[] = [];
+    let otherwise: ASTNode[] = [];
+
+    // Consome cláusulas "caso" até encontrar "outrocaso" ou "fimescolha"
+    while (
+      !this.check(TokenType.FIMESCOLHA) &&
+      !this.check(TokenType.OUTROCASO) &&
+      !this.check(TokenType.EOF)
+    ) {
+      this.expect(TokenType.CASO, "Esperado 'caso' dentro de 'escolha'");
+
+      // Uma cláusula pode ter múltiplos valores: caso 1, 2, 3
+      const values: ASTNode[] = [];
+      values.push(this.parseExpression());
+      while (this.check(TokenType.COMMA)) {
+        this.advance();
+        values.push(this.parseExpression());
+      }
+
+      const body = this.parseStatements([
+        TokenType.CASO,
+        TokenType.OUTROCASO,
+        TokenType.FIMESCOLHA,
+      ]);
+
+      cases.push({ values, body });
+    }
+
+    // Bloco opcional "outrocaso"
+    if (this.check(TokenType.OUTROCASO)) {
+      this.advance(); // consome "outrocaso"
+      otherwise = this.parseStatements([TokenType.FIMESCOLHA]);
+    }
+
+    this.expect(TokenType.FIMESCOLHA, "Esperado 'fimescolha'");
+
+    return { kind: "Switch", expression, cases, otherwise, line };
   }
 
   // ─── Expressões ───────────────────────────────────────────────────────────────
