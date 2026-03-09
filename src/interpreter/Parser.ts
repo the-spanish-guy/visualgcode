@@ -1,11 +1,12 @@
 import type {
   ArrayType,
-  ASTNode,
   AssignNode,
+  ASTNode,
   CallNode,
   ForNode,
   FunctionNode,
   IfNode,
+  MatrixAccessNode,
   PrimitiveType,
   ProcedureNode,
   ProgramNode,
@@ -55,7 +56,7 @@ export class Parser {
     const declarations: VarDeclarationNode[] = [];
 
     if (!this.check(TokenType.VAR)) return declarations;
-    this.advance(); // consome "var"
+    this.advance();
 
     // Lê declarações até encontrar inicio, procedimento, funcao
     while (
@@ -105,7 +106,7 @@ export class Parser {
     const type = typeMap[token.type];
     if (!type) {
       throw new ParseError(
-        `Tipo inválido '${token.value}'. Esperado: inteiro, real, caractere ou logico`,
+        `Tipo inválido '${token.value}'. Esperado: inteiro, real, caractere, logico ou vetor`,
         token.line,
         token.col,
       );
@@ -115,22 +116,58 @@ export class Parser {
     return type;
   }
 
+  // ─── Parsing de tipos vetor ───────────────────────────────────────────────────
+  // Suporta 1D: vetor[1..10] de inteiro
+  // Suporta 2D: vetor[1..3, 1..4] de inteiro
+
   private parseArrayType(): ArrayType {
     this.expect(TokenType.VETOR, "Esperado 'vetor'");
     this.expect(TokenType.LBRACKET, "Esperado '[' após 'vetor'");
 
-    const start = this.expect(TokenType.NUMBER, "Esperado número inicial do intervalo").value;
+    const start = Number(
+      this.expect(TokenType.NUMBER, "Esperado número inicial do intervalo").value,
+    );
     this.expect(TokenType.DOTDOT, "Esperado '..' no intervalo");
-    const end = this.expect(TokenType.NUMBER, "Esperado número final do intervalo").value;
+    const end = Number(this.expect(TokenType.NUMBER, "Esperado número final do intervalo").value);
 
+    // Verifica se é 2D: há uma vírgula após o primeiro intervalo
+    if (this.check(TokenType.COMMA)) {
+      this.advance(); // consome ','
+      const colStart = Number(
+        this.expect(TokenType.NUMBER, "Esperado número inicial do intervalo de colunas").value,
+      );
+      this.expect(TokenType.DOTDOT, "Esperado '..' no intervalo de colunas");
+      const colEnd = Number(
+        this.expect(TokenType.NUMBER, "Esperado número final do intervalo de colunas").value,
+      );
+      this.expect(TokenType.RBRACKET, "Esperado ']' após intervalo");
+      this.expect(TokenType.DE, "Esperado 'de' após ']'");
+      const elementType = this.parseType() as PrimitiveType;
+
+      const rowSize = end - start + 1;
+      const colSize = colEnd - colStart + 1;
+
+      return {
+        kind: "array",
+        elementType,
+        // Campos 1D usados como dimensão de linha para retrocompatibilidade
+        start,
+        size: rowSize,
+        // Campos 2D
+        rowStart: start,
+        rowSize,
+        colStart,
+        colSize,
+      };
+    }
+
+    // 1D
     this.expect(TokenType.RBRACKET, "Esperado ']' após intervalo");
     this.expect(TokenType.DE, "Esperado 'de' após ']'");
-
     const elementType = this.parseType() as PrimitiveType;
+    const size = end - start + 1;
 
-    const size = Number(end) - Number(start) + 1;
-
-    return { kind: "array", elementType, start: Number(start), size };
+    return { kind: "array", elementType, start, size };
   }
 
   // ─── Subprogramas ─────────────────────────────────────────────────────────────
@@ -176,7 +213,7 @@ export class Parser {
     const params: VarDeclarationNode[] = [];
 
     if (!this.check(TokenType.LPAREN)) return params;
-    this.advance(); // consome "("
+    this.advance();
 
     if (!this.check(TokenType.RPAREN)) {
       params.push(this.parseVarDeclaration());
@@ -224,7 +261,6 @@ export class Parser {
         return this.parseRepeat();
       case TokenType.RETORNE:
         return this.parseReturn();
-
       default:
         throw new ParseError(`Comando inesperado '${token.value}'`, token.line, token.col);
     }
@@ -232,12 +268,24 @@ export class Parser {
 
   private parseAssignOrCall(): AssignNode | CallNode {
     const token = this.current();
-    const name = this.advance().value; // consome o IDENTIFIER
+    const name = this.advance().value;
 
-    // Acesso a vetor para atribuição: nome[índice] <- expr
+    // Acesso com índice: pode ser 1D (v[i]) ou 2D (m[i, j])
     if (this.check(TokenType.LBRACKET)) {
       this.advance(); // consome '['
       const index = this.parseExpression();
+
+      if (this.check(TokenType.COMMA)) {
+        // 2D: m[i, j] <- valor
+        this.advance(); // consome ','
+        const col = this.parseExpression();
+        this.expect(TokenType.RBRACKET, "Esperado ']' após índices");
+        this.expect(TokenType.ASSIGN, "Esperado '<-' após índices");
+        const value = this.parseExpression();
+        return { kind: "Assign", name, index, col, value, line: token.line };
+      }
+
+      // 1D: v[i] <- valor
       this.expect(TokenType.RBRACKET, "Esperado ']' após índice");
       this.expect(TokenType.ASSIGN, "Esperado '<-' após índice");
       const value = this.parseExpression();
@@ -296,16 +344,24 @@ export class Parser {
 
     const name = this.expect(TokenType.IDENTIFIER, "Esperado nome de variável").value;
 
-    // Verifica se é acesso a vetor: leia(v[1])
     let index: ASTNode | undefined;
+    let col: ASTNode | undefined;
+
     if (this.check(TokenType.LBRACKET)) {
       this.advance(); // consome '['
       index = this.parseExpression();
-      this.expect(TokenType.RBRACKET, "Esperado ']' após índice");
+
+      if (this.check(TokenType.COMMA)) {
+        // 2D: leia(m[i, j])
+        this.advance(); // consome ','
+        col = this.parseExpression();
+      }
+
+      this.expect(TokenType.RBRACKET, "Esperado ']' após índice(s)");
     }
 
     this.expect(TokenType.RPAREN, "Esperado ')'");
-    return { kind: "Read", name, index, line };
+    return { kind: "Read", name, index, col, line };
   }
 
   private parseIf(): IfNode {
@@ -375,7 +431,7 @@ export class Parser {
     return { kind: "Return", value, line };
   }
 
-  // ─── Expressões (hierarquia de precedência) ───────────────────────────────────
+  // ─── Expressões ───────────────────────────────────────────────────────────────
 
   // Nível 1 — menor precedência: ou
   private parseExpression(): ASTNode {
@@ -515,18 +571,27 @@ export class Parser {
       return { kind: "BooleanLiteral", value: token.value === "verdadeiro", line: token.line };
     }
 
-    // Identificador, chamada de função ou acesso a vetor
+    // Identificador, chamada de função, acesso a vetor 1D ou matriz 2D
     if (this.check(TokenType.IDENTIFIER)) {
-      const name = this.current().value;
-      const line = this.current().line;
+      const name = token.value;
+      const line = token.line;
       this.advance();
 
-      // Acesso a vetor: identificador[índice]
       if (this.check(TokenType.LBRACKET)) {
         this.advance(); // consome '['
-        const index = this.parseExpression();
+        const row = this.parseExpression();
+
+        if (this.check(TokenType.COMMA)) {
+          // 2D: m[i, j]
+          this.advance(); // consome ','
+          const col = this.parseExpression();
+          this.expect(TokenType.RBRACKET, "Esperado ']' após índices");
+          return { kind: "MatrixAccess", name, row, col, line } as MatrixAccessNode;
+        }
+
+        // 1D: v[i]
         this.expect(TokenType.RBRACKET, "Esperado ']' após índice");
-        return { kind: "ArrayAccess", name, index, line };
+        return { kind: "ArrayAccess", name, index: row, line };
       }
 
       // Chamada de função

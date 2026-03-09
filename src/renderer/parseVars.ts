@@ -9,7 +9,22 @@ export function parseVars(code: string): CompletionVar[] {
   const lines = varBlock[1].split("\n");
 
   for (const line of lines) {
-    // Vetor: nome: vetor[1..N] de tipo
+    // Matriz 2D: nome: vetor[r1..r2, c1..c2] de tipo
+    const matrixMatch = line.match(
+      /^\s*([a-zA-Z_][\w]*)\s*:\s*vetor\[(\d+)\.\.(\d+)\s*,\s*(\d+)\.\.(\d+)\]\s*de\s*([a-zA-Z]+)/i,
+    );
+    if (matrixMatch) {
+      const name = matrixMatch[1].trim();
+      const r1 = matrixMatch[2];
+      const r2 = matrixMatch[3];
+      const c1 = matrixMatch[4];
+      const c2 = matrixMatch[5];
+      const elementType = matrixMatch[6].toLowerCase();
+      vars.push({ name, type: `vetor[${r1}..${r2}, ${c1}..${c2}] de ${elementType}` });
+      continue;
+    }
+
+    // Vetor 1D: nome: vetor[1..N] de tipo
     const vetorMatch = line.match(
       /^\s*([a-zA-Z_][\w]*)\s*:\s*vetor\[(\d+)\.\.(\d+)\]\s*de\s*([a-zA-Z]+)/i,
     );
@@ -26,14 +41,13 @@ export function parseVars(code: string): CompletionVar[] {
     const match = line.match(/^\s*([a-zA-Z_][\w,\s]*)\s*:\s*([a-zA-Z]+)/);
     if (!match) continue;
 
-    const type = match[2].toLowerCase().trim();
     const names = match[1]
       .split(",")
       .map((n) => n.trim())
       .filter(Boolean);
-
+    const type = match[2].toLowerCase();
     for (const name of names) {
-      if (name) vars.push({ name, type });
+      vars.push({ name, type });
     }
   }
 

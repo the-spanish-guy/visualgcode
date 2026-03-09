@@ -42,9 +42,7 @@ export class StaticAnalyzer {
       }
     }
 
-    for (const stmt of body) {
-      this.walkStatement(stmt, used);
-    }
+    for (const stmt of body) this.walkStatement(stmt, used);
 
     // Emite warnings para variáveis não usadas
     for (const [name, info] of used) {
@@ -64,12 +62,14 @@ export class StaticAnalyzer {
       case "Assign":
         this.markUsed(node.name, used);
         if (node.index) this.walkExpr(node.index, used);
+        if (node.col) this.walkExpr(node.col, used);
         this.walkExpr(node.value, used);
         break;
 
       case "Read":
         this.markUsed(node.name, used);
         if (node.index) this.walkExpr(node.index, used);
+        if (node.col) this.walkExpr(node.col, used);
         break;
 
       case "Write":
@@ -126,6 +126,12 @@ export class StaticAnalyzer {
       case "ArrayAccess":
         this.markUsed(node.name, used);
         this.walkExpr(node.index, used);
+        break;
+
+      case "MatrixAccess":
+        this.markUsed(node.name, used);
+        this.walkExpr(node.row, used);
+        this.walkExpr(node.col, used);
         break;
 
       case "BinaryOp":

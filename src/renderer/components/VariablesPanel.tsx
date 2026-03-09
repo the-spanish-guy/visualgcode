@@ -8,10 +8,10 @@ interface Props {
 }
 
 const TYPE_COLORS: Record<string, string> = {
-  inteiro: "#79d4f1",
-  real: "#3ddc97",
-  caractere: "#a8d8a8",
-  logico: "#c792ea",
+  inteiro: "#79b8ff",
+  real: "#b392f0",
+  caractere: "#9ecbff",
+  logico: "#85e89d",
 };
 
 const TYPE_DEFAULTS: Record<string, string> = {
@@ -25,22 +25,45 @@ interface VarInfo extends VarSnapshot {
   defaultValue: string;
 }
 
-function isVetorialType(type: string): boolean {
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function isVectorType(type: string): boolean {
   return type.startsWith("vetor[");
 }
 
-function formatVetorValue(value: string): string {
+function is2DType(type: string): boolean {
+  // "vetor[1..3, 1..4] de inteiro" contém vírgula antes do ']'
+  return /vetor\[.*,.*\]/.test(type);
+}
+
+function formatVectorValue(value: string): string {
   try {
     const parsed = JSON.parse(value);
     if (parsed && typeof parsed === "object" && "data" in parsed) {
-      const arr = parsed.data as unknown[];
-      return `[${arr.map((v) => JSON.stringify(v)).join(", ")}]`;
+      const arr = parsed as { data: unknown[]; is2D: boolean; rowSize: number; colSize: number };
+
+      if (arr.is2D) {
+        const rows: string[] = [];
+        for (let r = 0; r < arr.rowSize; r++) {
+          const row = arr.data.slice(r * arr.colSize, (r + 1) * arr.colSize);
+          rows.push(`[${row.map((v) => JSON.stringify(v)).join(", ")}]`);
+        }
+        return `[${rows.join(", ")}]`;
+      }
+
+      return `[${arr.data.map((v) => JSON.stringify(v)).join(", ")}]`;
     }
   } catch {
-    // Se não conseguir fazer parse, retorna o valor original
+    // fallback: retorna valor original
   }
   return value;
 }
+
+function vectorColor(type: string): string {
+  return is2DType(type) ? "#ffb86c" : "#ff9f68";
+}
+
+// ─── Componente ───────────────────────────────────────────────────────────────
 
 export default function VariablesPanel({ variables, isVisible }: Props) {
   const varInfo = useRef<Map<string, VarInfo>>(new Map());
@@ -48,64 +71,68 @@ export default function VariablesPanel({ variables, isVisible }: Props) {
   if (!isVisible) return null;
 
   variables.forEach((v) => {
-    const isVet = isVetorialType(v.type);
-    const defaultVal = isVet ? "[]" : (TYPE_DEFAULTS[v.type] ?? "0");
-    varInfo.current.set(v.name, {
-      ...v,
-      defaultValue: defaultVal,
-    });
+    const isVec = isVectorType(v.type);
+    const defaultVal = isVec ? "[]" : (TYPE_DEFAULTS[v.type] ?? "0");
+    varInfo.current.set(v.name, { ...v, defaultValue: defaultVal });
   });
 
   const isChanged = (v: VarSnapshot): boolean => {
     const info = varInfo.current.get(v.name);
-    const displayValue = isVetorialType(v.type) ? formatVetorValue(v.value) : String(v.value);
-    const defaultValue = isVetorialType(v.type) ? "[]" : (info?.defaultValue ?? "0");
+    const displayValue = isVectorType(v.type) ? formatVectorValue(v.value) : String(v.value);
+    const defaultValue = isVectorType(v.type) ? "[]" : (info?.defaultValue ?? "0");
     return displayValue.toLowerCase() !== defaultValue.toLowerCase();
+  };
+
+  // Agrupa: escalares primeiro, depois vetores 1D, depois matrizes 2D
+  const scalars = variables.filter((v) => !isVectorType(v.type));
+  const vectors = variables.filter((v) => isVectorType(v.type) && !is2DType(v.type));
+  const matrices = variables.filter((v) => is2DType(v.type));
+
+  const renderRow = (v: VarSnapshot) => {
+    const changed = isChanged(v);
+    const isVec = isVectorType(v.type);
+    const displayValue = isVec ? formatVectorValue(v.value) : String(v.value);
+    const color = isVec ? vectorColor(v.type) : (TYPE_COLORS[v.type] ?? "#7a90aa");
+
+    return (
+      <tr key={v.name} className={`${styles.row} ${changed ? styles.rowChanged : ""}`}>
+        <td className={styles.name}>{v.name}</td>
+        <td className={styles.type} style={{ color }}>
+          {v.type}
+        </td>
+        <td className={`${styles.value} ${changed ? styles.valueChanged : ""}`}>{displayValue}</td>
+      </tr>
+    );
+  };
+
+  const renderGroup = (label: string, items: VarSnapshot[]) => {
+    if (items.length === 0) return null;
+    return (
+      <>
+        <tr className={styles.groupHeader}>
+          <td colSpan={3}>{label}</td>
+        </tr>
+        {items.map(renderRow)}
+      </>
+    );
   };
 
   return (
     <div className={styles.panel}>
-      <div className={styles.header}>
-        <span className={styles.title}>Variáveis</span>
-        <span className={styles.count}>{variables.length}</span>
-      </div>
-
-      <div className={styles.list}>
-        {variables.length === 0 && <span className={styles.empty}>Nenhuma variável ainda</span>}
-
-        {variables.length > 0 && (
-          <table className={styles.table}>
-            <thead>
-              <tr className={styles.tableHead}>
-                <th className={styles.colNome}>NOME</th>
-                <th className={styles.colTipo}>TIPO</th>
-                <th className={styles.colValor}>VALOR</th>
-              </tr>
-            </thead>
-            <tbody>
-              {variables.map((v) => {
-                const changed = isChanged(v);
-                const isVet = isVetorialType(v.type);
-                const displayValue = isVet ? formatVetorValue(v.value) : String(v.value);
-                return (
-                  <tr key={v.name} className={`${styles.row} ${changed ? styles.rowChanged : ""}`}>
-                    <td className={styles.name}>{v.name}</td>
-                    <td
-                      className={styles.type}
-                      style={{ color: isVet ? "#ff9f68" : (TYPE_COLORS[v.type] ?? "#7a90aa") }}
-                    >
-                      {v.type}
-                    </td>
-                    <td className={`${styles.value} ${changed ? styles.valueChanged : ""}`}>
-                      {displayValue}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        )}
-      </div>
+      <table className={styles.table}>
+        <thead>
+          <tr>
+            <th className={styles.th}>Nome</th>
+            <th className={styles.th}>Tipo</th>
+            <th className={styles.th}>Valor</th>
+          </tr>
+        </thead>
+        <tbody>
+          {renderGroup("Escalares", scalars)}
+          {renderGroup("Vetores", vectors)}
+          {renderGroup("Matrizes", matrices)}
+        </tbody>
+      </table>
     </div>
   );
 }

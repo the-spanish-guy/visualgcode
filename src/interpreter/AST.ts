@@ -5,8 +5,14 @@ export type PrimitiveType = "inteiro" | "real" | "caractere" | "logico";
 export interface ArrayType {
   kind: "array";
   elementType: PrimitiveType;
-  start: number; // índice inicial (ex: 3 em vetor[3..10])
-  size: number; // end - start + 1
+  // 1D
+  start: number;
+  size: number;
+  // 2D (ausente = vetor 1D)
+  rowStart?: number;
+  rowSize?: number;
+  colStart?: number;
+  colSize?: number;
 }
 
 export type VizType = PrimitiveType | ArrayType;
@@ -19,6 +25,7 @@ export type ASTNode =
   | UnaryOpNode
   | IdentifierNode
   | ArrayAccessNode
+  | MatrixAccessNode
   | NumberLiteralNode
   | StringLiteralNode
   | BooleanLiteralNode
@@ -54,7 +61,8 @@ export interface VarDeclarationNode {
 export interface AssignNode {
   kind: "Assign";
   name: string;
-  index?: ASTNode; // presente quando é atribuição a elemento de vetor
+  index?: ASTNode; // 1D: v[i] <- x  |  2D: m[i, j] <- x (index = linha)
+  col?: ASTNode; // 2D apenas: coluna
   value: ASTNode;
   line: number;
 }
@@ -62,14 +70,15 @@ export interface AssignNode {
 export interface WriteNode {
   kind: "Write";
   args: ASTNode[];
-  newline: boolean; // escreval = true, escreva = false
+  newline: boolean;
   line: number;
 }
 
 export interface ReadNode {
   kind: "Read";
   name: string;
-  index?: ASTNode; // presente quando é leitura em elemento de vetor
+  index?: ASTNode; // 1D: leia(v[i])  |  2D: leia(m[i, j]) (index = linha)
+  col?: ASTNode; // 2D apenas: coluna
   line: number;
 }
 
@@ -86,7 +95,7 @@ export interface ForNode {
   variable: string;
   from: ASTNode;
   to: ASTNode;
-  step: ASTNode | null; // passo (opcional)
+  step: ASTNode | null;
   body: ASTNode[];
   line: number;
 }
@@ -101,7 +110,7 @@ export interface WhileNode {
 export interface RepeatNode {
   kind: "Repeat";
   body: ASTNode[];
-  condition: ASTNode; // repita...ate <condition>
+  condition: ASTNode;
   line: number;
 }
 
@@ -143,7 +152,7 @@ export interface CallNode {
 
 export interface BinaryOpNode {
   kind: "BinaryOp";
-  op: string; // "+", "-", "*", "/", "div", "mod", "=", "<>", "<", ">", "<=", ">=", "e", "ou"
+  op: string;
   left: ASTNode;
   right: ASTNode;
   line: number;
@@ -151,7 +160,7 @@ export interface BinaryOpNode {
 
 export interface UnaryOpNode {
   kind: "UnaryOp";
-  op: string; // "nao", "-"
+  op: string;
   operand: ASTNode;
   line: number;
 }
@@ -166,6 +175,14 @@ export interface ArrayAccessNode {
   kind: "ArrayAccess";
   name: string;
   index: ASTNode;
+  line: number;
+}
+
+export interface MatrixAccessNode {
+  kind: "MatrixAccess";
+  name: string;
+  row: ASTNode;
+  col: ASTNode;
   line: number;
 }
 

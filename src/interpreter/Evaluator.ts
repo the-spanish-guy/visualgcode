@@ -1,8 +1,8 @@
 import type {
   ArrayAccessNode,
   ArrayType,
-  ASTNode,
   AssignNode,
+  ASTNode,
   BinaryOpNode,
   BooleanLiteralNode,
   CallNode,
@@ -10,6 +10,7 @@ import type {
   FunctionNode,
   IdentifierNode,
   IfNode,
+  MatrixAccessNode,
   NumberLiteralNode,
   PrimitiveType,
   ProcedureNode,
@@ -29,8 +30,18 @@ import type {
 
 interface VizArray {
   elementType: PrimitiveType;
+  // 1D
   start: number;
   size: number;
+  // 2D (is2D = false → vetor 1D)
+  is2D: boolean;
+  rowStart: number;
+  rowSize: number;
+  colStart: number;
+  colSize: number;
+  // Armazenamento flat row-major
+  // 1D: data.length === size
+  // 2D: data.length === rowSize * colSize
   data: (number | string | boolean)[];
 }
 
@@ -84,36 +95,79 @@ class Environment {
     throw new RuntimeError(`Variável '${name}' não declarada`, line);
   }
 
+  // ─── Acesso a vetor 1D ──────────────────────────────────────────────────────
+
   setArrayElement(name: string, index: number, value: VizValue, line: number): void {
-    const variable = this.get(name, line);
-    const arr = variable.value as VizArray;
-    if (!arr || typeof arr !== "object" || !("data" in arr)) {
-      throw new RuntimeError(`'${name}' não é um vetor`, line);
-    }
-    const internalIndex = index - arr.start;
-    if (internalIndex < 0 || internalIndex >= arr.size) {
+    const arr = this.getArr(name, line);
+    const internal = index - arr.start;
+    if (internal < 0 || internal >= arr.size) {
       throw new RuntimeError(
         `Índice ${index} fora dos limites do vetor '${name}' (${arr.start}..${arr.start + arr.size - 1})`,
         line,
       );
     }
-    arr.data[internalIndex] = value as number | string | boolean;
+    arr.data[internal] = value as number | string | boolean;
   }
 
   getArrayElement(name: string, index: number, line: number): VizValue {
-    const variable = this.get(name, line);
-    const arr = variable.value as VizArray;
-    if (!arr || typeof arr !== "object" || !("data" in arr)) {
-      throw new RuntimeError(`'${name}' não é um vetor`, line);
-    }
-    const internalIndex = index - arr.start;
-    if (internalIndex < 0 || internalIndex >= arr.size) {
+    const arr = this.getArr(name, line);
+    const internal = index - arr.start;
+    if (internal < 0 || internal >= arr.size) {
       throw new RuntimeError(
         `Índice ${index} fora dos limites do vetor '${name}' (${arr.start}..${arr.start + arr.size - 1})`,
         line,
       );
     }
-    return arr.data[internalIndex];
+    return arr.data[internal];
+  }
+
+  // ─── Acesso a matriz 2D ─────────────────────────────────────────────────────
+
+  setMatrixElement(name: string, row: number, col: number, value: VizValue, line: number): void {
+    const arr = this.getArr(name, line);
+    if (!arr.is2D) throw new RuntimeError(`'${name}' não é uma matriz`, line);
+    const flatIndex = this.matrixFlatIndex(arr, row, col, name, line);
+    arr.data[flatIndex] = value as number | string | boolean;
+  }
+
+  getMatrixElement(name: string, row: number, col: number, line: number): VizValue {
+    const arr = this.getArr(name, line);
+    if (!arr.is2D) throw new RuntimeError(`'${name}' não é uma matriz`, line);
+    const flatIndex = this.matrixFlatIndex(arr, row, col, name, line);
+    return arr.data[flatIndex];
+  }
+
+  private matrixFlatIndex(
+    arr: VizArray,
+    row: number,
+    col: number,
+    name: string,
+    line: number,
+  ): number {
+    const internalRow = row - arr.rowStart;
+    const internalCol = col - arr.colStart;
+    if (internalRow < 0 || internalRow >= arr.rowSize) {
+      throw new RuntimeError(
+        `Linha ${row} fora dos limites da matriz '${name}' (${arr.rowStart}..${arr.rowStart + arr.rowSize - 1})`,
+        line,
+      );
+    }
+    if (internalCol < 0 || internalCol >= arr.colSize) {
+      throw new RuntimeError(
+        `Coluna ${col} fora dos limites da matriz '${name}' (${arr.colStart}..${arr.colStart + arr.colSize - 1})`,
+        line,
+      );
+    }
+    return internalRow * arr.colSize + internalCol;
+  }
+
+  private getArr(name: string, line: number): VizArray {
+    const variable = this.get(name, line);
+    const arr = variable.value as VizArray;
+    if (!arr || typeof arr !== "object" || !("data" in arr)) {
+      throw new RuntimeError(`'${name}' não é um vetor ou matriz`, line);
+    }
+    return arr;
   }
 }
 
@@ -170,11 +224,7 @@ export class Evaluator {
     const store = (env as any).store as Map<string, { type: string; value: any }>;
     const result: VarSnapshot[] = [];
     store.forEach((variable, name) => {
-      result.push({
-        name,
-        type: variable.type,
-        value: this.stringify(variable.value),
-      });
+      result.push({ name, type: variable.type, value: this.stringify(variable.value) });
     });
     return result;
   }
@@ -199,24 +249,55 @@ export class Evaluator {
 
   private declareVars(decl: VarDeclarationNode, env: Environment): void {
     const defaultValue = this.defaultFor(decl.type);
-    const typeStr =
-      typeof decl.type === "string"
-        ? decl.type
-        : `vetor[${(decl.type as ArrayType).start}..${(decl.type as ArrayType).start + (decl.type as ArrayType).size - 1}] de ${(decl.type as ArrayType).elementType}`;
+    const typeStr = this.typeToString(decl.type);
     for (const name of decl.names) {
       env.declare(name, typeStr, defaultValue);
     }
   }
 
+  private typeToString(type: VizType): string {
+    if (typeof type === "string") return type;
+    const t = type as ArrayType;
+    if (t.rowSize !== undefined && t.colSize !== undefined) {
+      return `vetor[${t.rowStart}..${t.rowStart! + t.rowSize! - 1}, ${t.colStart}..${t.colStart! + t.colSize! - 1}] de ${t.elementType}`;
+    }
+    return `vetor[${t.start}..${t.start + t.size - 1}] de ${t.elementType}`;
+  }
+
   private defaultFor(type: VizType): VizValue {
     if (typeof type === "object" && type.kind === "array") {
+      const t = type as ArrayType;
+      const primitiveDefault = this.defaultFor(t.elementType);
+
+      if (t.rowSize !== undefined && t.colSize !== undefined) {
+        // 2D
+        return {
+          elementType: t.elementType,
+          start: t.start,
+          size: t.size,
+          is2D: true,
+          rowStart: t.rowStart!,
+          rowSize: t.rowSize!,
+          colStart: t.colStart!,
+          colSize: t.colSize!,
+          data: new Array(t.rowSize * t.colSize).fill(primitiveDefault),
+        } as VizArray;
+      }
+
+      // 1D
       return {
-        elementType: type.elementType,
-        start: type.start,
-        size: type.size,
-        data: new Array(type.size).fill(this.defaultFor(type.elementType)),
-      };
+        elementType: t.elementType,
+        start: t.start,
+        size: t.size,
+        is2D: false,
+        rowStart: t.start,
+        rowSize: t.size,
+        colStart: 0,
+        colSize: 0,
+        data: new Array(t.size).fill(primitiveDefault),
+      } as VizArray;
     }
+
     switch (type) {
       case "inteiro":
         return 0;
@@ -244,11 +325,8 @@ export class Evaluator {
   private async execStatement(node: ASTNode, env: Environment): Promise<void | ReturnSignal> {
     if (this.cancel.cancelled) return;
 
-    // Pausa no debug se: modo step-by-step OU linha tem breakpoint
     const line = (node as any).line as number | undefined;
     if (line && this.onStep) {
-      const isBreakpoint = this.breakpoints.has(line);
-      // Sempre pausa em step-by-step; só pausa em breakpoints se não estiver em step mode
       await this.onStep(line, this.snapshot(env), [...this.callStack]);
       if (this.cancel.cancelled) return;
     }
@@ -280,18 +358,24 @@ export class Evaluator {
   private async execAssign(node: AssignNode, env: Environment): Promise<void> {
     const value = await this.evalExpr(node.value, env);
 
-    // Atribuição a elemento de vetor: v[1] <- 10
+    if (node.index && node.col) {
+      // 2D: m[i, j] <- valor
+      const row = Number(await this.evalExpr(node.index, env));
+      const col = Number(await this.evalExpr(node.col, env));
+      if (isNaN(row) || isNaN(col)) throw new RuntimeError("Índices devem ser números", node.line);
+      env.setMatrixElement(node.name, row, col, value, node.line);
+      return;
+    }
+
     if (node.index) {
-      const indexValue = await this.evalExpr(node.index, env);
-      const index = Number(indexValue);
-      if (isNaN(index)) {
-        throw new RuntimeError(`Índice deve ser um número`, node.line);
-      }
+      // 1D: v[i] <- valor
+      const index = Number(await this.evalExpr(node.index, env));
+      if (isNaN(index)) throw new RuntimeError("Índice deve ser um número", node.line);
       env.setArrayElement(node.name, index, value, node.line);
       return;
     }
 
-    // Atribuição simples: x <- 10
+    // Simples: x <- valor
     const variable = env.get(node.name, node.line);
     env.set(node.name, this.coerce(value, variable.type, node.line), node.line);
   }
@@ -309,30 +393,45 @@ export class Evaluator {
 
     if (this.cancel.cancelled) return;
 
-    // Leitura em elemento de vetor: leia(v[1])
-    if (node.index) {
-      const indexValue = await this.evalExpr(node.index, env);
-      const index = Number(indexValue);
-      if (isNaN(index)) {
-        throw new RuntimeError(`Índice deve ser um número`, node.line);
-      }
-      const variable = env.get(node.name, node.line);
-      const arr = variable.value as VizArray;
-      const value = this.parseInput(raw, arr.elementType, node.line);
-      env.setArrayElement(node.name, index, value, node.line);
+    if (node.index && node.col) {
+      // 2D: leia(m[i, j])
+      const row = Number(await this.evalExpr(node.index, env));
+      const col = Number(await this.evalExpr(node.col, env));
+      if (isNaN(row) || isNaN(col)) throw new RuntimeError("Índices devem ser números", node.line);
+      const arr = env.get(node.name, node.line).value as VizArray;
+      env.setMatrixElement(
+        node.name,
+        row,
+        col,
+        this.parseInput(raw, arr.elementType, node.line),
+        node.line,
+      );
       return;
     }
 
-    // Leitura simples: leia(x)
+    if (node.index) {
+      // 1D: leia(v[i])
+      const index = Number(await this.evalExpr(node.index, env));
+      if (isNaN(index)) throw new RuntimeError("Índice deve ser um número", node.line);
+      const arr = env.get(node.name, node.line).value as VizArray;
+      env.setArrayElement(
+        node.name,
+        index,
+        this.parseInput(raw, arr.elementType, node.line),
+        node.line,
+      );
+      return;
+    }
+
+    // Simples: leia(x)
     const variable = env.get(node.name, node.line);
     env.set(node.name, this.parseInput(raw, variable.type, node.line), node.line);
   }
 
   private async execIf(node: IfNode, env: Environment): Promise<void | ReturnSignal> {
     const condition = await this.evalExpr(node.condition, env);
-    if (typeof condition !== "boolean") {
+    if (typeof condition !== "boolean")
       throw new RuntimeError("Condição do 'se' deve ser lógica", node.line);
-    }
     return this.execStatements(condition ? node.then : node.else, env);
   }
 
@@ -380,14 +479,9 @@ export class Evaluator {
   private async execCallStatement(node: CallNode, env: Environment): Promise<void> {
     const proc = this.procedures.get(node.name);
     if (!proc) throw new RuntimeError(`Procedimento '${node.name}' não encontrado`, node.line);
-
     const localEnv = new Environment(this.globals);
     await this.bindParams(proc.params, node.args, localEnv, env, node.line);
-
-    for (const decl of proc.locals) {
-      this.declareVars(decl, localEnv);
-    }
-
+    for (const decl of proc.locals) this.declareVars(decl, localEnv);
     this.callStack.push(node.name);
     try {
       await this.execStatements(proc.body, localEnv);
@@ -408,15 +502,22 @@ export class Evaluator {
         return (node as BooleanLiteralNode).value;
       case "Identifier":
         return env.get((node as IdentifierNode).name, (node as IdentifierNode).line).value;
+
       case "ArrayAccess": {
-        const arrNode = node as ArrayAccessNode;
-        const indexValue = await this.evalExpr(arrNode.index, env);
-        const index = Number(indexValue);
-        if (isNaN(index)) {
-          throw new RuntimeError(`Índice deve ser um número`, arrNode.line);
-        }
-        return env.getArrayElement(arrNode.name, index, arrNode.line);
+        const n = node as ArrayAccessNode;
+        const index = Number(await this.evalExpr(n.index, env));
+        if (isNaN(index)) throw new RuntimeError("Índice deve ser um número", n.line);
+        return env.getArrayElement(n.name, index, n.line);
       }
+
+      case "MatrixAccess": {
+        const n = node as MatrixAccessNode;
+        const row = Number(await this.evalExpr(n.row, env));
+        const col = Number(await this.evalExpr(n.col, env));
+        if (isNaN(row) || isNaN(col)) throw new RuntimeError("Índices devem ser números", n.line);
+        return env.getMatrixElement(n.name, row, col, n.line);
+      }
+
       case "BinaryOp":
         return this.evalBinaryOp(node as BinaryOpNode, env);
       case "UnaryOp":
@@ -493,10 +594,7 @@ export class Evaluator {
 
     const localEnv = new Environment(this.globals);
     await this.bindParams(func.params, node.args, localEnv, env, node.line);
-
-    for (const decl of func.locals) {
-      this.declareVars(decl, localEnv);
-    }
+    for (const decl of func.locals) this.declareVars(decl, localEnv);
 
     this.callStack.push(node.name);
     try {
@@ -578,10 +676,7 @@ export class Evaluator {
     const flat: { name: string; type: string }[] = [];
     for (const p of params) {
       if (p.kind !== "VarDeclaration") continue;
-      const typeStr =
-        typeof p.type === "string"
-          ? p.type
-          : `vetor[${(p.type as ArrayType).start}..${(p.type as ArrayType).start + (p.type as ArrayType).size - 1}] de ${(p.type as ArrayType).elementType}`;
+      const typeStr = this.typeToString(p.type);
       for (const name of p.names) flat.push({ name, type: typeStr });
     }
 
@@ -612,6 +707,18 @@ export class Evaluator {
 
   private stringify(value: VizValue): string {
     if (typeof value === "boolean") return value ? "VERDADEIRO" : "FALSO";
+    if (typeof value === "object" && value !== null && "data" in value) {
+      const arr = value as VizArray;
+      if (arr.is2D) {
+        const rows: string[] = [];
+        for (let r = 0; r < arr.rowSize; r++) {
+          const row = arr.data.slice(r * arr.colSize, (r + 1) * arr.colSize);
+          rows.push(`[${row.map((v) => JSON.stringify(v)).join(", ")}]`);
+        }
+        return `[${rows.join(", ")}]`;
+      }
+      return `[${arr.data.map((v) => JSON.stringify(v)).join(", ")}]`;
+    }
     return String(value);
   }
 
