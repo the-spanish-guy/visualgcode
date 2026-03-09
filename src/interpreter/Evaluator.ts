@@ -11,6 +11,7 @@ import type {
   IdentifierNode,
   IfNode,
   MatrixAccessNode,
+  MultiReadNode,
   NumberLiteralNode,
   PrimitiveType,
   ProcedureNode,
@@ -364,6 +365,8 @@ export class Evaluator {
         return this.execSwitch(node as SwitchNode, env);
       case "Break":
         return new BreakSignal();
+      case "MultiRead":
+        return this.execMultiRead(node as MultiReadNode, env);
       default:
         throw new RuntimeError(`Nó desconhecido: ${(node as any).kind}`, 0);
     }
@@ -535,6 +538,13 @@ export class Evaluator {
     if (node.otherwise.length > 0) {
       const result = await this.execStatements(node.otherwise, env);
       if (result instanceof ReturnSignal) return result;
+    }
+  }
+
+  private async execMultiRead(node: MultiReadNode, env: Environment): Promise<void> {
+    for (const read of node.reads) {
+      await this.execRead(read, env);
+      if (this.cancel.cancelled) return;
     }
   }
 

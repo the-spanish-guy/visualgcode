@@ -344,31 +344,47 @@ export class Parser {
     return { kind: "Write", args, newline, line };
   }
 
-  private parseRead(): ReadNode {
+  private parseRead(): ASTNode {
     const line = this.current().line;
     this.advance(); // consome "leia"
     this.expect(TokenType.LPAREN, "Esperado '(' após leia");
 
-    const name = this.expect(TokenType.IDENTIFIER, "Esperado nome de variável").value;
+    const reads: ReadNode[] = [];
 
-    let index: ASTNode | undefined;
-    let col: ASTNode | undefined;
+    do {
+      if (this.check(TokenType.COMMA)) this.advance(); // consome ',' entre itens
 
-    if (this.check(TokenType.LBRACKET)) {
-      this.advance(); // consome '['
-      index = this.parseExpression();
+      const name = this.expect(TokenType.IDENTIFIER, "Esperado nome de variável").value;
+      let index: ASTNode | undefined;
+      let col: ASTNode | undefined;
 
-      if (this.check(TokenType.COMMA)) {
-        // 2D: leia(m[i, j])
-        this.advance(); // consome ','
-        col = this.parseExpression();
+      if (this.check(TokenType.LBRACKET)) {
+        this.advance(); // consome '['
+        index = this.parseExpression();
+
+        if (this.check(TokenType.COMMA)) {
+          // Pode ser índice 2D OU próxima variável do leia — precisamos distinguir.
+          // Se após a vírgula vier uma expressão seguida de ']', é 2D.
+          // Usamos lookahead: salvamos pos, tentamos parsear como 2D.
+          // Na prática o VisuAlg original não mistura leia(m[i,j], x),
+          // então tratamos vírgula dentro de '[' sempre como 2D.
+          this.advance(); // consome ','
+          col = this.parseExpression();
+        }
+
+        this.expect(TokenType.RBRACKET, "Esperado ']' após índice(s)");
       }
 
-      this.expect(TokenType.RBRACKET, "Esperado ']' após índice(s)");
-    }
+      reads.push({ kind: "Read", name, index, col, line });
+    } while (this.check(TokenType.COMMA));
 
     this.expect(TokenType.RPAREN, "Esperado ')'");
-    return { kind: "Read", name, index, col, line };
+
+    // Caso simples: leia(a) → ReadNode único
+    if (reads.length === 1) return reads[0];
+
+    // Múltiplos: leia(a, b, c) → MultiReadNode
+    return { kind: "MultiRead", reads, line };
   }
 
   private parseIf(): IfNode {

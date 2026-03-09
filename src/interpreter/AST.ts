@@ -37,6 +37,7 @@ export type ASTNode =
   | RepeatNode
   | SwitchNode
   | BreakNode
+  | MultiReadNode
   | ProcedureNode
   | FunctionNode
   | ReturnNode
@@ -131,6 +132,12 @@ export interface SwitchNode {
 
 export interface BreakNode {
   kind: "Break";
+  line: number;
+}
+
+export interface MultiReadNode {
+  kind: "MultiRead";
+  reads: ReadNode[]; // cada item é um ReadNode individual (escalar ou vetor)
   line: number;
 }
 

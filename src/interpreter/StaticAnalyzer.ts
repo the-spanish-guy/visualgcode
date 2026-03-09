@@ -124,6 +124,14 @@ export class StaticAnalyzer {
       case "Break":
         break;
 
+      case "MultiRead":
+        for (const read of node.reads) {
+          this.markUsed(read.name, used);
+          if (read.index) this.walkExpr(read.index, used);
+          if (read.col) this.walkExpr(read.col, used);
+        }
+        break;
+
       default:
         break;
     }
