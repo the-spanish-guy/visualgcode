@@ -77,11 +77,18 @@ export class Lexer {
       case "=":
         this.advance();
         return this.pushToken(TokenType.EQUAL, "=");
-
       case "<":
         return this.readLessThan();
       case ">":
         return this.readGreaterThan();
+      case "^":
+        this.advance();
+        return this.pushToken(TokenType.POWER, "^");
+      case "%":
+        this.advance();
+        return this.pushToken(TokenType.PERCENT, "%");
+      case "\\":
+        return this.readBackslash();
 
       default:
         throw new LexerError(`Caractere inesperado '${char}'`, this.line, this.col);
@@ -214,6 +221,17 @@ export class Lexer {
     }
 
     this.tokens.push({ type: TokenType.GREATER, value: ">", line: this.line, col: startCol });
+  }
+
+  private readBackslash(): void {
+    const startCol = this.col;
+    this.advance(); // consome primeiro '\'
+    if (!this.isAtEnd() && this.current() === "\\") {
+      this.advance(); // consome segundo '\'
+      this.tokens.push({ type: TokenType.INT_DIVIDE, value: "\\\\", line: this.line, col: startCol });
+      return;
+    }
+    throw new LexerError("Caractere inesperado '\\'", this.line, startCol);
   }
 
   private readDotDot(): void {

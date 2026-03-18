@@ -14,6 +14,12 @@ export enum TokenType {
   DIVIDE = "DIVIDE", // /
   DIV = "DIV", // div (divisão inteira)
   MOD = "MOD", // mod (resto)
+  POWER = "POWER", // ^ (potência)
+  INT_DIVIDE = "INT_DIVIDE", // \\\\ (divisão inteira, alias de div)
+  PERCENT = "PERCENT", // % (resto, alias de mod)
+
+  // Operadores lógicos extras
+  XOU = "XOU", // xou (XOR lógico)
 
   // Operadores relacionais
   EQUAL = "EQUAL", // =

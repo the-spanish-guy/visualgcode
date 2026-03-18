@@ -69,4 +69,5 @@ export const KEYWORDS: Record<string, TokenType> = {
   fimescolha: TokenType.FIMESCOLHA,
 
   interrompa: TokenType.INTERROMPA,
+  xou: TokenType.XOU,
 };

@@ -626,6 +626,16 @@ export class Evaluator {
         return Boolean(left) && Boolean(right);
       case "ou":
         return Boolean(left) || Boolean(right);
+      case "xou":
+        return Boolean(left) !== Boolean(right);
+      case "^":
+        return Math.pow(left as number, right as number);
+      case "\\\\":
+        if (right === 0) throw new RuntimeError("Divisão inteira por zero", line);
+        return Math.trunc((left as number) / (right as number));
+      case "%":
+        if (right === 0) throw new RuntimeError("Módulo por zero", line);
+        return (left as number) % (right as number);
       default:
         throw new RuntimeError(`Operador desconhecido '${node.op}'`, line);
     }

@@ -514,13 +514,28 @@ export class Parser {
 
   // Nível 2: e
   private parseOr(): ASTNode {
-    let left = this.parseAnd();
+    let left = this.parseXou();
 
     while (this.check(TokenType.OR)) {
       const line = this.current().line;
       this.advance();
-      const right = this.parseAnd();
+      const right = this.parseXou();
       left = { kind: "BinaryOp", op: "ou", left, right, line };
+    }
+
+    return left;
+  }
+
+
+  // Nível 2.5: xou (XOR lógico) — entre ou e e
+  private parseXou(): ASTNode {
+    let left = this.parseAnd();
+
+    while (this.check(TokenType.XOU)) {
+      const line = this.current().line;
+      this.advance();
+      const right = this.parseAnd();
+      left = { kind: "BinaryOp", op: "xou", left, right, line };
     }
 
     return left;
@@ -587,23 +602,40 @@ export class Parser {
     return left;
   }
 
-  // Nível 7: * / div mod
+  // Nível 7: * / div mod %% \\\\
   private parseMulDiv(): ASTNode {
-    let left = this.parseUnary();
+    let left = this.parsePower();
 
     while (
       this.check(TokenType.MULTIPLY) ||
       this.check(TokenType.DIVIDE) ||
       this.check(TokenType.DIV) ||
-      this.check(TokenType.MOD)
+      this.check(TokenType.MOD) ||
+      this.check(TokenType.INT_DIVIDE) ||
+      this.check(TokenType.PERCENT)
     ) {
       const line = this.current().line;
       const op = this.advance().value;
-      const right = this.parseUnary();
+      const right = this.parsePower();
       left = { kind: "BinaryOp", op, left, right, line };
     }
 
     return left;
+  }
+
+
+  // Nível 7.5: ^ (potência) — acima de * /, associatividade direita
+  private parsePower(): ASTNode {
+    const base = this.parseUnary();
+
+    if (this.check(TokenType.POWER)) {
+      const line = this.current().line;
+      this.advance();
+      const exp = this.parsePower(); // recursão direita
+      return { kind: "BinaryOp", op: "^", left: base, right: exp, line };
+    }
+
+    return base;
   }
 
   // Nível 8: nao, - (unário)
