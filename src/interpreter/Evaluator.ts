@@ -238,6 +238,7 @@ export class Evaluator {
     private onInput: () => Promise<string>,
     cancelSignal?: CancelSignal,
     private onStep?: StepCallback,
+    private onClearScreen?: () => void,
   ) {
     this.cancel = cancelSignal ?? new CancelSignal();
   }
@@ -391,6 +392,10 @@ export class Evaluator {
         return new BreakSignal();
       case "MultiRead":
         return this.execMultiRead(node as MultiReadNode, env);
+      case "ClearScreen":
+        return this.execClearScreen();
+      case "Pause":
+        return this.execPause();
       default:
         throw new RuntimeError(`Nó desconhecido: ${(node as any).kind}`, 0);
     }
@@ -570,6 +575,15 @@ export class Evaluator {
       await this.execRead(read, env);
       if (this.cancel.cancelled) return;
     }
+  }
+
+  private execClearScreen(): void {
+    this.onClearScreen?.();
+  }
+
+  private async execPause(): Promise<void> {
+    this.onOutput("Pressione ENTER para continuar...\n");
+    await this.onInput();
   }
 
   // ─── Avaliação de expressões ──────────────────────────────────────────────

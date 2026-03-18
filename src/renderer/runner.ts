@@ -11,6 +11,7 @@ export interface RunResult {
 export interface RunCallbacks {
   onOutput: (text: string) => void;
   onInput: () => Promise<string>;
+  onClearScreen?: () => void;
 }
 
 export async function runCode(
@@ -26,7 +27,13 @@ export async function runCode(
     const tokens = new Lexer(code).tokenize();
     const ast = new Parser(tokens).parse();
     warnings.push(...analyzeAST(ast));
-    const evaluator = new Evaluator(callbacks.onOutput, callbacks.onInput, cancelSignal, onStep);
+    const evaluator = new Evaluator(
+      callbacks.onOutput,
+      callbacks.onInput,
+      cancelSignal,
+      onStep,
+      callbacks.onClearScreen,
+    );
 
     await evaluator.run(ast);
   } catch (err) {

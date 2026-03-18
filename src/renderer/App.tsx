@@ -175,6 +175,10 @@ export default function App() {
     });
   }, []);
 
+  const clearOutput = useCallback(() => {
+    setOutput({ lines: [], lineOpen: false });
+  }, []);
+
   const makeInputCallback = useCallback(
     () =>
       new Promise<string>((resolve) => {
@@ -194,7 +198,7 @@ export default function App() {
 
     const result = await runCode(
       activeTab.code,
-      { onOutput: appendOutput, onInput: makeInputCallback },
+      { onOutput: appendOutput, onInput: makeInputCallback, onClearScreen: clearOutput },
       cancelSignal.current,
     );
 
@@ -228,7 +232,7 @@ export default function App() {
 
     const result = await runCode(
       activeTab.code,
-      { onOutput: appendOutput, onInput: makeInputCallback },
+      { onOutput: appendOutput, onInput: makeInputCallback, onClearScreen: clearOutput },
       cancelSignal.current,
       ctrl.onStep,
     );
@@ -239,7 +243,7 @@ export default function App() {
     setCurrentLine(null);
     setCallStack([]);
     debugCtrl.current = null;
-  }, [activeTab.code, activeTab.breakpoints, appendOutput, makeInputCallback]);
+  }, [activeTab.code, activeTab.breakpoints, appendOutput, makeInputCallback, clearOutput]);
 
   const handleTimer = useCallback(async () => {
     cancelSignal.current = new CancelSignal();
@@ -271,7 +275,7 @@ export default function App() {
 
     const result = await runCode(
       activeTab.code,
-      { onOutput: appendOutput, onInput: makeInputCallback },
+      { onOutput: appendOutput, onInput: makeInputCallback, onClearScreen: clearOutput },
       cancelSignal.current,
       ctrl.onStep,
     );
@@ -282,7 +286,14 @@ export default function App() {
     setCurrentLine(null);
     setCallStack([]);
     debugCtrl.current = null;
-  }, [activeTab.code, activeTab.breakpoints, timerDelay, appendOutput, makeInputCallback]);
+  }, [
+    activeTab.code,
+    activeTab.breakpoints,
+    timerDelay,
+    appendOutput,
+    makeInputCallback,
+    clearOutput,
+  ]);
 
   const handleStep = useCallback(() => debugCtrl.current?.step(), []);
   const handleContinue = useCallback(() => debugCtrl.current?.continue(), []);

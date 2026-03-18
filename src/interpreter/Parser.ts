@@ -5,10 +5,12 @@ import type {
   BreakNode,
   CallNode,
   CaseClause,
+  ClearScreenNode,
   ForNode,
   FunctionNode,
   IfNode,
   MatrixAccessNode,
+  PauseNode,
   PrimitiveType,
   ProcedureNode,
   ProgramNode,
@@ -277,6 +279,10 @@ export class Parser {
         return this.parseSwitch();
       case TokenType.INTERROMPA:
         return this.parseBreak();
+      case TokenType.LIMPATELA:
+        return this.parseClearScreen();
+      case TokenType.PAUSA:
+        return this.parsePause();
       default:
         throw new ParseError(`Comando inesperado '${token.value}'`, token.line, token.col);
     }
@@ -512,6 +518,18 @@ export class Parser {
     const line = this.current().line;
     this.advance(); // consome "interrompa"
     return { kind: "Break", line };
+  }
+
+  private parseClearScreen(): ClearScreenNode {
+    const line = this.current().line;
+    this.advance(); // consome "limpatela"
+    return { kind: "ClearScreen", line };
+  }
+
+  private parsePause(): PauseNode {
+    const line = this.current().line;
+    this.advance(); // consome "pausa"
+    return { kind: "Pause", line };
   }
 
   // ─── Expressões ───────────────────────────────────────────────────────────────

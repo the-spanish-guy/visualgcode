@@ -70,4 +70,6 @@ export const KEYWORDS: Record<string, TokenType> = {
 
   interrompa: TokenType.INTERROMPA,
   xou: TokenType.XOU,
+  limpatela: TokenType.LIMPATELA,
+  pausa: TokenType.PAUSA,
 };
