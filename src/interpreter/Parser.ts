@@ -219,15 +219,24 @@ export class Parser {
     this.advance();
 
     if (!this.check(TokenType.RPAREN)) {
-      params.push(this.parseVarDeclaration());
+      params.push(this.parseParamDeclaration());
       while (this.check(TokenType.COMMA)) {
         this.advance();
-        params.push(this.parseVarDeclaration());
+        params.push(this.parseParamDeclaration());
       }
     }
 
     this.expect(TokenType.RPAREN, "Esperado ')' após parâmetros");
     return params;
+  }
+
+  private parseParamDeclaration(): VarDeclarationNode {
+    // Detecta "var" opcional antes do nome — indica passagem por referência
+    const byRef = this.check(TokenType.VAR);
+    if (byRef) this.advance(); // consome "var"
+
+    const decl = this.parseVarDeclaration();
+    return byRef ? { ...decl, byRef: true } : decl;
   }
 
   // ─── Statements ───────────────────────────────────────────────────────────────
@@ -526,7 +535,6 @@ export class Parser {
     return left;
   }
 
-
   // Nível 2.5: xou (XOR lógico) — entre ou e e
   private parseXou(): ASTNode {
     let left = this.parseAnd();
@@ -622,7 +630,6 @@ export class Parser {
 
     return left;
   }
-
 
   // Nível 7.5: ^ (potência) — acima de * /, associatividade direita
   private parsePower(): ASTNode {

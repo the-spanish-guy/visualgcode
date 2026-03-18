@@ -49,9 +49,20 @@ interface VizArray {
 
 type VizValue = number | string | boolean | VizArray;
 
+// Slot de referência — captura get/set do ambiente do caller(passagem por referência)
+interface RefSlot {
+  __isRef: true;
+  get: () => VizValue;
+  set: (v: VizValue) => void;
+}
+
+function isRefSlot(v: unknown): v is RefSlot {
+  return typeof v === "object" && v !== null && (v as any).__isRef === true;
+}
+
 interface Variable {
   type: string;
-  value: VizValue;
+  value: VizValue | RefSlot;
 }
 
 class ReturnSignal {
@@ -77,19 +88,32 @@ class Environment {
 
   constructor(private parent: Environment | null = null) {}
 
-  declare(name: string, type: string, value: VizValue): void {
+  declare(name: string, type: string, value: VizValue | RefSlot): void {
     this.store.set(name, { type, value });
   }
 
   get(name: string, line: number): Variable {
-    if (this.store.has(name)) return this.store.get(name)!;
+    if (this.store.has(name)) {
+      const entry = this.store.get(name)!;
+      // Se for ref, retorna o valor atual do ambiente do caller
+      if (isRefSlot(entry.value)) {
+        return { type: entry.type, value: entry.value.get() };
+      }
+      return entry as Variable;
+    }
     if (this.parent) return this.parent.get(name, line);
     throw new RuntimeError(`Variável '${name}' não declarada`, line);
   }
 
   set(name: string, value: VizValue, line: number): void {
     if (this.store.has(name)) {
-      this.store.get(name)!.value = value;
+      const entry = this.store.get(name)!;
+      // Se for ref, escreve diretamente no ambiente do caller
+      if (isRefSlot(entry.value)) {
+        entry.value.set(value);
+      } else {
+        entry.value = value;
+      }
       return;
     }
     if (this.parent) {
@@ -629,7 +653,7 @@ export class Evaluator {
       case "xou":
         return Boolean(left) !== Boolean(right);
       case "^":
-        return Math.pow(left as number, right as number);
+        return (left as number) ** (right as number);
       case "\\\\":
         if (right === 0) throw new RuntimeError("Divisão inteira por zero", line);
         return Math.trunc((left as number) / (right as number));
@@ -741,11 +765,11 @@ export class Evaluator {
     callerEnv: Environment,
     line: number,
   ): Promise<void> {
-    const flat: { name: string; type: string }[] = [];
+    const flat: { name: string; type: string; byRef: boolean }[] = [];
     for (const p of params) {
       if (p.kind !== "VarDeclaration") continue;
       const typeStr = this.typeToString(p.type);
-      for (const name of p.names) flat.push({ name, type: typeStr });
+      for (const name of p.names) flat.push({ name, type: typeStr, byRef: !!p.byRef });
     }
 
     if (flat.length !== args.length) {
@@ -753,8 +777,27 @@ export class Evaluator {
     }
 
     for (let i = 0; i < flat.length; i++) {
-      const value = await this.evalExpr(args[i], callerEnv);
-      localEnv.declare(flat[i].name, flat[i].type, value);
+      if (flat[i].byRef) {
+        // Passagem por referência: cria RefSlot apontando para a variável do caller
+        const argNode = args[i];
+        if (argNode.kind !== "Identifier") {
+          throw new RuntimeError(
+            `Parâmetro '${flat[i].name}' é por referência — o argumento deve ser uma variável simples`,
+            line,
+          );
+        }
+        const refName = (argNode as IdentifierNode).name;
+        const slot: RefSlot = {
+          __isRef: true,
+          get: () => callerEnv.get(refName, line).value,
+          set: (v) => callerEnv.set(refName, v, line),
+        };
+        localEnv.declare(flat[i].name, flat[i].type, slot);
+      } else {
+        // Passagem por valor: comportamento original
+        const value = await this.evalExpr(args[i], callerEnv);
+        localEnv.declare(flat[i].name, flat[i].type, value);
+      }
     }
   }
 

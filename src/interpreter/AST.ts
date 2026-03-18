@@ -56,6 +56,7 @@ export interface VarDeclarationNode {
   kind: "VarDeclaration";
   names: string[];
   type: VizType;
+  byRef?: boolean;
   line: number;
 }
 
