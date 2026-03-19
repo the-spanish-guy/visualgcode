@@ -25,12 +25,19 @@
   "build": {
     "appId": "com.visualg.ide",
     "productName": "VisuAlg IDE",
+    "compression": "maximum",
+    "removePackageScripts": true,
     "directories": {
       "output": "release"
     },
     "files": [
       "dist/**/*",
-      "package.json"
+      "package.json",
+      "!node_modules/*/{README,CHANGELOG,CONTRIBUTING}.md",
+      "!node_modules/**/{test,tests,__tests__,spec,specs}/**",
+      "!node_modules/**/*.{ts,map,md}",
+      "!**/.git/**",
+      "!**/*.d.ts"
     ],
     "win": {
       "target": [
@@ -55,7 +62,9 @@
       "category": "public.app-category.developer-tools"
     },
     "linux": {
-      "target": ["AppImage"],
+      "target": [
+        "AppImage"
+      ],
       "icon": "build/icon.png",
       "category": "Development"
     }
@@ -68,6 +77,7 @@
     "concurrently": "9.2.1",
     "electron": "40.4.1",
     "electron-builder": "25.0.0",
+    "terser": "5.46.1",
     "ts-node": "10.9.2",
     "typescript": "5.9.3",
     "vite": "7.3.1",
