@@ -1,6 +1,6 @@
 import { useRef } from "react";
-import type { VarSnapshot } from "../../interpreter/Evaluator";
-import styles from "../styles/VariablesPanel.module.css";
+import type { VarSnapshot } from "../../../interpreter/Evaluator";
+import styles from "./VariablesPanel.module.css";
 
 interface Props {
   variables: VarSnapshot[];

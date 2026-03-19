@@ -1,5 +1,5 @@
-import type { DebugMode } from "../DebugController";
-import styles from "../styles/Toolbar.module.css";
+import type { DebugMode } from "../../lib/DebugController";
+import styles from "./Toolbar.module.css";
 
 interface Props {
   fileName: string;

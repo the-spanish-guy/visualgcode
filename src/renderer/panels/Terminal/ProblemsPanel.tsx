@@ -1,5 +1,5 @@
-import type { StaticWarning } from "../../interpreter/StaticAnalyzer";
-import styles from "../styles/ProblemsPanel.module.css";
+import type { StaticWarning } from "../../../interpreter/StaticAnalyzer";
+import styles from "./ProblemsPanel.module.css";
 
 interface Props {
   errors: string[];

@@ -1,7 +1,7 @@
-import { type CancelSignal, Evaluator, type StepCallback } from "../interpreter/Evaluator";
-import { Lexer } from "../interpreter/Lexer";
-import { Parser } from "../interpreter/Parser";
-import { analyzeAST, type StaticWarning } from "../interpreter/StaticAnalyzer";
+import { type CancelSignal, Evaluator, type StepCallback } from "../../interpreter/Evaluator";
+import { Lexer } from "../../interpreter/Lexer";
+import { Parser } from "../../interpreter/Parser";
+import { analyzeAST, type StaticWarning } from "../../interpreter/StaticAnalyzer";
 
 export interface RunResult {
   errors: string[];

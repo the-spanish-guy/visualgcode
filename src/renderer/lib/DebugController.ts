@@ -1,4 +1,4 @@
-import type { StepCallback, VarSnapshot } from "../interpreter/Evaluator";
+import type { StepCallback, VarSnapshot } from "../../interpreter/Evaluator";
 
 export type DebugMode = "idle" | "running" | "debugging" | "paused" | "timer";
 

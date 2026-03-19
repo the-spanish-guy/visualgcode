@@ -1,5 +1,5 @@
-import type { VarSnapshot } from "../../interpreter/Evaluator";
-import styles from "../styles/TraceTable.module.css";
+import type { VarSnapshot } from "../../../interpreter/Evaluator";
+import styles from "./TraceTable.module.css";
 
 interface Props {
   snapshots: VarSnapshot[][];

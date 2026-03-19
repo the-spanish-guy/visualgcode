@@ -1,4 +1,4 @@
-import type { CompletionVar } from "./components/Editor";
+import type { CompletionVar } from "./Editor";
 
 export function parseConsts(code: string): CompletionVar[] {
   const consts: CompletionVar[] = [];

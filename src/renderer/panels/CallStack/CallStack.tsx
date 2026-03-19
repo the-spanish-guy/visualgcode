@@ -1,4 +1,4 @@
-import styles from "../styles/CallStack.module.css";
+import styles from "./CallStack.module.css";
 
 interface Props {
   callStack: string[];

@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import styles from "../styles/Explorer.module.css";
+import styles from "./Explorer.module.css";
 
 export interface FileNode {
   name: string;

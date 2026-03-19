@@ -1,5 +1,5 @@
-import styles from "../styles/TabBar.module.css";
-import type { Tab } from "../useTabs";
+import styles from "./TabBar.module.css";
+import type { Tab } from "../../hooks/useTabs";
 
 interface Props {
   tabs: Tab[];

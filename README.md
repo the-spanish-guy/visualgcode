@@ -152,10 +152,13 @@ visualgcode/
 │   │   ├── main.ts        # Entry point, window management
 │   │   └── preload.ts     # Bridge segura entre main e renderer
 │   ├── renderer/          # Interface React
-│   │   ├── components/    # Componentes UI
-│   │   ├── styles/        # CSS Modules
 │   │   ├── App.tsx        # Componente raiz
-│   │   └── main.tsx       # Entry point React
+│   │   ├── App.module.css
+│   │   ├── components/    # Chrome estrutural da IDE (Toolbar, TabBar, StatusBar)
+│   │   ├── panels/        # Áreas de conteúdo (Editor, Terminal, Explorer, ...)
+│   │   ├── hooks/         # Custom hooks React (useTabs, useFile)
+│   │   ├── lib/           # Lógica pura sem JSX (runner, DebugController, explainError)
+│   │   └── styles/        # Apenas global.css (variáveis CSS globais)
 │   ├── interpreter/       # Engine do VisuAlg
 │   │   ├── Lexer.ts       # Análise léxica
 │   │   ├── Parser.ts      # Análise sintática
