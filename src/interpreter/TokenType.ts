@@ -96,6 +96,9 @@ export enum TokenType {
   FIMFUNCAO = "FIMFUNCAO",
   RETORNE = "RETORNE",
 
+  // Constantes
+  CONST = "CONST",
+
   // Controle
   EOF = "EOF",
   INTERROMPA = "INTERROMPA",

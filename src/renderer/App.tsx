@@ -11,7 +11,7 @@ import Toolbar from "./components/Toolbar";
 import VariablesPanel from "./components/VariablesPanel";
 import { DebugController, type DebugMode } from "./DebugController";
 import { parseFunctions } from "./parseFunctions";
-import { parseVars } from "./parseVars";
+import { parseConsts, parseVars } from "./parseVars";
 import { runCode } from "./runner";
 import styles from "./styles/App.module.css";
 import { useTabs } from "./useTabs";
@@ -483,7 +483,10 @@ export default function App() {
     setTheme((prev) => (prev === "dark" ? "light" : "dark"));
   }, [theme]);
 
-  const completionVars: CompletionVar[] = parseVars(activeTab.code);
+  const completionVars: CompletionVar[] = [
+    ...parseVars(activeTab.code),
+    ...parseConsts(activeTab.code),
+  ];
   const completionFunctions = parseFunctions(activeTab.code);
   const isDebugging = debugMode === "debugging" || debugMode === "paused" || debugMode === "timer";
 

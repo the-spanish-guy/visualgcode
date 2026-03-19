@@ -1,5 +1,18 @@
 import type { CompletionVar } from "./components/Editor";
 
+export function parseConsts(code: string): CompletionVar[] {
+  const consts: CompletionVar[] = [];
+  const blockRe = /\bconstante\b([\s\S]*?)(?=\bvar\b|\bconstante\b|\bprocedimento\b|\bfuncao\b|\binicio\b|$)/gi;
+  let match;
+  while ((match = blockRe.exec(code)) !== null) {
+    for (const line of match[1].split("\n")) {
+      const m = line.match(/^\s*([a-zA-Z_]\w*)\s*=/);
+      if (m) consts.push({ name: m[1].trim(), type: "constante" });
+    }
+  }
+  return consts;
+}
+
 export function parseVars(code: string): CompletionVar[] {
   const vars: CompletionVar[] = [];
 

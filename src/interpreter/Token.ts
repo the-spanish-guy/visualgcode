@@ -68,6 +68,7 @@ export const KEYWORDS: Record<string, TokenType> = {
   outrocaso: TokenType.OUTROCASO,
   fimescolha: TokenType.FIMESCOLHA,
 
+  constante: TokenType.CONST,
   interrompa: TokenType.INTERROMPA,
   xou: TokenType.XOU,
   limpatela: TokenType.LIMPATELA,

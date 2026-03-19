@@ -6,6 +6,7 @@ import type {
   BinaryOpNode,
   BooleanLiteralNode,
   CallNode,
+  ConstDeclarationNode,
   ForNode,
   FunctionNode,
   IdentifierNode,
@@ -63,6 +64,7 @@ function isRefSlot(v: unknown): v is RefSlot {
 interface Variable {
   type: string;
   value: VizValue | RefSlot;
+  readonly?: boolean;
 }
 
 class ReturnSignal {
@@ -88,8 +90,8 @@ class Environment {
 
   constructor(private parent: Environment | null = null) {}
 
-  declare(name: string, type: string, value: VizValue | RefSlot): void {
-    this.store.set(name, { type, value });
+  declare(name: string, type: string, value: VizValue | RefSlot, readonly?: boolean): void {
+    this.store.set(name, { type, value, readonly });
   }
 
   get(name: string, line: number): Variable {
@@ -108,6 +110,9 @@ class Environment {
   set(name: string, value: VizValue, line: number): void {
     if (this.store.has(name)) {
       const entry = this.store.get(name)!;
+      if (entry.readonly) {
+        throw new RuntimeError(`'${name}' é uma constante e não pode ser alterada`, line);
+      }
       // Se for ref, escreve diretamente no ambiente do caller
       if (isRefSlot(entry.value)) {
         entry.value.set(value);
@@ -267,6 +272,15 @@ export class Evaluator {
         );
       } else if ((decl as any).kind === "Function") {
         this.functions.set((decl as unknown as FunctionNode).name, decl as unknown as FunctionNode);
+      } else if ((decl as any).kind === "ConstDeclaration") {
+        const c = decl as unknown as ConstDeclarationNode;
+        const typeStr =
+          typeof c.value === "number"
+            ? Number.isInteger(c.value) ? "inteiro" : "real"
+            : typeof c.value === "string"
+              ? "caractere"
+              : "logico";
+        this.globals.declare(c.name, typeStr, c.value, true);
       } else {
         this.declareVars(decl as VarDeclarationNode, this.globals);
       }

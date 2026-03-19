@@ -20,6 +20,7 @@ export type VizType = PrimitiveType | ArrayType;
 export type ASTNode =
   | ProgramNode
   | VarDeclarationNode
+  | ConstDeclarationNode
   | AssignNode
   | BinaryOpNode
   | UnaryOpNode
@@ -59,6 +60,13 @@ export interface VarDeclarationNode {
   names: string[];
   type: VizType;
   byRef?: boolean;
+  line: number;
+}
+
+export interface ConstDeclarationNode {
+  kind: "ConstDeclaration";
+  name: string;
+  value: number | string | boolean;
   line: number;
 }
 

@@ -6,6 +6,7 @@ import type {
   CallNode,
   CaseClause,
   ClearScreenNode,
+  ConstDeclarationNode,
   ForNode,
   FunctionNode,
   IfNode,
@@ -46,13 +47,32 @@ export class Parser {
     this.expect(TokenType.ALGORITMO, "Esperado 'algoritmo'");
     const name = this.expect(TokenType.STRING, "Esperado nome do algoritmo entre aspas").value;
 
-    const declarations = this.parseVarBlock();
-    const procedures = this.parseProceduresAndFunctions();
+    // Aceita blocos var, constante, procedimento e funcao em qualquer ordem
+    const declarations: any[] = [];
+    while (!this.check(TokenType.INICIO) && !this.check(TokenType.EOF)) {
+      if (this.check(TokenType.VAR)) {
+        declarations.push(...this.parseVarBlock());
+      } else if (this.check(TokenType.CONST)) {
+        declarations.push(...this.parseConstBlock());
+      } else if (this.check(TokenType.PROCEDIMENTO)) {
+        declarations.push(this.parseProcedure());
+      } else if (this.check(TokenType.FUNCAO)) {
+        declarations.push(this.parseFunction());
+      } else {
+        const tok = this.current();
+        throw new ParseError(
+          `Esperado 'var', 'constante', 'procedimento', 'funcao' ou 'inicio'`,
+          tok.line,
+          tok.col,
+        );
+      }
+    }
+
     this.expect(TokenType.INICIO, "Esperado 'inicio'");
     const body = this.parseStatements([TokenType.FIMALGORITMO]);
     this.expect(TokenType.FIMALGORITMO, "Esperado 'fimalgoritmo'");
 
-    return { kind: "Program", name, declarations: [...declarations, ...(procedures as any)], body };
+    return { kind: "Program", name, declarations, body };
   }
 
   // ─── Declarações de variáveis ─────────────────────────────────────────────────
@@ -63,9 +83,10 @@ export class Parser {
     if (!this.check(TokenType.VAR)) return declarations;
     this.advance();
 
-    // Lê declarações até encontrar inicio, procedimento, funcao
+    // Lê declarações até encontrar inicio, constante, procedimento, funcao
     while (
       !this.check(TokenType.INICIO) &&
+      !this.check(TokenType.CONST) &&
       !this.check(TokenType.PROCEDIMENTO) &&
       !this.check(TokenType.FUNCAO) &&
       !this.check(TokenType.EOF)
@@ -74,6 +95,50 @@ export class Parser {
     }
 
     return declarations;
+  }
+
+  private parseConstBlock(): ConstDeclarationNode[] {
+    this.advance(); // consome "constante"
+    const nodes: ConstDeclarationNode[] = [];
+
+    while (
+      !this.check(TokenType.VAR) &&
+      !this.check(TokenType.CONST) &&
+      !this.check(TokenType.INICIO) &&
+      !this.check(TokenType.PROCEDIMENTO) &&
+      !this.check(TokenType.FUNCAO) &&
+      !this.check(TokenType.EOF)
+    ) {
+      const nameTok = this.expect(TokenType.IDENTIFIER, "Esperado nome da constante");
+      this.expect(TokenType.EQUAL, "Esperado '=' após nome da constante");
+      const value = this.parseConstValue();
+      nodes.push({ kind: "ConstDeclaration", name: nameTok.value, value, line: nameTok.line });
+    }
+
+    return nodes;
+  }
+
+  private parseConstValue(): number | string | boolean {
+    if (this.check(TokenType.MINUS)) {
+      this.advance();
+      const num = this.expect(TokenType.NUMBER, "Esperado número após '-'");
+      return -Number(num.value);
+    }
+    if (this.check(TokenType.NUMBER)) {
+      return Number(this.advance().value);
+    }
+    if (this.check(TokenType.STRING)) {
+      return this.advance().value;
+    }
+    if (this.check(TokenType.BOOLEAN)) {
+      return this.advance().value === "verdadeiro";
+    }
+    const tok = this.current();
+    throw new ParseError(
+      `Valor inválido para constante: '${tok.value}'. Esperado número, string ou booleano`,
+      tok.line,
+      tok.col,
+    );
   }
 
   private parseVarDeclaration(): VarDeclarationNode {
