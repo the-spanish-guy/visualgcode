@@ -2,6 +2,7 @@ import MonacoEditor, { type OnMount } from "@monaco-editor/react";
 import type * as Monaco from "monaco-editor";
 import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 import type { StaticWarning } from "../../interpreter/StaticAnalyzer";
+import type { CompletionFunction } from "../parseFunctions";
 import { snippets } from "../editor";
 import styles from "../styles/Editor.module.css";
 
@@ -19,8 +20,11 @@ export interface EditorHandle {
   goToLine: (line: number) => void;
 }
 
-// Ref global — lida pelo completion provider que é registrado uma única vez
+export type { CompletionFunction };
+
+// Refs globais — lidas pelo completion/signature provider que é registrado uma única vez
 const completionVarsRef = { current: [] as CompletionVar[] };
+const completionFunctionsRef = { current: [] as CompletionFunction[] };
 
 interface Props {
   tabKey: TabKey;
@@ -32,6 +36,7 @@ interface Props {
   currentLine: number | null;
   onChange: (val: string) => void;
   completionVars: CompletionVar[];
+  completionFunctions: CompletionFunction[];
   onBreakpointsChange: (lines: number[]) => void;
   onCursorChange: (pos: { line: number; col: number }) => void;
 }
@@ -46,6 +51,7 @@ const Editor = forwardRef<EditorHandle, Props>(function Editor(
     currentLine,
     breakpoints,
     completionVars,
+    completionFunctions,
     onChange,
     onCursorChange,
     onBreakpointsChange,
@@ -62,8 +68,9 @@ const Editor = forwardRef<EditorHandle, Props>(function Editor(
     },
   }));
 
-  // Atualiza ref global a cada render — provider sempre lê valor atual
+  // Atualiza refs globais a cada render — providers sempre lêem valor atual
   completionVarsRef.current = completionVars;
+  completionFunctionsRef.current = completionFunctions;
   const { id: tabId, initialContent } = tabKey;
 
   const editorRef = useRef<Monaco.editor.IStandaloneCodeEditor | null>(null);
@@ -414,6 +421,16 @@ function registerVisuAlgLanguage(monaco: typeof Monaco, initialTheme: "dark" | "
     },
   });
 
+  // Keywords para autocomplete
+  const KEYWORDS = [
+    "escreva", "escreval", "leia", "se", "entao", "senao", "fimse",
+    "para", "de", "ate", "passo", "faca", "fimpara",
+    "enquanto", "fimenquanto", "repita", "escolha", "caso", "outrocaso",
+    "fimescolha", "procedimento", "fimprocedimento", "funcao", "fimfuncao",
+    "retorne", "interrompa", "limpatela", "pausa",
+    "var", "inicio", "fimalgoritmo", "algoritmo",
+  ];
+
   // Autocomplete
   monaco.languages.registerCompletionItemProvider("visualg", {
     provideCompletionItems: (model, position) => {
@@ -427,7 +444,7 @@ function registerVisuAlgLanguage(monaco: typeof Monaco, initialTheme: "dark" | "
 
       const localSnippets: Monaco.languages.CompletionItem[] = snippets(monaco, range);
 
-      // Variáveis declaradas na aba atual — lidas da ref global, sempre atualizadas
+      // Variáveis declaradas na aba atual
       const varSuggestions: Monaco.languages.CompletionItem[] = completionVarsRef.current.map(
         (v) => ({
           label: v.name,
@@ -439,7 +456,135 @@ function registerVisuAlgLanguage(monaco: typeof Monaco, initialTheme: "dark" | "
         }),
       );
 
-      return { suggestions: [...localSnippets, ...varSuggestions] };
+      // Funções e procedimentos declarados pelo usuário
+      const fnSuggestions: Monaco.languages.CompletionItem[] = completionFunctionsRef.current.map(
+        (fn) => {
+          const sig = formatFnSignature(fn);
+          return {
+            label: fn.name,
+            kind:
+              fn.kind === "funcao"
+                ? monaco.languages.CompletionItemKind.Function
+                : monaco.languages.CompletionItemKind.Module,
+            insertText: fn.name,
+            detail: fn.kind === "funcao" ? `funcao → ${fn.returnType}` : "procedimento",
+            documentation: sig,
+            range,
+          };
+        },
+      );
+
+      // Keywords individuais
+      const keywordSuggestions: Monaco.languages.CompletionItem[] = KEYWORDS.map((kw) => ({
+        label: kw,
+        kind: monaco.languages.CompletionItemKind.Keyword,
+        insertText: kw,
+        detail: "palavra-chave",
+        range,
+      }));
+
+      return { suggestions: [...localSnippets, ...varSuggestions, ...fnSuggestions, ...keywordSuggestions] };
+    },
+  });
+
+  // Assinaturas de funções nativas built-in
+  const BUILTIN_SIGNATURES: Record<string, { params: string[]; returnType: string }> = {
+    abs:      { params: ["x: real"], returnType: "real" },
+    int:      { params: ["x: real"], returnType: "inteiro" },
+    sqrt:     { params: ["x: real"], returnType: "real" },
+    quad:     { params: ["x: real"], returnType: "real" },
+    exp:      { params: ["base: real", "exp: real"], returnType: "real" },
+    log:      { params: ["x: real"], returnType: "real" },
+    logn:     { params: ["x: real"], returnType: "real" },
+    sen:      { params: ["x: real"], returnType: "real" },
+    cos:      { params: ["x: real"], returnType: "real" },
+    tan:      { params: ["x: real"], returnType: "real" },
+    pi:       { params: [], returnType: "real" },
+    rand:     { params: [], returnType: "real" },
+    randi:    { params: ["max: inteiro"], returnType: "inteiro" },
+    compr:    { params: ["s: caractere"], returnType: "inteiro" },
+    copia:    { params: ["s: caractere", "pos: inteiro", "len: inteiro"], returnType: "caractere" },
+    maiusc:   { params: ["s: caractere"], returnType: "caractere" },
+    minusc:   { params: ["s: caractere"], returnType: "caractere" },
+    pos:      { params: ["sub: caractere", "s: caractere"], returnType: "inteiro" },
+    caracpnum: { params: ["s: caractere"], returnType: "real" },
+    numcarac: { params: ["x: real"], returnType: "caractere" },
+  };
+
+  // Signature Help
+  monaco.languages.registerSignatureHelpProvider("visualg", {
+    signatureHelpTriggerCharacters: ["(", ","],
+    provideSignatureHelp: (model, position) => {
+      const lineText = model.getValueInRange({
+        startLineNumber: position.lineNumber,
+        startColumn: 1,
+        endLineNumber: position.lineNumber,
+        endColumn: position.column,
+      });
+
+      // Encontra o nome da função chamada: última palavra antes do "(" mais externo ainda aberto
+      let depth = 0;
+      let activeCommaIdx = -1;
+      let commaCount = 0;
+      for (let i = lineText.length - 1; i >= 0; i--) {
+        const ch = lineText[i];
+        if (ch === ")") { depth++; continue; }
+        if (ch === "(") {
+          if (depth === 0) { activeCommaIdx = i; break; }
+          depth--;
+        }
+        if (ch === "," && depth === 0) commaCount++;
+      }
+
+      if (activeCommaIdx === -1) return null;
+
+      const before = lineText.slice(0, activeCommaIdx).trimEnd();
+      const fnName = before.match(/([a-zA-Z_]\w*)$/)?.[1]?.toLowerCase();
+      if (!fnName) return null;
+
+      // Procura em funções do usuário primeiro
+      const userFn = completionFunctionsRef.current.find(
+        (f) => f.name.toLowerCase() === fnName,
+      );
+      if (userFn) {
+        const label = formatFnSignature(userFn);
+        return {
+          dispose: () => {},
+          value: {
+            signatures: [
+              {
+                label,
+                parameters: userFn.params.map((p) => ({
+                  label: `${p.isRef ? "var " : ""}${p.name}: ${p.type}`,
+                })),
+              },
+            ],
+            activeSignature: 0,
+            activeParameter: Math.min(commaCount, Math.max(0, userFn.params.length - 1)),
+          },
+        };
+      }
+
+      // Procura nas funções nativas
+      const builtin = BUILTIN_SIGNATURES[fnName];
+      if (builtin) {
+        const label = `${fnName}(${builtin.params.join(", ")}): ${builtin.returnType}`;
+        return {
+          dispose: () => {},
+          value: {
+            signatures: [
+              {
+                label,
+                parameters: builtin.params.map((p) => ({ label: p })),
+              },
+            ],
+            activeSignature: 0,
+            activeParameter: Math.min(commaCount, Math.max(0, builtin.params.length - 1)),
+          },
+        };
+      }
+
+      return null;
     },
   });
 
@@ -511,4 +656,12 @@ function registerVisuAlgLanguage(monaco: typeof Monaco, initialTheme: "dark" | "
   });
 
   monaco.editor.setTheme(initialTheme === "light" ? "visualg-light" : "visualg-dark");
+}
+
+function formatFnSignature(fn: CompletionFunction): string {
+  const params = fn.params
+    .map((p) => `${p.isRef ? "var " : ""}${p.name}: ${p.type}`)
+    .join(", ");
+  const ret = fn.kind === "funcao" ? `: ${fn.returnType}` : "";
+  return `${fn.name}(${params})${ret}`;
 }

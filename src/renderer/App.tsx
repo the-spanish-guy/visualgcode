@@ -10,6 +10,7 @@ import Terminal from "./components/Terminal";
 import Toolbar from "./components/Toolbar";
 import VariablesPanel from "./components/VariablesPanel";
 import { DebugController, type DebugMode } from "./DebugController";
+import { parseFunctions } from "./parseFunctions";
 import { parseVars } from "./parseVars";
 import { runCode } from "./runner";
 import styles from "./styles/App.module.css";
@@ -483,6 +484,7 @@ export default function App() {
   }, [theme]);
 
   const completionVars: CompletionVar[] = parseVars(activeTab.code);
+  const completionFunctions = parseFunctions(activeTab.code);
   const isDebugging = debugMode === "debugging" || debugMode === "paused" || debugMode === "timer";
 
   return (
@@ -538,6 +540,7 @@ export default function App() {
             <Editor
               ref={editorRef}
               completionVars={completionVars}
+              completionFunctions={completionFunctions}
               theme={theme}
               errors={errors}
               fontSize={fontSize} // ← adicionar
