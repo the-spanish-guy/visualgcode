@@ -20,7 +20,9 @@
     "format": "biome format --write ./src",
     "check": "biome check --write ./src",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "changelog": "git-cliff -o CHANGELOG.md",
+    "changelog:unreleased": "git-cliff --unreleased --prepend CHANGELOG.md"
   },
   "build": {
     "appId": "com.visualg.ide",
@@ -85,6 +87,7 @@
     "concurrently": "9.2.1",
     "electron": "40.4.1",
     "electron-builder": "25.0.0",
+    "git-cliff": "2.12.0",
     "jsdom": "29.0.0",
     "terser": "5.46.1",
     "ts-node": "10.9.2",
