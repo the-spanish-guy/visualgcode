@@ -276,7 +276,9 @@ export class Evaluator {
         const c = decl as unknown as ConstDeclarationNode;
         const typeStr =
           typeof c.value === "number"
-            ? Number.isInteger(c.value) ? "inteiro" : "real"
+            ? Number.isInteger(c.value)
+              ? "inteiro"
+              : "real"
             : typeof c.value === "string"
               ? "caractere"
               : "logico";

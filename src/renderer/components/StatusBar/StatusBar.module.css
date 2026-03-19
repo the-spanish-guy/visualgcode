@@ -19,7 +19,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: rgba(255,255,255,0.5);
+  background: rgba(255, 255, 255, 0.5);
   transition: background 0.2s;
 }
 
@@ -32,15 +32,16 @@
   font-family: var(--font-ui);
   font-size: 11px;
   font-weight: 600;
-  color: var(--statusbar-text);             /* ← variável */
+  color: var(--statusbar-text); /* ← variável */
   letter-spacing: 0.3px;
 }
 
-.errors, .warnings {
+.errors,
+.warnings {
   font-family: var(--font-ui);
   font-size: 11px;
-  color: var(--statusbar-text);             /* ← variável */
-  background: var(--statusbar-badge-bg);    /* ← variável */
+  color: var(--statusbar-text); /* ← variável */
+  background: var(--statusbar-badge-bg); /* ← variável */
   padding: 1px 6px;
   border-radius: var(--radius-sm);
 }
@@ -48,13 +49,13 @@
 .cursor {
   font-family: var(--font-mono);
   font-size: 11px;
-  color: var(--statusbar-text-dim);         /* ← variável */
+  color: var(--statusbar-text-dim); /* ← variável */
 }
 
 .lang {
   font-family: var(--font-ui);
   font-size: 11px;
   font-weight: 700;
-  color: var(--statusbar-text);             /* ← variável */
+  color: var(--statusbar-text); /* ← variável */
   letter-spacing: 0.5px;
 }

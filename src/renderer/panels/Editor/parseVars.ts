@@ -2,7 +2,8 @@ import type { CompletionVar } from "./Editor";
 
 export function parseConsts(code: string): CompletionVar[] {
   const consts: CompletionVar[] = [];
-  const blockRe = /\bconstante\b([\s\S]*?)(?=\bvar\b|\bconstante\b|\bprocedimento\b|\bfuncao\b|\binicio\b|$)/gi;
+  const blockRe =
+    /\bconstante\b([\s\S]*?)(?=\bvar\b|\bconstante\b|\bprocedimento\b|\bfuncao\b|\binicio\b|$)/gi;
   let match;
   while ((match = blockRe.exec(code)) !== null) {
     for (const line of match[1].split("\n")) {

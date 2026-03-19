@@ -24,24 +24,19 @@ export function parseFunctions(code: string): CompletionFunction[] {
     }
 
     // procedimento nome(params)
-    const procMatch = line.match(
-      /^\s*procedimento\s+([a-zA-Z_]\w*)\s*(?:\(([^)]*)\))?\s*$/i,
-    );
+    const procMatch = line.match(/^\s*procedimento\s+([a-zA-Z_]\w*)\s*(?:\(([^)]*)\))?\s*$/i);
     if (procMatch) {
       const name = procMatch[1];
       const paramsStr = procMatch[2] ?? "";
       const params = parseParams(paramsStr);
       functions.push({ name, kind: "procedimento", params });
-      continue;
     }
   }
 
   return functions;
 }
 
-function parseParams(
-  paramsStr: string,
-): { name: string; type: string; isRef: boolean }[] {
+function parseParams(paramsStr: string): { name: string; type: string; isRef: boolean }[] {
   if (!paramsStr.trim()) return [];
 
   const result: { name: string; type: string; isRef: boolean }[] = [];
@@ -58,7 +53,10 @@ function parseParams(
     if (colonIdx === -1) continue;
 
     const name = withoutVar.slice(0, colonIdx).trim();
-    const type = withoutVar.slice(colonIdx + 1).trim().toLowerCase();
+    const type = withoutVar
+      .slice(colonIdx + 1)
+      .trim()
+      .toLowerCase();
 
     if (name) result.push({ name, type, isRef });
   }

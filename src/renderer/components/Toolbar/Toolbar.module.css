@@ -72,7 +72,7 @@
 }
 
 .tab::after {
-  content: '';
+  content: "";
   position: absolute;
   bottom: 0;
   left: 0;
@@ -180,7 +180,9 @@
   box-shadow: 0 4px 16px var(--accent-glow);
 }
 
-.btnRun:active { transform: translateY(0); }
+.btnRun:active {
+  transform: translateY(0);
+}
 
 .btnDebug {
   background: var(--bg-elevated);
@@ -242,7 +244,9 @@
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
   font-family: var(--font-ui);
   background: transparent;
   color: var(--blue);
@@ -292,7 +296,9 @@
   border-radius: 50%;
   background: var(--blue);
   cursor: pointer;
-  transition: background 0.15s, transform 0.1s;
+  transition:
+    background 0.15s,
+    transform 0.1s;
 }
 
 .timerSlider:not(:disabled)::-webkit-slider-thumb:hover {
@@ -316,5 +322,3 @@
   min-width: 40px;
   text-align: right;
 }
-
-

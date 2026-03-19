@@ -110,7 +110,7 @@
   white-space: pre-wrap;
   word-break: break-word;
   padding: 4px 8px;
-  background: var(--error-bg);               /* ← variável */
+  background: var(--error-bg); /* ← variável */
   border-left: 2px solid var(--red);
   border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
   margin-top: 4px;
@@ -120,9 +120,9 @@
 .errorHint {
   font-size: 11px;
   line-height: 18px;
-  color: var(--error-border);                /* ← variável */
+  color: var(--error-border); /* ← variável */
   padding: 2px 8px 6px 10px;
-  background: var(--error-bg-hint);          /* ← variável */
+  background: var(--error-bg-hint); /* ← variável */
   border-left: 2px solid var(--error-border); /* ← variável */
   border-radius: 0 0 var(--radius-sm) 0;
   font-style: italic;

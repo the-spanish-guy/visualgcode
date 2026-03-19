@@ -9,7 +9,9 @@
   scrollbar-width: none;
 }
 
-.bar::-webkit-scrollbar { display: none; }
+.bar::-webkit-scrollbar {
+  display: none;
+}
 
 /* ─── Toggle do explorador ─── */
 
@@ -91,7 +93,9 @@
   cursor: pointer;
   white-space: nowrap;
   position: relative;
-  transition: background 0.1s, color 0.1s;
+  transition:
+    background 0.1s,
+    color 0.1s;
   min-width: 0;
   max-width: 180px;
 }
@@ -107,7 +111,7 @@
 }
 
 .tab.active::after {
-  content: '';
+  content: "";
   position: absolute;
   bottom: 0;
   left: 0;
@@ -145,7 +149,9 @@
   font-size: 14px;
   line-height: 1;
   flex-shrink: 0;
-  transition: background 0.1s, color 0.1s;
+  transition:
+    background 0.1s,
+    color 0.1s;
   padding: 0;
 }
 
@@ -167,7 +173,9 @@
   font-size: 18px;
   font-weight: 300;
   flex-shrink: 0;
-  transition: color 0.1s, background 0.1s;
+  transition:
+    color 0.1s,
+    background 0.1s;
   border-left: 1px solid var(--border-dim);
 }
 

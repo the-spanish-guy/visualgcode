@@ -74,9 +74,16 @@
   border-bottom: 1px solid var(--border-dim);
 }
 
-.colNome  { width: 38%; }
-.colTipo  { width: 32%; }
-.colValor { width: 30%; text-align: right; }
+.colNome {
+  width: 38%;
+}
+.colTipo {
+  width: 32%;
+}
+.colValor {
+  width: 30%;
+  text-align: right;
+}
 
 .row {
   transition: background 0.1s;
@@ -130,6 +137,12 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateX(8px); }
-  to   { opacity: 1; transform: translateX(0); }
+  from {
+    opacity: 0;
+    transform: translateX(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }

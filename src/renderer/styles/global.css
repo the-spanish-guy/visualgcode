@@ -1,7 +1,9 @@
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;600;700;800&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;600;700;800&display=swap");
 @import url("https://www.nerdfonts.com/assets/css/webfont.css");
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -12,39 +14,39 @@
 :root,
 [data-theme="dark"] {
   /* Cores base */
-  --bg-void:      #080b10;
-  --bg-deep:      #0d1117;
-  --bg-panel:     #111620;
-  --bg-surface:   #161c2a;
-  --bg-elevated:  #1c2333;
-  --bg-hover:     #232d42;
+  --bg-void: #080b10;
+  --bg-deep: #0d1117;
+  --bg-panel: #111620;
+  --bg-surface: #161c2a;
+  --bg-elevated: #1c2333;
+  --bg-hover: #232d42;
 
   /* Bordas */
-  --border-dim:   #1e2a3a;
-  --border-soft:  #253042;
-  --border-mid:   #2e3d54;
+  --border-dim: #1e2a3a;
+  --border-soft: #253042;
+  --border-mid: #2e3d54;
 
   /* Texto */
-  --text-primary:   #e2eaf5;
+  --text-primary: #e2eaf5;
   --text-secondary: #7a90aa;
-  --text-muted:     #3f5068;
-  --text-dim:       #2a3a50;
+  --text-muted: #3f5068;
+  --text-dim: #2a3a50;
 
   /* Acento */
-  --accent:       #ff6b2b;
-  --accent-glow:  rgba(255, 107, 43, 0.2);
-  --accent-dim:   rgba(255, 107, 43, 0.08);
+  --accent: #ff6b2b;
+  --accent-glow: rgba(255, 107, 43, 0.2);
+  --accent-dim: rgba(255, 107, 43, 0.08);
 
   /* Status */
-  --green:  #3ddc97;
-  --red:    #ff4d6a;
+  --green: #3ddc97;
+  --red: #ff4d6a;
   --yellow: #ffd166;
-  --blue:   #5ba4f5;
+  --blue: #5ba4f5;
 
   /* Cores semânticas usadas em componentes com rgba hardcoded */
-  --error-bg:       rgba(255, 77, 106, 0.06);
-  --error-bg-hint:  rgba(255, 77, 106, 0.06);
-  --error-border:   rgba(255, 77, 106, 0.25);
+  --error-bg: rgba(255, 77, 106, 0.06);
+  --error-bg-hint: rgba(255, 77, 106, 0.06);
+  --error-border: rgba(255, 77, 106, 0.25);
   --statusbar-text: rgba(255, 255, 255, 0.9);
   --statusbar-text-dim: rgba(255, 255, 255, 0.7);
   --statusbar-badge-bg: rgba(0, 0, 0, 0.2);
@@ -57,40 +59,40 @@
 
 [data-theme="light"] {
   /* Cores base */
-  --bg-void:      #e8ecf2;
-  --bg-deep:      #f0f4f8;
-  --bg-panel:     #e4e9f0;
-  --bg-surface:   #dde3ec;
-  --bg-elevated:  #d6dde8;
-  --bg-hover:     #cdd5e2;
+  --bg-void: #e8ecf2;
+  --bg-deep: #f0f4f8;
+  --bg-panel: #e4e9f0;
+  --bg-surface: #dde3ec;
+  --bg-elevated: #d6dde8;
+  --bg-hover: #cdd5e2;
 
   /* Bordas */
-  --border-dim:   #c8d0dc;
-  --border-soft:  #bcc5d4;
-  --border-mid:   #a8b4c8;
+  --border-dim: #c8d0dc;
+  --border-soft: #bcc5d4;
+  --border-mid: #a8b4c8;
 
   /* Texto */
-  --text-primary:   #1a2232;
+  --text-primary: #1a2232;
   --text-secondary: #3a4f6a;
-  --text-muted:     #6a7f9a;
-  --text-dim:       #94a5b8;
+  --text-muted: #6a7f9a;
+  --text-dim: #94a5b8;
 
   /* Acento — mantém o laranja, é a identidade do projeto */
-  --accent:       #e85a1a;
-  --accent-glow:  rgba(232, 90, 26, 0.18);
-  --accent-dim:   rgba(232, 90, 26, 0.08);
+  --accent: #e85a1a;
+  --accent-glow: rgba(232, 90, 26, 0.18);
+  --accent-dim: rgba(232, 90, 26, 0.08);
 
   /* Status — ligeiramente mais saturados para contrastar no fundo claro */
-  --green:  #1a9e6a;
-  --red:    #d93050;
+  --green: #1a9e6a;
+  --red: #d93050;
   --yellow: #c47f00;
-  --blue:   #2878d0;
+  --blue: #2878d0;
 
   /* Cores semânticas */
-  --error-bg:           rgba(217, 48, 80, 0.06);
-  --error-bg-hint:      rgba(217, 48, 80, 0.04);
-  --error-border:       rgba(217, 48, 80, 0.25);
-  --statusbar-text:     rgba(255, 255, 255, 0.95);
+  --error-bg: rgba(217, 48, 80, 0.06);
+  --error-bg-hint: rgba(217, 48, 80, 0.04);
+  --error-border: rgba(217, 48, 80, 0.25);
+  --statusbar-text: rgba(255, 255, 255, 0.95);
   --statusbar-text-dim: rgba(255, 255, 255, 0.75);
   --statusbar-badge-bg: rgba(0, 0, 0, 0.15);
 
@@ -100,7 +102,9 @@
 
 /* ─── Base ───────────────────────────────────────────────────────────────────── */
 
-html, body, #root {
+html,
+body,
+#root {
   width: 100%;
   height: 100%;
   overflow: hidden;
@@ -115,13 +119,13 @@ html, body, #root {
 /* ─── Layout ─────────────────────────────────────────────────────────────────── */
 
 :root {
-  --titlebar-h:   38px;
-  --toolbar-h:    48px;
-  --statusbar-h:  24px;
-  --sidebar-w:    220px;
-  --panel-h:      200px;
-  --font-ui:   'Syne', sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  --titlebar-h: 38px;
+  --toolbar-h: 48px;
+  --statusbar-h: 24px;
+  --sidebar-w: 220px;
+  --panel-h: 200px;
+  --font-ui: "Syne", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
   --radius-sm: 4px;
   --radius-md: 6px;
   --radius-lg: 10px;
@@ -129,26 +133,53 @@ html, body, #root {
 
 /* ─── Scrollbar ──────────────────────────────────────────────────────────────── */
 
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border-mid); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-mid);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
 
 /* ─── Animações ──────────────────────────────────────────────────────────────── */
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(4px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes pulse-accent {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0.5; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
 .animate-in {

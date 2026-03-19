@@ -23,7 +23,6 @@ async function runCode(code: string): Promise<{ output: string[]; errors: string
 }
 
 describe("#31 — Operador ^ (potência)", () => {
-
   test("2 ^ 10 = 1024", async () => {
     const { output, errors } = await runCode(`
 algoritmo "teste"
@@ -80,11 +79,9 @@ fimalgoritmo
     expect(errors).toHaveLength(0);
     expect(output.join("")).toMatch(/1/);
   });
-
 });
 
 describe("#32 — Operador xou (XOR lógico)", () => {
-
   test("verdadeiro xou falso = verdadeiro", async () => {
     const { output, errors } = await runCode(`
 algoritmo "teste"
@@ -128,11 +125,9 @@ fimalgoritmo
     expect(errors).toHaveLength(0);
     expect(output.join("").toLowerCase()).toMatch(/falso/);
   });
-
 });
 
 describe("#33 — Operador \\\\ (divisão inteira)", () => {
-
   test("7 \\\\ 2 = 3", async () => {
     const { output, errors } = await runCode(`
 algoritmo "teste"
@@ -168,7 +163,7 @@ escreval(a div b)
 fimalgoritmo
 `);
     expect(errors).toHaveLength(0);
-    const nums = output.map(o => o.trim());
+    const nums = output.map((o) => o.trim());
     expect(nums[0]).toBe(nums[1]);
   });
 
@@ -182,11 +177,9 @@ fimalgoritmo
     expect(errors.length).toBeGreaterThan(0);
     expect(errors[0]).toMatch(/zero/i);
   });
-
 });
 
 describe("#34 — Operador % (alias de mod)", () => {
-
   test("7 % 3 = 1", async () => {
     const { output, errors } = await runCode(`
 algoritmo "teste"
@@ -222,7 +215,7 @@ escreval(a mod b)
 fimalgoritmo
 `);
     expect(errors).toHaveLength(0);
-    const nums = output.map(o => o.trim());
+    const nums = output.map((o) => o.trim());
     expect(nums[0]).toBe(nums[1]);
   });
 
@@ -236,5 +229,4 @@ fimalgoritmo
     expect(errors.length).toBeGreaterThan(0);
     expect(errors[0]).toMatch(/zero/i);
   });
-
 });

@@ -2,9 +2,9 @@ import MonacoEditor, { type OnMount } from "@monaco-editor/react";
 import type * as Monaco from "monaco-editor";
 import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 import type { StaticWarning } from "../../../interpreter/StaticAnalyzer";
-import { snippets } from "./snippets";
-import type { CompletionFunction } from "./parseFunctions";
 import styles from "./Editor.module.css";
+import type { CompletionFunction } from "./parseFunctions";
+import { snippets } from "./snippets";
 import { registerVisuAlgThemes } from "./themes";
 
 export interface TabKey {

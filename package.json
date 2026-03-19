@@ -27,7 +27,10 @@
     "productName": "VisuAlg IDE",
     "compression": "maximum",
     "removePackageScripts": true,
-    "electronLanguages": ["pt-BR", "en-US"],
+    "electronLanguages": [
+      "pt-BR",
+      "en-US"
+    ],
     "directories": {
       "output": "release"
     },
@@ -72,18 +75,22 @@
     }
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "6.9.1",
+    "@testing-library/react": "16.3.2",
+    "@testing-library/user-event": "14.6.1",
     "@types/node": "25.2.3",
     "@types/react": "19.2.1",
     "@types/react-dom": "19.2.1",
-    "@vitejs/plugin-react": "5.1.4",
+    "@vitejs/plugin-react": "6.0.1",
     "concurrently": "9.2.1",
     "electron": "40.4.1",
     "electron-builder": "25.0.0",
+    "jsdom": "29.0.0",
     "terser": "5.46.1",
     "ts-node": "10.9.2",
     "typescript": "5.9.3",
-    "vite": "7.3.1",
-    "vitest": "3.1.4",
+    "vite": "8.0.1",
+    "vitest": "4.1.0",
     "wait-on": "9.0.4"
   },
   "dependencies": {

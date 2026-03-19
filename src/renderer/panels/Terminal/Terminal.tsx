@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import type { VarSnapshot } from "../../../interpreter/Evaluator";
 import type { StaticWarning } from "../../../interpreter/StaticAnalyzer";
 import { explainError } from "../../lib/explainError";
-import styles from "./Terminal.module.css";
 import ProblemsPanel from "./ProblemsPanel";
+import styles from "./Terminal.module.css";
 import TraceTable from "./TraceTable";
 
 interface Props {

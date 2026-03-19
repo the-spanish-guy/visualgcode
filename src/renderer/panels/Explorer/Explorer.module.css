@@ -76,20 +76,33 @@
   flex: 1;
 }
 
-.dir .icon  { color: var(--accent); }
-.dir .label { color: var(--text-secondary); }
+.dir .icon {
+  color: var(--accent);
+}
+.dir .label {
+  color: var(--text-secondary);
+}
 
-.alg .icon  { color: var(--accent); opacity: 0.7; }
-.alg .label { color: var(--text-primary); }
+.alg .icon {
+  color: var(--accent);
+  opacity: 0.7;
+}
+.alg .label {
+  color: var(--text-primary);
+}
 
-.alg:hover .label { color: var(--accent); }
+.alg:hover .label {
+  color: var(--accent);
+}
 
 .active {
   background: var(--bg-elevated) !important;
 }
-.active .label { color: var(--accent) !important; }
+.active .label {
+  color: var(--accent) !important;
+}
 .active::before {
-  content: '';
+  content: "";
   position: absolute;
   left: 0;
   top: 0;
@@ -98,8 +111,13 @@
   background: var(--accent);
 }
 
-.disabled .label { color: var(--text-dim); cursor: default; }
-.disabled:hover  { background: none; }
+.disabled .label {
+  color: var(--text-dim);
+  cursor: default;
+}
+.disabled:hover {
+  background: none;
+}
 
 .empty {
   font-family: var(--font-mono);

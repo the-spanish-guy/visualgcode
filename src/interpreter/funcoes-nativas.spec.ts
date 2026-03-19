@@ -34,15 +34,15 @@ fimalgoritmo
 describe("Funções nativas — Matemáticas", () => {
   // Funções de um argumento com resultado numérico — mesmo padrão de asserção
   it.each([
-    ["abs(-5)",   5],
-    ["abs(3)",    3],
-    ["sqrt(9)",   3],
-    ["quad(3)",   9],
-    ["log(1)",    0],
+    ["abs(-5)", 5],
+    ["abs(3)", 3],
+    ["sqrt(9)", 3],
+    ["quad(3)", 9],
+    ["log(1)", 0],
     ["logn(100)", 2],
-    ["sen(0)",    0],
-    ["cos(0)",    1],
-    ["tan(0)",    0],
+    ["sen(0)", 0],
+    ["cos(0)", 1],
+    ["tan(0)", 0],
   ])("escreval(%s) ≈ %s", async (expr, expected) => {
     const { output, errors } = await evalExpr(expr);
     expect(errors).toHaveLength(0);
@@ -51,7 +51,7 @@ describe("Funções nativas — Matemáticas", () => {
 
   // int() usa parseInt — asserção diferente das demais
   it.each([
-    ["int(3.7)",  3],
+    ["int(3.7)", 3],
     ["int(-3.7)", -3],
   ])("escreval(%s) trunca para %i", async (expr, expected) => {
     const { output, errors } = await evalExpr(expr);
@@ -141,9 +141,9 @@ describe("Funções nativas — Strings", () => {
 
   // pos() — encontrado e não-encontrado
   it.each([
-    ['"bc"',  '"abcd"', 2],
+    ['"bc"', '"abcd"', 2],
     ['"xyz"', '"abcd"', 0],
-  ])('pos(%s, %s) = %i', async (sub, s, expected) => {
+  ])("pos(%s, %s) = %i", async (sub, s, expected) => {
     const { output, errors } = await evalExpr(`pos(${sub}, ${s})`);
     expect(errors).toHaveLength(0);
     expect(parseInt(output.join("").trim(), 10)).toBe(expected as number);

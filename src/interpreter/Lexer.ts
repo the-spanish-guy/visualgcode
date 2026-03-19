@@ -228,7 +228,12 @@ export class Lexer {
     this.advance(); // consome primeiro '\'
     if (!this.isAtEnd() && this.current() === "\\") {
       this.advance(); // consome segundo '\'
-      this.tokens.push({ type: TokenType.INT_DIVIDE, value: "\\\\", line: this.line, col: startCol });
+      this.tokens.push({
+        type: TokenType.INT_DIVIDE,
+        value: "\\\\",
+        line: this.line,
+        col: startCol,
+      });
       return;
     }
     throw new LexerError("Caractere inesperado '\\'", this.line, startCol);
