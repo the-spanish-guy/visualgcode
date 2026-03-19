@@ -171,6 +171,25 @@ visualgcode/
 
 ---
 
+## 🚢 Criando uma Release
+
+1. Atualize o `CHANGELOG.md` com os commits desde a última tag:
+   ```bash
+   npm run changelog:unreleased
+   git add CHANGELOG.md
+   git commit -m "chore: atualiza CHANGELOG para vX.Y.Z"
+   ```
+
+2. Crie a tag e faça push:
+   ```bash
+   git tag vX.Y.Z
+   git push && git push --tags
+   ```
+
+O CI compila os instaladores e publica a GitHub Release automaticamente com as notas da versão.
+
+---
+
 ## 🤝 Contribuir
 
 Este é um projeto open source então contribuições são **muito bem-vindas**!
