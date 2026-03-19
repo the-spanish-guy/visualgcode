@@ -2,9 +2,10 @@ import MonacoEditor, { type OnMount } from "@monaco-editor/react";
 import type * as Monaco from "monaco-editor";
 import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 import type { StaticWarning } from "../../interpreter/StaticAnalyzer";
-import type { CompletionFunction } from "../parseFunctions";
 import { snippets } from "../editor";
+import type { CompletionFunction } from "../parseFunctions";
 import styles from "../styles/Editor.module.css";
+import { registerVisuAlgThemes } from "../themes";
 
 export interface TabKey {
   id: string;
@@ -345,6 +346,7 @@ function registerVisuAlgLanguage(monaco: typeof Monaco, initialTheme: "dark" | "
       "funcao",
       "fimfuncao",
       "retorne",
+      "constante",
       "e",
       "ou",
       "nao",
@@ -423,12 +425,39 @@ function registerVisuAlgLanguage(monaco: typeof Monaco, initialTheme: "dark" | "
 
   // Keywords para autocomplete
   const KEYWORDS = [
-    "escreva", "escreval", "leia", "se", "entao", "senao", "fimse",
-    "para", "de", "ate", "passo", "faca", "fimpara",
-    "enquanto", "fimenquanto", "repita", "escolha", "caso", "outrocaso",
-    "fimescolha", "procedimento", "fimprocedimento", "funcao", "fimfuncao",
-    "retorne", "interrompa", "limpatela", "pausa",
-    "var", "inicio", "fimalgoritmo", "algoritmo",
+    "escreva",
+    "escreval",
+    "leia",
+    "se",
+    "entao",
+    "senao",
+    "fimse",
+    "para",
+    "de",
+    "ate",
+    "passo",
+    "faca",
+    "fimpara",
+    "enquanto",
+    "fimenquanto",
+    "repita",
+    "escolha",
+    "caso",
+    "outrocaso",
+    "fimescolha",
+    "procedimento",
+    "fimprocedimento",
+    "funcao",
+    "fimfuncao",
+    "retorne",
+    "interrompa",
+    "limpatela",
+    "pausa",
+    "var",
+    "constante",
+    "inicio",
+    "fimalgoritmo",
+    "algoritmo",
   ];
 
   // Autocomplete
@@ -448,7 +477,10 @@ function registerVisuAlgLanguage(monaco: typeof Monaco, initialTheme: "dark" | "
       const varSuggestions: Monaco.languages.CompletionItem[] = completionVarsRef.current.map(
         (v) => ({
           label: v.name,
-          kind: monaco.languages.CompletionItemKind.Variable,
+          kind:
+            v.type === "constante"
+              ? monaco.languages.CompletionItemKind.Constant
+              : monaco.languages.CompletionItemKind.Variable,
           insertText: v.name,
           documentation: `${v.type} ${v.name}`,
           detail: v.type,
@@ -483,30 +515,32 @@ function registerVisuAlgLanguage(monaco: typeof Monaco, initialTheme: "dark" | "
         range,
       }));
 
-      return { suggestions: [...localSnippets, ...varSuggestions, ...fnSuggestions, ...keywordSuggestions] };
+      return {
+        suggestions: [...localSnippets, ...varSuggestions, ...fnSuggestions, ...keywordSuggestions],
+      };
     },
   });
 
   // Assinaturas de funções nativas built-in
   const BUILTIN_SIGNATURES: Record<string, { params: string[]; returnType: string }> = {
-    abs:      { params: ["x: real"], returnType: "real" },
-    int:      { params: ["x: real"], returnType: "inteiro" },
-    sqrt:     { params: ["x: real"], returnType: "real" },
-    quad:     { params: ["x: real"], returnType: "real" },
-    exp:      { params: ["base: real", "exp: real"], returnType: "real" },
-    log:      { params: ["x: real"], returnType: "real" },
-    logn:     { params: ["x: real"], returnType: "real" },
-    sen:      { params: ["x: real"], returnType: "real" },
-    cos:      { params: ["x: real"], returnType: "real" },
-    tan:      { params: ["x: real"], returnType: "real" },
-    pi:       { params: [], returnType: "real" },
-    rand:     { params: [], returnType: "real" },
-    randi:    { params: ["max: inteiro"], returnType: "inteiro" },
-    compr:    { params: ["s: caractere"], returnType: "inteiro" },
-    copia:    { params: ["s: caractere", "pos: inteiro", "len: inteiro"], returnType: "caractere" },
-    maiusc:   { params: ["s: caractere"], returnType: "caractere" },
-    minusc:   { params: ["s: caractere"], returnType: "caractere" },
-    pos:      { params: ["sub: caractere", "s: caractere"], returnType: "inteiro" },
+    abs: { params: ["x: real"], returnType: "real" },
+    int: { params: ["x: real"], returnType: "inteiro" },
+    sqrt: { params: ["x: real"], returnType: "real" },
+    quad: { params: ["x: real"], returnType: "real" },
+    exp: { params: ["base: real", "exp: real"], returnType: "real" },
+    log: { params: ["x: real"], returnType: "real" },
+    logn: { params: ["x: real"], returnType: "real" },
+    sen: { params: ["x: real"], returnType: "real" },
+    cos: { params: ["x: real"], returnType: "real" },
+    tan: { params: ["x: real"], returnType: "real" },
+    pi: { params: [], returnType: "real" },
+    rand: { params: [], returnType: "real" },
+    randi: { params: ["max: inteiro"], returnType: "inteiro" },
+    compr: { params: ["s: caractere"], returnType: "inteiro" },
+    copia: { params: ["s: caractere", "pos: inteiro", "len: inteiro"], returnType: "caractere" },
+    maiusc: { params: ["s: caractere"], returnType: "caractere" },
+    minusc: { params: ["s: caractere"], returnType: "caractere" },
+    pos: { params: ["sub: caractere", "s: caractere"], returnType: "inteiro" },
     caracpnum: { params: ["s: caractere"], returnType: "real" },
     numcarac: { params: ["x: real"], returnType: "caractere" },
   };
@@ -528,9 +562,15 @@ function registerVisuAlgLanguage(monaco: typeof Monaco, initialTheme: "dark" | "
       let commaCount = 0;
       for (let i = lineText.length - 1; i >= 0; i--) {
         const ch = lineText[i];
-        if (ch === ")") { depth++; continue; }
+        if (ch === ")") {
+          depth++;
+          continue;
+        }
         if (ch === "(") {
-          if (depth === 0) { activeCommaIdx = i; break; }
+          if (depth === 0) {
+            activeCommaIdx = i;
+            break;
+          }
           depth--;
         }
         if (ch === "," && depth === 0) commaCount++;
@@ -543,9 +583,7 @@ function registerVisuAlgLanguage(monaco: typeof Monaco, initialTheme: "dark" | "
       if (!fnName) return null;
 
       // Procura em funções do usuário primeiro
-      const userFn = completionFunctionsRef.current.find(
-        (f) => f.name.toLowerCase() === fnName,
-      );
+      const userFn = completionFunctionsRef.current.find((f) => f.name.toLowerCase() === fnName);
       if (userFn) {
         const label = formatFnSignature(userFn);
         return {
@@ -588,80 +626,14 @@ function registerVisuAlgLanguage(monaco: typeof Monaco, initialTheme: "dark" | "
     },
   });
 
-  /**
-   * Tema customizado
-   * TODO: Separar isso num arquivo de tema(s) posteriormente
-   */
-  monaco.editor.defineTheme("visualg-dark", {
-    base: "vs-dark",
-    inherit: true,
-    rules: [
-      { token: "keyword", foreground: "ff6b2b", fontStyle: "bold" },
-      { token: "keyword.operator", foreground: "5ba4f5" },
-      { token: "type", foreground: "3ddc97" },
-      { token: "support.function", foreground: "ffd166" },
-      { token: "constant", foreground: "c792ea" },
-      { token: "string", foreground: "a8d8a8" },
-      { token: "number", foreground: "79d4f1" },
-      { token: "number.float", foreground: "79d4f1" },
-      { token: "comment", foreground: "3f5068", fontStyle: "italic" },
-      { token: "operator", foreground: "7a90aa" },
-      { token: "identifier", foreground: "e2eaf5" },
-      { token: "delimiter", foreground: "5b6d82" },
-    ],
-    colors: {
-      "editor.background": "#0d1117",
-      "editor.foreground": "#e2eaf5",
-      "editor.lineHighlightBackground": "#161c2a",
-      "editor.selectionBackground": "#253042",
-      "editorLineNumber.foreground": "#2e3d54",
-      "editorLineNumber.activeForeground": "#7a90aa",
-      "editorGutter.background": "#0d1117",
-      "editorCursor.foreground": "#ff6b2b",
-      "editor.findMatchBackground": "#ff6b2b44",
-      "editorHoverWidget.background": "#0d1117",
-      "editorHoverWidget.border": "#f14c4c",
-    },
-  });
-  monaco.editor.defineTheme("visualg-light", {
-    base: "vs", // base clara do Monaco
-    inherit: true,
-    rules: [
-      { token: "keyword", foreground: "c04000", fontStyle: "bold" },
-      { token: "keyword.operator", foreground: "1a6abf" },
-      { token: "type", foreground: "0a7a50" },
-      { token: "support.function", foreground: "8a6000" },
-      { token: "constant", foreground: "7a00aa" },
-      { token: "string", foreground: "1a7040" },
-      { token: "number", foreground: "1a5abf" },
-      { token: "number.float", foreground: "1a5abf" },
-      { token: "comment", foreground: "8899aa", fontStyle: "italic" },
-      { token: "operator", foreground: "556677" },
-      { token: "identifier", foreground: "1a2232" },
-      { token: "delimiter", foreground: "445566" },
-    ],
-    colors: {
-      "editor.background": "#f0f4f8",
-      "editor.foreground": "#1a2232",
-      "editor.lineHighlightBackground": "#e4e9f0",
-      "editor.selectionBackground": "#c8d8f0",
-      "editorLineNumber.foreground": "#a8b4c8",
-      "editorLineNumber.activeForeground": "#3a4f6a",
-      "editorGutter.background": "#f0f4f8",
-      "editorCursor.foreground": "#e85a1a",
-      "editor.findMatchBackground": "#e85a1a44",
-      "editorHoverWidget.background": "#e4e9f0",
-      "editorHoverWidget.border": "#d93050",
-    },
-  });
+  registerVisuAlgThemes(monaco);
 
+  // monaco.editor.setTheme(initialTheme === "light" ? "visualg-light" : "visualg-dark");
   monaco.editor.setTheme(initialTheme === "light" ? "visualg-light" : "visualg-dark");
 }
 
 function formatFnSignature(fn: CompletionFunction): string {
-  const params = fn.params
-    .map((p) => `${p.isRef ? "var " : ""}${p.name}: ${p.type}`)
-    .join(", ");
+  const params = fn.params.map((p) => `${p.isRef ? "var " : ""}${p.name}: ${p.type}`).join(", ");
   const ret = fn.kind === "funcao" ? `: ${fn.returnType}` : "";
   return `${fn.name}(${params})${ret}`;
 }
