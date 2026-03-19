@@ -37,7 +37,7 @@ declare global {
 
       readFolderTree: (folderPath: string) => Promise<{
         success: boolean;
-        tree?: import("../panels/Explorer/Explorer").FileNode[];
+        tree?: FileNode[];
         error?: string;
       }>;
 
