@@ -43,6 +43,11 @@ declare global {
         canceled?: boolean;
         error?: string;
       }>;
+      readFolderTree: (folderPath: string) => Promise<{
+        success: boolean;
+        tree?: import("../panels/Explorer/Explorer").FileNode[];
+        error?: string;
+      }>;
     };
   }
 }

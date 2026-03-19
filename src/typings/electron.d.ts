@@ -35,6 +35,12 @@ declare global {
         error?: string;
       }>;
 
+      readFolderTree: (folderPath: string) => Promise<{
+        success: boolean;
+        tree?: import("../panels/Explorer/Explorer").FileNode[];
+        error?: string;
+      }>;
+
       readFile: (filePath: string) => Promise<{
         success: boolean;
         filePath?: string;

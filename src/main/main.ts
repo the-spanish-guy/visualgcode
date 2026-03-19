@@ -163,6 +163,16 @@ ipcMain.handle("open-folder-dialog", async (_event) => {
   return { success: true, folderPath, folderName, tree };
 });
 
+// Relê a árvore de um diretório já aberto (para atualizar o Explorer)
+ipcMain.handle("read-folder-tree", async (_event, folderPath: string) => {
+  try {
+    const tree = readDirRecursive(folderPath);
+    return { success: true, tree };
+  } catch (err) {
+    return { success: false, error: (err as Error).message };
+  }
+});
+
 // Lê arquivo ao clicar no explorador
 ipcMain.handle("read-file", async (_event, filePath: string) => {
   try {

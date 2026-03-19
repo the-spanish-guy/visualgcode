@@ -14,6 +14,9 @@ contextBridge.exposeInMainWorld("electronAPI", {
   // Abre diálogo para escolher pasta de trabalho
   openFolderDialog: () => ipcRenderer.invoke("open-folder-dialog"),
 
+  // Relê a árvore de um diretório já aberto
+  readFolderTree: (folderPath: string) => ipcRenderer.invoke("read-folder-tree", folderPath),
+
   // Lê arquivo ao clicar no explorador
   readFile: (filePath: string) => ipcRenderer.invoke("read-file", filePath),
 });

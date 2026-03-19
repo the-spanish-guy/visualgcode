@@ -1,20 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CancelSignal, type VarSnapshot } from "../interpreter/Evaluator";
 import type { StaticWarning } from "../interpreter/StaticAnalyzer";
-import CallStack from "./panels/CallStack/CallStack";
-import Editor, { type CompletionVar, type EditorHandle } from "./panels/Editor/Editor";
-import Explorer, { type FileNode } from "./panels/Explorer/Explorer";
+import styles from "./App.module.css";
 import StatusBar from "./components/StatusBar/StatusBar";
 import TabBar from "./components/TabBar/TabBar";
-import Terminal from "./panels/Terminal/Terminal";
 import Toolbar from "./components/Toolbar/Toolbar";
-import VariablesPanel from "./panels/VariablesPanel/VariablesPanel";
+import { useTabs } from "./hooks/useTabs";
 import { DebugController, type DebugMode } from "./lib/DebugController";
+import { runCode } from "./lib/runner";
+import CallStack from "./panels/CallStack/CallStack";
+import Editor, { type CompletionVar, type EditorHandle } from "./panels/Editor/Editor";
 import { parseFunctions } from "./panels/Editor/parseFunctions";
 import { parseConsts, parseVars } from "./panels/Editor/parseVars";
-import { runCode } from "./lib/runner";
-import styles from "./App.module.css";
-import { useTabs } from "./hooks/useTabs";
+import Explorer, { type FileNode } from "./panels/Explorer/Explorer";
+import Terminal from "./panels/Terminal/Terminal";
+import VariablesPanel from "./panels/VariablesPanel/VariablesPanel";
 
 const FONT_SIZE_KEY = "visualg:fontSize";
 const FONT_SIZE_MIN = 10;
@@ -97,18 +97,30 @@ export default function App() {
 
   const editorRef = useRef<EditorHandle>(null);
 
+  const refreshWorkspaceTree = useCallback(async () => {
+    if (!workspace) return;
+    const result = await window.electronAPI.readFolderTree(workspace.folderPath);
+    if (result.success && result.tree) {
+      setWorkspace((prev) => prev && { ...prev, tree: result.tree! });
+    }
+  }, [workspace]);
+
   const handleSave = useCallback(async () => {
     if (!activeTab.filePath) return handleSaveAs();
     const result = await window.electronAPI.saveFile(activeTab.filePath, activeTab.code);
-    if (result.success) markSaved(activeId, activeTab.fileName, activeTab.filePath);
-  }, [activeTab, activeId, markSaved]);
+    if (result.success) {
+      markSaved(activeId, activeTab.fileName, activeTab.filePath);
+      refreshWorkspaceTree();
+    }
+  }, [activeTab, activeId, markSaved, refreshWorkspaceTree]);
 
   const handleSaveAs = useCallback(async () => {
     const result = await window.electronAPI.saveFileAs(activeTab.code);
     if (!result.success || result.canceled) return;
     const fileName = result.filePath!.split(/[\\/]/).pop()!;
     markSaved(activeId, fileName, result.filePath!);
-  }, [activeTab.code, activeId, markSaved]);
+    refreshWorkspaceTree();
+  }, [activeTab.code, activeId, markSaved, refreshWorkspaceTree]);
 
   const handleOpen = useCallback(async () => {
     const result = await window.electronAPI.openFileDialog();
