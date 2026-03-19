@@ -27,6 +27,7 @@
     "productName": "VisuAlg IDE",
     "compression": "maximum",
     "removePackageScripts": true,
+    "electronLanguages": ["pt-BR", "en-US"],
     "directories": {
       "output": "release"
     },
@@ -37,7 +38,8 @@
       "!node_modules/**/{test,tests,__tests__,spec,specs}/**",
       "!node_modules/**/*.{ts,map,md}",
       "!**/.git/**",
-      "!**/*.d.ts"
+      "!**/*.d.ts",
+      "!node_modules/@biomejs/**"
     ],
     "win": {
       "target": [
