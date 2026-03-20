@@ -10,8 +10,7 @@ import { DebugController, type DebugMode } from "./lib/DebugController";
 import { runCode } from "./lib/runner";
 import CallStack from "./panels/CallStack/CallStack";
 import Editor, { type CompletionVar, type EditorHandle } from "./panels/Editor/Editor";
-import { parseFunctions } from "./panels/Editor/parseFunctions";
-import { parseConsts, parseVars } from "./panels/Editor/parseVars";
+import { extractFromAST } from "./panels/Editor/extractFromAST";
 import Explorer, { type FileNode } from "./panels/Explorer/Explorer";
 import Terminal from "./panels/Terminal/Terminal";
 import VariablesPanel from "./panels/VariablesPanel/VariablesPanel";
@@ -495,11 +494,7 @@ export default function App() {
     setTheme((prev) => (prev === "dark" ? "light" : "dark"));
   }, [theme]);
 
-  const completionVars: CompletionVar[] = [
-    ...parseVars(activeTab.code),
-    ...parseConsts(activeTab.code),
-  ];
-  const completionFunctions = parseFunctions(activeTab.code);
+  const { vars: completionVars, functions: completionFunctions } = extractFromAST(activeTab.code);
   const isDebugging = debugMode === "debugging" || debugMode === "paused" || debugMode === "timer";
 
   return (

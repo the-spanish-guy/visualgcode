@@ -3,7 +3,7 @@ import type * as Monaco from "monaco-editor";
 import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 import type { StaticWarning } from "../../../interpreter/StaticAnalyzer";
 import styles from "./Editor.module.css";
-import type { CompletionFunction } from "./parseFunctions";
+import type { CompletionFunction } from "./extractFromAST";
 import { snippets } from "./snippets";
 import { registerVisuAlgThemes } from "./themes";
 
@@ -515,8 +515,61 @@ function registerVisuAlgLanguage(monaco: typeof Monaco, initialTheme: "dark" | "
         range,
       }));
 
+      // Tipos primitivos
+      const typeSuggestions: Monaco.languages.CompletionItem[] = [
+        "inteiro", "real", "caractere", "logico",
+      ].map((t) => ({
+        label: t,
+        kind: monaco.languages.CompletionItemKind.TypeParameter,
+        insertText: t,
+        detail: "tipo",
+        range,
+      }));
+
+      // Operadores-palavra
+      const operatorSuggestions: Monaco.languages.CompletionItem[] = [
+        "e", "ou", "nao", "div", "mod",
+      ].map((op) => ({
+        label: op,
+        kind: monaco.languages.CompletionItemKind.Operator,
+        insertText: op,
+        detail: "operador",
+        range,
+      }));
+
+      // Constantes literais
+      const constantSuggestions: Monaco.languages.CompletionItem[] = [
+        "verdadeiro", "falso",
+      ].map((c) => ({
+        label: c,
+        kind: monaco.languages.CompletionItemKind.Constant,
+        insertText: c,
+        detail: "constante",
+        range,
+      }));
+
+      // Funções built-in
+      const builtinSuggestions: Monaco.languages.CompletionItem[] = Object.entries(
+        BUILTIN_SIGNATURES,
+      ).map(([name, sig]) => ({
+        label: name,
+        kind: monaco.languages.CompletionItemKind.Function,
+        insertText: name,
+        detail: `(${sig.params.join(", ")}): ${sig.returnType}`,
+        range,
+      }));
+
       return {
-        suggestions: [...localSnippets, ...varSuggestions, ...fnSuggestions, ...keywordSuggestions],
+        suggestions: [
+          ...localSnippets,
+          ...varSuggestions,
+          ...fnSuggestions,
+          ...keywordSuggestions,
+          ...typeSuggestions,
+          ...operatorSuggestions,
+          ...constantSuggestions,
+          ...builtinSuggestions,
+        ],
       };
     },
   });
