@@ -1,78 +1,35 @@
 import MonacoEditor, { type OnMount } from "@monaco-editor/react";
 import type * as Monaco from "monaco-editor";
-import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
-import type { StaticWarning } from "../../../interpreter/StaticAnalyzer";
+import { useEffect, useRef } from "react";
+import { useDebugStore } from "../../store/debugStore";
+import { useEditorStore } from "../../store/editorStore";
+import { useExecutionStore } from "../../store/executionStore";
+import { useTabsStore } from "../../store/tabsStore";
 import styles from "./Editor.module.css";
-import type { CompletionFunction } from "./extractFromAST";
+import type { CompletionFunction, CompletionVar } from "./extractFromAST";
+import { extractFromAST } from "./extractFromAST";
 import { snippets } from "./snippets";
 import { registerVisuAlgThemes } from "./themes";
-
-export interface TabKey {
-  id: string;
-  initialContent: string;
-}
-
-export interface CompletionVar {
-  name: string;
-  type: string;
-}
-
-export interface EditorHandle {
-  goToLine: (line: number) => void;
-}
-
-export type { CompletionFunction };
 
 // Refs globais — lidas pelo completion/signature provider que é registrado uma única vez
 const completionVarsRef = { current: [] as CompletionVar[] };
 const completionFunctionsRef = { current: [] as CompletionFunction[] };
 
-interface Props {
-  tabKey: TabKey;
-  errors: string[];
-  fontSize: number;
-  theme: "dark" | "light";
-  breakpoints: Set<number>;
-  warnings: StaticWarning[];
-  currentLine: number | null;
-  onChange: (val: string) => void;
-  completionVars: CompletionVar[];
-  completionFunctions: CompletionFunction[];
-  onBreakpointsChange: (lines: number[]) => void;
-  onCursorChange: (pos: { line: number; col: number }) => void;
-}
+export default function Editor() {
+  const theme = useEditorStore((s) => s.theme);
+  const fontSize = useEditorStore((s) => s.fontSize);
+  const errors = useExecutionStore((s) => s.errors);
+  const warnings = useExecutionStore((s) => s.warnings);
+  const currentLine = useDebugStore((s) => s.currentLine);
+  const { tabs, activeId } = useTabsStore();
 
-const Editor = forwardRef<EditorHandle, Props>(function Editor(
-  {
-    theme,
-    tabKey,
-    errors,
-    warnings,
-    fontSize,
-    currentLine,
-    breakpoints,
-    completionVars,
-    completionFunctions,
-    onChange,
-    onCursorChange,
-    onBreakpointsChange,
-  }: Props,
-  ref,
-) {
-  useImperativeHandle(ref, () => ({
-    goToLine(line: number) {
-      const editor = editorRef.current;
-      if (!editor) return;
-      editor.revealLineInCenter(line);
-      editor.setPosition({ lineNumber: line, column: 1 });
-      editor.focus();
-    },
-  }));
+  const activeTab = tabs.find((t) => t.id === activeId) ?? tabs[0];
+  const tabId = activeTab.id;
+  const { vars: completionVars, functions: completionFunctions } = extractFromAST(activeTab.code);
 
   // Atualiza refs globais a cada render — providers sempre lêem valor atual
   completionVarsRef.current = completionVars;
   completionFunctionsRef.current = completionFunctions;
-  const { id: tabId, initialContent } = tabKey;
 
   const editorRef = useRef<Monaco.editor.IStandaloneCodeEditor | null>(null);
   const monacoRef = useRef<typeof Monaco | null>(null);
@@ -80,17 +37,11 @@ const Editor = forwardRef<EditorHandle, Props>(function Editor(
   const bpDecorations = useRef<Monaco.editor.IEditorDecorationsCollection | null>(null);
   const models = useRef<Map<string, Monaco.editor.ITextModel>>(new Map());
 
-  const onChangeRef = useRef(onChange);
-  const onCursorChangeRef = useRef(onCursorChange);
-  const onBreakpointsChangeRef = useRef(onBreakpointsChange);
-  const breakpointsRef = useRef(breakpoints);
-  onChangeRef.current = onChange;
-  onCursorChangeRef.current = onCursorChange;
-  onBreakpointsChangeRef.current = onBreakpointsChange;
+  const activeIdRef = useRef(tabId);
+  activeIdRef.current = tabId;
 
-  useEffect(() => {
-    breakpointsRef.current = breakpoints;
-  }, [breakpoints]);
+  const breakpointsRef = useRef(activeTab.breakpoints);
+  breakpointsRef.current = activeTab.breakpoints;
 
   // Suprime onChange durante operações internas do Monaco
   const suppressChange = useRef(false);
@@ -106,6 +57,7 @@ const Editor = forwardRef<EditorHandle, Props>(function Editor(
     const monaco = monacoRef.current;
     if (!editor || !monaco) return;
 
+    const initialContent = activeTab.code;
     let model = models.current.get(tabId);
     if (!model) {
       const uri = monaco.Uri.parse(`inmemory:///${tabId}.alg`);
@@ -138,6 +90,7 @@ const Editor = forwardRef<EditorHandle, Props>(function Editor(
 
     registerVisuAlgLanguage(monaco, theme);
 
+    const initialContent = activeTab.code;
     const uri = monaco.Uri.parse(`inmemory:///${tabId}.alg`);
     const existing = monaco.editor.getModel(uri);
 
@@ -150,12 +103,25 @@ const Editor = forwardRef<EditorHandle, Props>(function Editor(
     decorations.current = editor.createDecorationsCollection([]);
     bpDecorations.current = editor.createDecorationsCollection([]);
 
+    // Registra handle imperativo no store
+    useEditorStore.getState().setEditorHandle({
+      goToLine(line: number) {
+        editor.revealLineInCenter(line);
+        editor.setPosition({ lineNumber: line, column: 1 });
+        editor.focus();
+      },
+    });
+
     editor.onDidChangeCursorPosition((e) => {
-      onCursorChangeRef.current({ line: e.position.lineNumber, col: e.position.column });
+      useEditorStore
+        .getState()
+        .setCursorInfo({ line: e.position.lineNumber, col: e.position.column });
     });
 
     editor.onDidChangeModelContent(() => {
-      if (!suppressChange.current) onChangeRef.current(editor.getValue());
+      if (!suppressChange.current) {
+        useTabsStore.getState().updateCode(activeIdRef.current, editor.getValue());
+      }
     });
 
     editor.onMouseDown((e) => {
@@ -170,7 +136,7 @@ const Editor = forwardRef<EditorHandle, Props>(function Editor(
         if (updated.has(line)) updated.delete(line);
         else updated.add(line);
 
-        onBreakpointsChangeRef.current(Array.from(updated));
+        useTabsStore.getState().updateBreakpoints(activeIdRef.current, Array.from(updated));
       }
     });
 
@@ -195,8 +161,7 @@ const Editor = forwardRef<EditorHandle, Props>(function Editor(
           isWholeLine: true,
           className: "debug-current-line",
           glyphMarginClassName: "debug-arrow",
-          overviewRulerLane: monaco.editor.OverviewRulerLane.Left,
-          overviewRulerColor: "#ff6b2b",
+          overviewRuler: { position: monaco.editor.OverviewRulerLane.Left, color: "#ff6b2b" },
         },
       },
     ]);
@@ -211,17 +176,16 @@ const Editor = forwardRef<EditorHandle, Props>(function Editor(
     if (!editor || !monaco || !bpDecorations.current) return;
 
     bpDecorations.current.set(
-      Array.from(breakpoints).map((line) => ({
+      Array.from(activeTab.breakpoints).map((line) => ({
         range: new monaco.Range(line, 1, line, 1),
         options: {
           isWholeLine: false,
           glyphMarginClassName: "debug-breakpoint",
-          overviewRulerLane: monaco.editor.OverviewRulerLane.Left,
-          overviewRulerColor: "#ff4d6a",
+          overviewRuler: { position: monaco.editor.OverviewRulerLane.Left, color: "#ff4d6a" },
         },
       })),
     );
-  }, [breakpoints]);
+  }, [activeTab.breakpoints]);
 
   // Erros aparecem como markers
   useEffect(() => {
@@ -302,9 +266,7 @@ const Editor = forwardRef<EditorHandle, Props>(function Editor(
       />
     </div>
   );
-});
-
-export default Editor;
+}
 
 /**
  * Registro da linguagem no monaco editor
@@ -517,7 +479,10 @@ function registerVisuAlgLanguage(monaco: typeof Monaco, initialTheme: "dark" | "
 
       // Tipos primitivos
       const typeSuggestions: Monaco.languages.CompletionItem[] = [
-        "inteiro", "real", "caractere", "logico",
+        "inteiro",
+        "real",
+        "caractere",
+        "logico",
       ].map((t) => ({
         label: t,
         kind: monaco.languages.CompletionItemKind.TypeParameter,
@@ -528,7 +493,11 @@ function registerVisuAlgLanguage(monaco: typeof Monaco, initialTheme: "dark" | "
 
       // Operadores-palavra
       const operatorSuggestions: Monaco.languages.CompletionItem[] = [
-        "e", "ou", "nao", "div", "mod",
+        "e",
+        "ou",
+        "nao",
+        "div",
+        "mod",
       ].map((op) => ({
         label: op,
         kind: monaco.languages.CompletionItemKind.Operator,
@@ -538,15 +507,15 @@ function registerVisuAlgLanguage(monaco: typeof Monaco, initialTheme: "dark" | "
       }));
 
       // Constantes literais
-      const constantSuggestions: Monaco.languages.CompletionItem[] = [
-        "verdadeiro", "falso",
-      ].map((c) => ({
-        label: c,
-        kind: monaco.languages.CompletionItemKind.Constant,
-        insertText: c,
-        detail: "constante",
-        range,
-      }));
+      const constantSuggestions: Monaco.languages.CompletionItem[] = ["verdadeiro", "falso"].map(
+        (c) => ({
+          label: c,
+          kind: monaco.languages.CompletionItemKind.Constant,
+          insertText: c,
+          detail: "constante",
+          range,
+        }),
+      );
 
       // Funções built-in
       const builtinSuggestions: Monaco.languages.CompletionItem[] = Object.entries(
@@ -681,7 +650,6 @@ function registerVisuAlgLanguage(monaco: typeof Monaco, initialTheme: "dark" | "
 
   registerVisuAlgThemes(monaco);
 
-  // monaco.editor.setTheme(initialTheme === "light" ? "visualg-light" : "visualg-dark");
   monaco.editor.setTheme(initialTheme === "light" ? "visualg-light" : "visualg-dark");
 }
 

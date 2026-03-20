@@ -1,8 +1,14 @@
 import { act, renderHook } from "@testing-library/react";
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { createTab, useTabsStore } from "../store/tabsStore";
 import { useTabs } from "./useTabs";
 
 describe("useTabs", () => {
+  beforeEach(() => {
+    const freshTab = createTab();
+    useTabsStore.setState({ tabs: [freshTab], activeId: freshTab.id });
+  });
+
   describe("estado inicial", () => {
     test("inicia com 1 aba", () => {
       const { result } = renderHook(() => useTabs());

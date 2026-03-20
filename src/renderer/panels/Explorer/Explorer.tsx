@@ -1,4 +1,6 @@
 import { useCallback, useState } from "react";
+import { useTabsStore } from "../../store/tabsStore";
+import { useWorkspaceStore } from "../../store/workspaceStore";
 import styles from "./Explorer.module.css";
 
 export interface FileNode {
@@ -6,13 +8,6 @@ export interface FileNode {
   path: string;
   isDir: boolean;
   children?: FileNode[];
-}
-
-interface Props {
-  folderName: string;
-  tree: FileNode[];
-  activeFilePath: string | null;
-  onFileOpen: (filePath: string) => void;
 }
 
 function TreeNode({
@@ -80,20 +75,27 @@ function TreeNode({
   );
 }
 
-export default function Explorer({ folderName, tree, activeFilePath, onFileOpen }: Props) {
+export default function Explorer() {
+  const workspace = useWorkspaceStore((s) => s.workspace);
+  const handleExplorerFileOpen = useWorkspaceStore((s) => s.handleExplorerFileOpen);
+  const { tabs, activeId } = useTabsStore();
+  const activeTab = tabs.find((t) => t.id === activeId) ?? tabs[0];
+
+  if (!workspace) return null;
+
   return (
     <div className={styles.explorer}>
       <div className={styles.tree}>
-        {tree.map((node) => (
+        {workspace.tree.map((node) => (
           <TreeNode
             key={node.path}
             node={node}
             depth={0}
-            activeFilePath={activeFilePath}
-            onFileOpen={onFileOpen}
+            activeFilePath={activeTab.filePath}
+            onFileOpen={handleExplorerFileOpen}
           />
         ))}
-        {tree.length === 0 && (
+        {workspace.tree.length === 0 && (
           <div className={styles.empty} style={{ paddingLeft: "12px" }}>
             Pasta vazia
           </div>

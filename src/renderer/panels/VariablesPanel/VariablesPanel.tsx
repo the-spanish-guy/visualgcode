@@ -1,11 +1,7 @@
 import { useRef } from "react";
 import type { VarSnapshot } from "../../../interpreter/Evaluator";
+import { useDebugStore } from "../../store/debugStore";
 import styles from "./VariablesPanel.module.css";
-
-interface Props {
-  variables: VarSnapshot[];
-  isVisible: boolean;
-}
 
 const TYPE_COLORS: Record<string, string> = {
   inteiro: "#79b8ff",
@@ -25,14 +21,11 @@ interface VarInfo extends VarSnapshot {
   defaultValue: string;
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
 function isVectorType(type: string): boolean {
   return type.startsWith("vetor[");
 }
 
 function is2DType(type: string): boolean {
-  // "vetor[1..3, 1..4] de inteiro" contém vírgula antes do ']'
   return /vetor\[.*,.*\]/.test(type);
 }
 
@@ -54,7 +47,7 @@ function formatVectorValue(value: string): string {
       return `[${arr.data.map((v) => JSON.stringify(v)).join(", ")}]`;
     }
   } catch {
-    // fallback: retorna valor original
+    // fallback
   }
   return value;
 }
@@ -63,9 +56,11 @@ function vectorColor(type: string): string {
   return is2DType(type) ? "#ffb86c" : "#ff9f68";
 }
 
-// ─── Componente ───────────────────────────────────────────────────────────────
+export default function VariablesPanel() {
+  const variables = useDebugStore((s) => s.variables);
+  const debugMode = useDebugStore((s) => s.debugMode);
+  const isVisible = debugMode === "debugging" || debugMode === "paused" || debugMode === "timer";
 
-export default function VariablesPanel({ variables, isVisible }: Props) {
   const varInfo = useRef<Map<string, VarInfo>>(new Map());
 
   if (!isVisible) return null;
@@ -83,7 +78,6 @@ export default function VariablesPanel({ variables, isVisible }: Props) {
     return displayValue.toLowerCase() !== defaultValue.toLowerCase();
   };
 
-  // Agrupa: escalares primeiro, depois vetores 1D, depois matrizes 2D
   const scalars = variables.filter((v) => !isVectorType(v.type));
   const vectors = variables.filter((v) => isVectorType(v.type) && !is2DType(v.type));
   const matrices = variables.filter((v) => is2DType(v.type));

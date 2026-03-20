@@ -1,34 +1,20 @@
-import type { Tab } from "../../hooks/useTabs";
+import { useTabsStore } from "../../store/tabsStore";
+import { useWorkspaceStore } from "../../store/workspaceStore";
 import styles from "./TabBar.module.css";
 
-interface Props {
-  tabs: Tab[];
-  activeId: string;
-  workspaceName: string | null;
-  explorerOpen: boolean;
-  onNew: () => void;
-  onClose: (id: string) => void;
-  onSwitch: (id: string) => void;
-  onToggleExplorer: () => void;
-}
+export default function TabBar() {
+  const { tabs, activeId, newTab, closeTab, switchTab } = useTabsStore();
+  const workspace = useWorkspaceStore((s) => s.workspace);
+  const explorerOpen = useWorkspaceStore((s) => s.explorerOpen);
+  const handleToggleExplorer = useWorkspaceStore((s) => s.handleToggleExplorer);
 
-export default function TabBar({
-  tabs,
-  activeId,
-  workspaceName,
-  explorerOpen,
-  onNew,
-  onClose,
-  onSwitch,
-  onToggleExplorer,
-}: Props) {
   return (
     <div className={styles.bar}>
       <button
         className={`${styles.explorerToggle} ${explorerOpen ? styles.explorerOpen : ""}`}
-        onClick={onToggleExplorer}
+        onClick={handleToggleExplorer}
         title={
-          workspaceName
+          workspace
             ? explorerOpen
               ? "Fechar explorador"
               : "Abrir explorador"
@@ -36,7 +22,7 @@ export default function TabBar({
         }
       >
         <span className={styles.explorerIcon}>⌂</span>
-        {workspaceName && <span className={styles.explorerName}>{workspaceName}</span>}
+        {workspace && <span className={styles.explorerName}>{workspace.folderName}</span>}
       </button>
 
       <div className={styles.tabs}>
@@ -44,7 +30,7 @@ export default function TabBar({
           <div
             key={tab.id}
             className={`${styles.tab} ${tab.id === activeId ? styles.active : ""}`}
-            onClick={() => onSwitch(tab.id)}
+            onClick={() => switchTab(tab.id)}
           >
             {tab.isDirty && <span className={styles.dirty} title="Alterações não salvas" />}
             <span className={styles.name}>{tab.fileName}</span>
@@ -52,7 +38,7 @@ export default function TabBar({
               className={styles.close}
               onClick={(e) => {
                 e.stopPropagation();
-                onClose(tab.id);
+                closeTab(tab.id);
               }}
               title="Fechar aba"
             >
@@ -62,7 +48,7 @@ export default function TabBar({
         ))}
       </div>
 
-      <button className={styles.newTab} onClick={onNew} title="Nova aba (Ctrl+T)">
+      <button className={styles.newTab} onClick={newTab} title="Nova aba (Ctrl+T)">
         +
       </button>
     </div>

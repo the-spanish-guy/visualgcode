@@ -1,36 +1,24 @@
 import { useEffect, useRef, useState } from "react";
-import type { VarSnapshot } from "../../../interpreter/Evaluator";
-import type { StaticWarning } from "../../../interpreter/StaticAnalyzer";
 import { explainError } from "../../lib/explainError";
+import { useDebugStore } from "../../store/debugStore";
+import { useEditorStore } from "../../store/editorStore";
+import { useExecutionStore } from "../../store/executionStore";
 import ProblemsPanel from "./ProblemsPanel";
 import styles from "./Terminal.module.css";
 import TraceTable from "./TraceTable";
 
-interface Props {
-  lines: string[];
-  errors: string[];
-  warnings: StaticWarning[];
-  isRunning: boolean;
-  waitingInput: boolean;
-  traceSnapshots: VarSnapshot[][];
-  onClear: () => void;
-  onClearTrace: () => void;
-  onInput: (val: string) => void;
-  onProblemClick: (line: number) => void;
-}
+export default function Terminal() {
+  const lines = useExecutionStore((s) => s.output.lines);
+  const errors = useExecutionStore((s) => s.errors);
+  const warnings = useExecutionStore((s) => s.warnings);
+  const isRunning = useExecutionStore((s) => s.isRunning);
+  const waitingInput = useExecutionStore((s) => s.waitingInput);
+  const handleTerminalInput = useExecutionStore((s) => s.handleTerminalInput);
+  const handleClear = useExecutionStore((s) => s.handleClear);
+  const traceSnapshots = useDebugStore((s) => s.traceSnapshots);
+  const clearTraceSnapshots = useDebugStore((s) => s.clearTraceSnapshots);
+  const goToLine = useEditorStore((s) => s.goToLine);
 
-export default function Terminal({
-  lines,
-  errors,
-  warnings,
-  isRunning,
-  waitingInput,
-  traceSnapshots,
-  onInput,
-  onClear,
-  onClearTrace,
-  onProblemClick,
-}: Props) {
   const [activeTab, setActiveTab] = useState<"saida" | "rastreamento" | "problemas">("saida");
   const [inputVal, setInputVal] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -38,12 +26,10 @@ export default function Terminal({
 
   const problemCount = errors.length + warnings.length;
 
-  // Auto-scroll pra baixo
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [lines]);
 
-  // Foca input quando aguardando
   useEffect(() => {
     if (waitingInput) inputRef.current?.focus();
   }, [waitingInput]);
@@ -52,14 +38,13 @@ export default function Terminal({
     if (traceSnapshots.length === 1) setActiveTab("rastreamento");
   }, [traceSnapshots.length]);
 
-  // Muda para problemas quando surgem erros/warnings (só se não estiver rodando)
   useEffect(() => {
     if (problemCount > 0 && !isRunning) setActiveTab("problemas");
   }, [problemCount]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && waitingInput) {
-      onInput(inputVal);
+      handleTerminalInput(inputVal);
       setInputVal("");
     }
   };
@@ -108,7 +93,7 @@ export default function Terminal({
             </span>
           )}
           {activeTab === "saida" && (
-            <button className={styles.clearBtn} onClick={onClear} title="Limpar saída">
+            <button className={styles.clearBtn} onClick={handleClear} title="Limpar saída">
               ✕
             </button>
           )}
@@ -159,11 +144,11 @@ export default function Terminal({
       )}
 
       {activeTab === "rastreamento" && (
-        <TraceTable snapshots={traceSnapshots} onClear={onClearTrace} />
+        <TraceTable snapshots={traceSnapshots} onClear={clearTraceSnapshots} />
       )}
 
       {activeTab === "problemas" && (
-        <ProblemsPanel errors={errors} warnings={warnings} onProblemClick={onProblemClick} />
+        <ProblemsPanel errors={errors} warnings={warnings} onProblemClick={goToLine} />
       )}
     </div>
   );

@@ -1,51 +1,34 @@
-import type { DebugMode } from "../../lib/DebugController";
+import { useDebugStore } from "../../store/debugStore";
+import { useEditorStore } from "../../store/editorStore";
+import { useExecutionStore } from "../../store/executionStore";
+import { useTabsStore } from "../../store/tabsStore";
+import { useWorkspaceStore } from "../../store/workspaceStore";
 import styles from "./Toolbar.module.css";
 
-interface Props {
-  fileName: string;
-  isDirty: boolean;
-  isRunning: boolean;
-  timerDelay: number;
-  debugMode: DebugMode;
-  timerPaused: boolean;
-  theme: "dark" | "light";
-  onNew: () => void;
-  onRun: () => void;
-  onOpen: () => void;
-  onSave: () => void;
-  onStep: () => void;
-  onStop: () => void;
-  onDebug: () => void;
-  onTimer: () => void;
-  onSaveAs: () => void;
-  onContinue: () => void;
-  onOpenFolder: () => void;
-  onThemeToggle: () => void;
-  onTimerDelayChange: (delay: number) => void;
-}
+export default function Toolbar() {
+  const theme = useEditorStore((s) => s.theme);
+  const toggleTheme = useEditorStore((s) => s.toggleTheme);
+  const isRunning = useExecutionStore((s) => s.isRunning);
+  const handleRun = useExecutionStore((s) => s.handleRun);
+  const handleStop = useExecutionStore((s) => s.handleStop);
+  const handleDebug = useExecutionStore((s) => s.handleDebug);
+  const handleTimer = useExecutionStore((s) => s.handleTimer);
+  const handleStep = useExecutionStore((s) => s.handleStep);
+  const handleContinue = useExecutionStore((s) => s.handleContinue);
+  const debugMode = useDebugStore((s) => s.debugMode);
+  const timerDelay = useDebugStore((s) => s.timerDelay);
+  const timerPaused = useDebugStore((s) => s.timerPaused);
+  const setTimerDelay = useDebugStore((s) => s.setTimerDelay);
+  const { tabs, activeId } = useTabsStore();
+  const activeTab = tabs.find((t) => t.id === activeId) ?? tabs[0];
+  const { newTab, handleSave, handleSaveAs, handleOpen, handleOpenFolder } = {
+    newTab: useTabsStore((s) => s.newTab),
+    handleSave: useWorkspaceStore((s) => s.handleSave),
+    handleSaveAs: useWorkspaceStore((s) => s.handleSaveAs),
+    handleOpen: useWorkspaceStore((s) => s.handleOpen),
+    handleOpenFolder: useWorkspaceStore((s) => s.handleOpenFolder),
+  };
 
-export default function Toolbar({
-  theme,
-  isDirty,
-  fileName,
-  isRunning,
-  debugMode,
-  timerDelay,
-  timerPaused,
-  onNew,
-  onRun,
-  onOpen,
-  onStop,
-  onStep,
-  onSave,
-  onSaveAs,
-  onDebug,
-  onTimer,
-  onContinue,
-  onOpenFolder,
-  onThemeToggle,
-  onTimerDelayChange,
-}: Props) {
   const isDebugging = debugMode === "debugging" || debugMode === "paused";
   const isTimer = debugMode === "timer";
   const isPaused = debugMode === "paused";
@@ -63,7 +46,7 @@ export default function Toolbar({
 
       <div className={styles.right}>
         <div className={styles.fileActions}>
-          <button className={styles.iconBtn} onClick={onNew} title="Novo (Ctrl+N)">
+          <button className={styles.iconBtn} onClick={newTab} title="Novo (Ctrl+N)">
             <svg
               width="14"
               height="14"
@@ -79,7 +62,7 @@ export default function Toolbar({
             </svg>
           </button>
 
-          <button className={styles.iconBtn} onClick={onOpen} title="Abrir arquivo (Ctrl+O)">
+          <button className={styles.iconBtn} onClick={handleOpen} title="Abrir arquivo (Ctrl+O)">
             <svg
               width="14"
               height="14"
@@ -93,7 +76,11 @@ export default function Toolbar({
             </svg>
           </button>
 
-          <button className={styles.iconBtn} onClick={onOpenFolder} title="Abrir pasta de trabalho">
+          <button
+            className={styles.iconBtn}
+            onClick={handleOpenFolder}
+            title="Abrir pasta de trabalho"
+          >
             <svg
               width="14"
               height="14"
@@ -107,8 +94,8 @@ export default function Toolbar({
           </button>
 
           <button
-            className={`${styles.iconBtn} ${isDirty ? styles.iconBtnDirty : ""}`}
-            onClick={onSave}
+            className={`${styles.iconBtn} ${activeTab.isDirty ? styles.iconBtnDirty : ""}`}
+            onClick={handleSave}
             title="Salvar (Ctrl+S)"
           >
             <svg
@@ -125,7 +112,11 @@ export default function Toolbar({
             </svg>
           </button>
 
-          <button className={styles.iconBtn} onClick={onSaveAs} title="Salvar como (Ctrl+Shift+S)">
+          <button
+            className={styles.iconBtn}
+            onClick={handleSaveAs}
+            title="Salvar como (Ctrl+Shift+S)"
+          >
             <svg
               width="14"
               height="14"
@@ -141,13 +132,13 @@ export default function Toolbar({
               <line x1="17" y1="11" x2="23" y2="11" />
             </svg>
           </button>
+
           <button
             className={styles.iconBtn}
-            onClick={onThemeToggle}
+            onClick={toggleTheme}
             title={theme === "dark" ? "Tema claro" : "Tema escuro"}
           >
             {theme === "dark" ? (
-              // Sol — clica para ir ao tema claro
               <svg
                 width="14"
                 height="14"
@@ -167,7 +158,6 @@ export default function Toolbar({
                 <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
               </svg>
             ) : (
-              // Lua — clica para ir ao tema escuro
               <svg
                 width="14"
                 height="14"
@@ -187,17 +177,17 @@ export default function Toolbar({
         <div className={styles.actions}>
           {idle && (
             <>
-              <button className={styles.btnRun} onClick={onRun} title="Executar (F5)">
+              <button className={styles.btnRun} onClick={handleRun} title="Executar (F5)">
                 <span className={styles.btnIcon}>▶</span>
                 Executar
               </button>
-              <button className={styles.btnDebug} onClick={onDebug} title="Debug (F8)">
+              <button className={styles.btnDebug} onClick={handleDebug} title="Debug (F8)">
                 <span className={styles.btnIcon}>⬡</span>
                 Debug
               </button>
               <button
                 className={styles.btnTimer}
-                onClick={onTimer}
+                onClick={handleTimer}
                 title="Executar com timer (Shift+F5)"
               >
                 <span className={styles.btnIcon}>⏱</span>
@@ -207,7 +197,7 @@ export default function Toolbar({
           )}
 
           {isRunning && !isDebugging && !isTimer && (
-            <button className={styles.btnStop} onClick={onStop} title="Parar (Esc)">
+            <button className={styles.btnStop} onClick={handleStop} title="Parar (Esc)">
               <span className={styles.btnIcon}>■</span>
               Parar
             </button>
@@ -217,7 +207,7 @@ export default function Toolbar({
             <>
               <button
                 className={styles.btnStep}
-                onClick={onStep}
+                onClick={handleStep}
                 disabled={!isPaused}
                 title="Próximo passo (F10)"
               >
@@ -226,14 +216,14 @@ export default function Toolbar({
               </button>
               <button
                 className={styles.btnContinue}
-                onClick={onContinue}
+                onClick={handleContinue}
                 disabled={!isPaused}
                 title="Continuar (F5)"
               >
                 <span className={styles.btnIcon}>▶▶</span>
                 Continuar
               </button>
-              <button className={styles.btnStop} onClick={onStop} title="Parar (Esc)">
+              <button className={styles.btnStop} onClick={handleStop} title="Parar (Esc)">
                 <span className={styles.btnIcon}>■</span>
                 Parar
               </button>
@@ -242,15 +232,19 @@ export default function Toolbar({
 
           {isTimer && (
             <>
-              {timerPaused && ( // ← usa timerPaused em vez de isPaused
+              {timerPaused && (
                 <>
-                  <button className={styles.btnStep} onClick={onStep} title="Próximo passo (F10)">
+                  <button
+                    className={styles.btnStep}
+                    onClick={handleStep}
+                    title="Próximo passo (F10)"
+                  >
                     <span className={styles.btnIcon}>↷</span>
                     Passo
                   </button>
                   <button
                     className={styles.btnContinue}
-                    onClick={onContinue}
+                    onClick={handleContinue}
                     title="Continuar timer (F5)"
                   >
                     <span className={styles.btnIcon}>▶▶</span>
@@ -258,7 +252,7 @@ export default function Toolbar({
                   </button>
                 </>
               )}
-              <button className={styles.btnStop} onClick={onStop} title="Parar (Esc)">
+              <button className={styles.btnStop} onClick={handleStop} title="Parar (Esc)">
                 <span className={styles.btnIcon}>■</span>
                 Parar
               </button>
@@ -278,7 +272,7 @@ export default function Toolbar({
                 step={100}
                 value={timerDelay}
                 disabled={isTimer}
-                onChange={(e) => onTimerDelayChange(Number(e.target.value))}
+                onChange={(e) => setTimerDelay(Number(e.target.value))}
                 className={styles.timerSlider}
                 title={`Delay do timer: ${timerDelay}ms`}
               />

@@ -5,6 +5,21 @@ if (typeof window !== "undefined") {
   // biome-ignore lint/suspicious/noExplicitAny: setup de teste
   (await import("@testing-library/jest-dom/vitest")) as any;
 
+  // jsdom não implementa matchMedia — editorStore usa na inicialização
+  Object.defineProperty(window, "matchMedia", {
+    writable: true,
+    value: vi.fn().mockImplementation((query: string) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })),
+  });
+
   // jsdom não implementa scrollIntoView — Terminal usa via bottomRef
   Element.prototype.scrollIntoView = vi.fn();
 

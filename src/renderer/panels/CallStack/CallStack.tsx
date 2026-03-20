@@ -1,11 +1,11 @@
+import { useDebugStore } from "../../store/debugStore";
 import styles from "./CallStack.module.css";
 
-interface Props {
-  callStack: string[];
-  isVisible: boolean;
-}
+export default function CallStack() {
+  const callStack = useDebugStore((s) => s.callStack);
+  const debugMode = useDebugStore((s) => s.debugMode);
+  const isVisible = debugMode === "debugging" || debugMode === "paused" || debugMode === "timer";
 
-export default function CallStack({ callStack, isVisible }: Props) {
   if (!isVisible) return null;
 
   return (
@@ -16,14 +16,12 @@ export default function CallStack({ callStack, isVisible }: Props) {
 
       <div className={styles.list}>
         {callStack.length === 0 ? (
-          // Escopo global — nenhuma função/procedimento ativo
           <div className={styles.frame}>
             <span className={styles.arrow}>▶</span>
             <span className={styles.name}>(programa principal)</span>
           </div>
         ) : (
           <>
-            {/* Exibe do mais interno ao mais externo */}
             {[...callStack].reverse().map((name, i) => (
               <div
                 key={`${name}-${i}`}
@@ -34,7 +32,6 @@ export default function CallStack({ callStack, isVisible }: Props) {
               </div>
             ))}
 
-            {/* Programa principal sempre aparece no fundo da pilha */}
             <div className={styles.frame}>
               <span className={styles.arrow}>·</span>
               <span className={`${styles.name} ${styles.muted}`}>(programa principal)</span>

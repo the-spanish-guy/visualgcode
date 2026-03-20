@@ -1,16 +1,15 @@
-import type { DebugMode } from "../../lib/DebugController";
+import { useDebugStore } from "../../store/debugStore";
+import { useEditorStore } from "../../store/editorStore";
+import { useExecutionStore } from "../../store/executionStore";
 import styles from "./StatusBar.module.css";
 
-interface Props {
-  line: number;
-  col: number;
-  isRunning: boolean;
-  errors: number;
-  warnings: number;
-  debugMode: DebugMode;
-}
+export default function StatusBar() {
+  const { line, col } = useEditorStore((s) => s.cursorInfo);
+  const isRunning = useExecutionStore((s) => s.isRunning);
+  const errors = useExecutionStore((s) => s.errors.length);
+  const warnings = useExecutionStore((s) => s.warnings.length);
+  const debugMode = useDebugStore((s) => s.debugMode);
 
-export default function StatusBar({ line, col, isRunning, errors, debugMode, warnings }: Props) {
   const label =
     debugMode === "paused"
       ? "⏸ Pausado"
