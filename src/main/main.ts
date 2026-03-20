@@ -1,6 +1,7 @@
 import { app, BrowserWindow, dialog, ipcMain } from "electron";
 import * as fs from "fs";
 import * as path from "path";
+import { IpcChannels } from "./ipc-channels";
 
 const isDev = !app.isPackaged;
 
@@ -51,7 +52,7 @@ app.on("window-all-closed", () => {
 
 // Salva em um caminho já conhecido (Ctrl+S)
 ipcMain.handle(
-  "save-file",
+  IpcChannels.SAVE_FILE,
   async (_event, { filePath, content }: { filePath: string; content: string }) => {
     try {
       fs.writeFileSync(filePath, content, "utf-8");
@@ -63,7 +64,7 @@ ipcMain.handle(
 );
 
 // Abre diálogo "Salvar como..." e salva (Ctrl+Shift+S)
-ipcMain.handle("save-file-as", async (_event, content: string) => {
+ipcMain.handle(IpcChannels.SAVE_FILE_AS, async (_event, content: string) => {
   const win = BrowserWindow.getFocusedWindow();
   if (!win) return { success: false, error: "Nenhuma janela ativa" };
 
@@ -87,7 +88,7 @@ ipcMain.handle("save-file-as", async (_event, content: string) => {
 });
 
 // Abre diálogo "Abrir arquivo..." (Ctrl+O)
-ipcMain.handle("open-file-dialog", async (_event) => {
+ipcMain.handle(IpcChannels.OPEN_FILE_DIALOG, async (_event) => {
   const win = BrowserWindow.getFocusedWindow();
   if (!win) return { success: false, error: "Nenhuma janela ativa" };
 
@@ -145,7 +146,7 @@ function readDirRecursive(dirPath: string, depth = 0): FileNode[] {
 }
 
 // Abre diálogo para escolher pasta de trabalho
-ipcMain.handle("open-folder-dialog", async (_event) => {
+ipcMain.handle(IpcChannels.OPEN_FOLDER_DIALOG, async (_event) => {
   const win = BrowserWindow.getFocusedWindow();
   if (!win) return { success: false, error: "Nenhuma janela ativa" };
 
@@ -164,7 +165,7 @@ ipcMain.handle("open-folder-dialog", async (_event) => {
 });
 
 // Relê a árvore de um diretório já aberto (para atualizar o Explorer)
-ipcMain.handle("read-folder-tree", async (_event, folderPath: string) => {
+ipcMain.handle(IpcChannels.READ_FOLDER_TREE, async (_event, folderPath: string) => {
   try {
     const tree = readDirRecursive(folderPath);
     return { success: true, tree };
@@ -174,7 +175,7 @@ ipcMain.handle("read-folder-tree", async (_event, folderPath: string) => {
 });
 
 // Lê arquivo ao clicar no explorador
-ipcMain.handle("read-file", async (_event, filePath: string) => {
+ipcMain.handle(IpcChannels.READ_FILE, async (_event, filePath: string) => {
   try {
     const content = fs.readFileSync(filePath, "utf-8");
     const fileName = path.basename(filePath);
