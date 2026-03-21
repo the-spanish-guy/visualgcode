@@ -8,6 +8,18 @@
   border-bottom: 1px solid var(--border-dim);
   flex-shrink: 0;
   gap: 12px;
+  -webkit-app-region: drag;
+}
+
+.toolbarMac {
+  padding-left: 80px;
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  -webkit-app-region: no-drag;
 }
 
 /* ── Lado esquerdo: marca + aba ── */
@@ -97,11 +109,6 @@
 }
 
 /* ── Lado direito: arquivos + execução ── */
-.right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
 
 /* Botões de ícone (arquivo) */
 .fileActions {

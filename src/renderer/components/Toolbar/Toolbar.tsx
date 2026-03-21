@@ -32,8 +32,10 @@ export default function Toolbar() {
   const isPaused = debugMode === "paused";
   const idle = !isRunning && !isDebugging && !isTimer;
 
+  const isMac = navigator.userAgent.includes("Macintosh");
+
   return (
-    <div className={styles.toolbar}>
+    <div className={`${styles.toolbar} ${isMac ? styles.toolbarMac : ""}`}>
       <div className={styles.left}>
         <div className={styles.brand}>
           <span className={styles.logo}>▸</span>

@@ -20,7 +20,9 @@ function createWindow(): void {
       sandbox: false,
     },
 
-    ...(process.platform !== "darwin" ? { titleBarOverlay: true } : {}),
+    ...(process.platform !== "darwin"
+      ? { titleBarOverlay: true }
+      : { trafficLightPosition: { x: 12, y: 16 } }),
   });
   win.setMenuBarVisibility(false);
 
