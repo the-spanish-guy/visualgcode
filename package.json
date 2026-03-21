@@ -1,7 +1,7 @@
 {
   "name": "VisuAlg-IDE",
   "productName": "VisuAlg IDE",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "VisuAlg IDE moderna — Electron + React + Monaco",
   "author": "the-spanish-guy",
   "main": "dist/main/main.js",
