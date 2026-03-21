@@ -102,7 +102,7 @@ jobs:
         run: npm version ${GITHUB_REF_NAME#v} --no-git-tag-version --allow-same-version
 
       - name: Atualizar CHANGELOG.md
-        run: npx git-cliff -o CHANGELOG.md
+        run: npx git-cliff --tag $GITHUB_REF_NAME -o CHANGELOG.md
 
       - name: Commit release
         run: |
