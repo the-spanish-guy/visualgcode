@@ -6,6 +6,8 @@ import { IpcChannels } from "./ipc-channels";
 const isDev = !app.isPackaged;
 
 function createWindow(): void {
+  const iconPath = path.join(app.getAppPath(), "build", "icon.png");
+
   const win = new BrowserWindow({
     width: 1280,
     height: 800,
@@ -13,6 +15,7 @@ function createWindow(): void {
     minHeight: 600,
     titleBarStyle: "hiddenInset",
     backgroundColor: "#0f1117",
+    icon: iconPath,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
@@ -35,6 +38,11 @@ function createWindow(): void {
 }
 
 app.whenReady().then(() => {
+  if (process.platform === "darwin" && app.dock) {
+    const iconPath = path.join(app.getAppPath(), "build", "icon.png");
+    app.dock.setIcon(iconPath);
+  }
+
   createWindow();
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();

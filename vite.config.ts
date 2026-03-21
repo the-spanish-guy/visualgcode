@@ -24,17 +24,17 @@ export default defineConfig({
           if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
             return 'react-vendor';
           }
+          if (id.includes('node_modules/monaco-editor')) {
+            return 'monaco-vendor';
+          }
         }
       }
     },
     sourcemap: false,
-    chunkSizeWarningLimit: 500,
+    chunkSizeWarningLimit: 3000,
   },
   server: {
     port: 5173,
-  },
-  optimizeDeps: {
-    exclude: ["monaco-editor"],
   },
   worker: {
     format: "es",
