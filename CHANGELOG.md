@@ -2,6 +2,41 @@
 
 ## [Não lançado]
 
+### Correções
+- Ajusta drag-n-drop no mac e traffic-light-buttons, ajusta também o tema Mist
+
+
+### Documentação
+- Adiciona seção de criação de release ao README
+- Adiciona CHANGELOG.md gerado automaticamente via git-cliff
+
+
+### Novas Funcionalidades
+- Substitui regex por AST no autocomplete e completa sugestões do Monaco
+- Adiciona enum de ipc-channels
+- Remove hook n usado e atualiza os types
+- Mostra o arquivo que foi salvo como na pasta aberta
+- Separando os temas
+- Adiciona suporte a constantes
+- Testes
+- Adiciona comandos limpatela e pausa
+- **interpretador**: Suporte a passagem por referência com `var` (#35)
+- Adiciona novos operadores
+- Adicionado suporte a leia com multiplas variaveis: leia(num1, num2, ...)
+- Adicionado suporte a interrompa(break de loop)
+- Adicionado suporte a escolha/caso/outrocaso/fimescolha
+- Adiiconado suporte a vetor 2D
+- Adiiconado suporte a vetor 1D
+- Adiciona aba problemas
+
+
+### Refatoração
+- Refatora toda a seção de temas e adiciona novas opções de temas
+- Completa migração do App.tsx para stores Zustand
+
+
+## [Não lançado]
+
 ### Novas Funcionalidades
 - Remove hook n usado e atualiza os types
 - Mostra o arquivo que foi salvo como na pasta aberta
