@@ -175,7 +175,7 @@
 }
 
 .btnRun:hover {
-  background: #ff8450;
+  background: color-mix(in srgb, var(--accent) 85%, white);
   transform: translateY(-1px);
   box-shadow: 0 4px 16px var(--accent-glow);
 }
@@ -187,21 +187,21 @@
 .btnDebug {
   background: var(--bg-elevated);
   color: var(--blue);
-  border: 1px solid rgba(91, 164, 245, 0.25);
+  border: 1px solid color-mix(in srgb, var(--blue) 25%, transparent);
 }
 
 .btnDebug:hover {
-  background: rgba(91, 164, 245, 0.1);
+  background: color-mix(in srgb, var(--blue) 10%, transparent);
 }
 
 .btnStep {
   background: var(--bg-elevated);
   color: var(--yellow);
-  border: 1px solid rgba(255, 209, 102, 0.25);
+  border: 1px solid color-mix(in srgb, var(--yellow) 25%, transparent);
 }
 
 .btnStep:hover:not(:disabled) {
-  background: rgba(255, 209, 102, 0.1);
+  background: color-mix(in srgb, var(--yellow) 10%, transparent);
 }
 
 .btnStep:disabled,
@@ -213,21 +213,21 @@
 .btnContinue {
   background: var(--bg-elevated);
   color: var(--green);
-  border: 1px solid rgba(61, 220, 151, 0.25);
+  border: 1px solid color-mix(in srgb, var(--green) 25%, transparent);
 }
 
 .btnContinue:hover:not(:disabled) {
-  background: rgba(61, 220, 151, 0.1);
+  background: color-mix(in srgb, var(--green) 10%, transparent);
 }
 
 .btnStop {
   background: var(--bg-elevated);
   color: var(--red);
-  border: 1px solid rgba(255, 77, 106, 0.3);
+  border: 1px solid color-mix(in srgb, var(--red) 30%, transparent);
 }
 
 .btnStop:hover {
-  background: rgba(255, 77, 106, 0.1);
+  background: color-mix(in srgb, var(--red) 10%, transparent);
 }
 
 .btnIcon {
@@ -254,7 +254,7 @@
 }
 
 .btnTimer:hover {
-  background: rgba(121, 212, 241, 0.1);
+  background: color-mix(in srgb, var(--blue) 10%, transparent);
 }
 
 /* ── Controle do slider ───────────────────────────────────────────────────── */

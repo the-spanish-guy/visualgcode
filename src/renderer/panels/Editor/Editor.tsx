@@ -1,15 +1,15 @@
-import MonacoEditor, { type OnMount } from "@monaco-editor/react";
+import MonacoEditor, { type BeforeMount, type OnMount } from "@monaco-editor/react";
 import type * as Monaco from "monaco-editor";
 import { useEffect, useRef } from "react";
 import { useDebugStore } from "../../store/debugStore";
 import { useEditorStore } from "../../store/editorStore";
 import { useExecutionStore } from "../../store/executionStore";
 import { useTabsStore } from "../../store/tabsStore";
+import { getAllThemes, setMonacoInstance } from "../../themes/index";
 import styles from "./Editor.module.css";
 import type { CompletionFunction, CompletionVar } from "./extractFromAST";
 import { extractFromAST } from "./extractFromAST";
 import { snippets } from "./snippets";
-import { registerVisuAlgThemes } from "./themes";
 
 // Refs globais — lidas pelo completion/signature provider que é registrado uma única vez
 const completionVarsRef = { current: [] as CompletionVar[] };
@@ -81,14 +81,18 @@ export default function Editor() {
   useEffect(() => {
     const monaco = monacoRef.current;
     if (!monaco) return;
-    monaco.editor.setTheme(theme === "light" ? "visualg-light" : "visualg-dark");
+    monaco.editor.setTheme(theme);
   }, [theme]);
+
+  const handleBeforeMount: BeforeMount = (monaco) => {
+    setMonacoInstance(monaco);
+  };
 
   const handleMount: OnMount = (editor, monaco) => {
     editorRef.current = editor;
     monacoRef.current = monaco;
 
-    registerVisuAlgLanguage(monaco, theme);
+    registerVisuAlgLanguage(monaco);
 
     const initialContent = activeTab.code;
     const uri = monaco.Uri.parse(`inmemory:///${tabId}.alg`);
@@ -154,6 +158,8 @@ export default function Editor() {
       return;
     }
 
+    const accent = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim();
+
     decorations.current.set([
       {
         range: new monaco.Range(currentLine, 1, currentLine, 1),
@@ -161,13 +167,13 @@ export default function Editor() {
           isWholeLine: true,
           className: "debug-current-line",
           glyphMarginClassName: "debug-arrow",
-          overviewRuler: { position: monaco.editor.OverviewRulerLane.Left, color: "#ff6b2b" },
+          overviewRuler: { position: monaco.editor.OverviewRulerLane.Left, color: accent },
         },
       },
     ]);
 
     editor.revealLineInCenterIfOutsideViewport(currentLine);
-  }, [currentLine]);
+  }, [currentLine, theme]);
 
   // Atualizando a decoracao dos breakpoints
   useEffect(() => {
@@ -175,17 +181,19 @@ export default function Editor() {
     const monaco = monacoRef.current;
     if (!editor || !monaco || !bpDecorations.current) return;
 
+    const red = getComputedStyle(document.documentElement).getPropertyValue("--red").trim();
+
     bpDecorations.current.set(
       Array.from(activeTab.breakpoints).map((line) => ({
         range: new monaco.Range(line, 1, line, 1),
         options: {
           isWholeLine: false,
           glyphMarginClassName: "debug-breakpoint",
-          overviewRuler: { position: monaco.editor.OverviewRulerLane.Left, color: "#ff4d6a" },
+          overviewRuler: { position: monaco.editor.OverviewRulerLane.Left, color: red },
         },
       })),
     );
-  }, [activeTab.breakpoints]);
+  }, [activeTab.breakpoints, theme]);
 
   // Erros aparecem como markers
   useEffect(() => {
@@ -233,15 +241,16 @@ export default function Editor() {
   return (
     <div className={styles.wrapper}>
       <style>{`
-        .debug-current-line { background: rgba(255, 107, 43, 0.12) !important; }
-        .debug-arrow::before { content: "▶"; color: #ff6b2b; font-size: 11px; margin-left: 2px; }
-        .debug-breakpoint::before { content: "●"; color: #ff4d6a; font-size: 13px; margin-left: 1px; }
+        .debug-current-line { background: color-mix(in srgb, var(--accent) 12%, transparent) !important; }
+        .debug-arrow::before { content: "▶"; color: var(--accent); font-size: 11px; margin-left: 2px; }
+        .debug-breakpoint::before { content: "●"; color: var(--red); font-size: 13px; margin-left: 1px; }
       `}</style>
       <MonacoEditor
         height="100%"
         language="visualg"
+        beforeMount={handleBeforeMount}
         onMount={handleMount}
-        theme="visualg-dark"
+        theme={theme}
         options={{
           fontSize,
           lineHeight: fontSize * 1.58,
@@ -276,7 +285,7 @@ export default function Editor() {
  * @param monaco
  * @returns
  */
-function registerVisuAlgLanguage(monaco: typeof Monaco, initialTheme: "dark" | "light"): void {
+function registerVisuAlgLanguage(monaco: typeof Monaco): void {
   const already = monaco.languages.getLanguages().some((l) => l.id === "visualg");
   if (already) return;
 
@@ -648,9 +657,9 @@ function registerVisuAlgLanguage(monaco: typeof Monaco, initialTheme: "dark" | "
     },
   });
 
-  registerVisuAlgThemes(monaco);
-
-  monaco.editor.setTheme(initialTheme === "light" ? "visualg-light" : "visualg-dark");
+  for (const def of getAllThemes()) {
+    monaco.editor.defineTheme(def.id, def.monaco as Monaco.editor.IStandaloneThemeData);
+  }
 }
 
 function formatFnSignature(fn: CompletionFunction): string {

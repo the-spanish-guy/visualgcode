@@ -11,7 +11,7 @@ import Toolbar from "./Toolbar";
 beforeEach(() => {
   const tab = createTab({ id: "tab-1" });
   useTabsStore.setState({ tabs: [tab], activeId: "tab-1" });
-  useEditorStore.setState({ theme: "dark" });
+  useEditorStore.setState({ theme: "void", setTheme: vi.fn() });
   useExecutionStore.setState({ isRunning: false });
   useDebugStore.setState({ debugMode: "idle", timerDelay: 500, timerPaused: false });
   useWorkspaceStore.setState({ workspace: null, explorerOpen: false });

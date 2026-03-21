@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { applyTheme, getAllThemes } from "../themes/index";
 
 export interface EditorHandle {
   goToLine: (line: number) => void;
@@ -10,10 +11,10 @@ const FONT_SIZE_MIN = 10;
 const FONT_SIZE_MAX = 28;
 const FONT_SIZE_DEFAULT = 14;
 
-function getInitialTheme(): "dark" | "light" {
+function getInitialTheme(): string {
   const saved = localStorage.getItem(THEME_KEY);
-  if (saved === "light" || saved === "dark") return saved;
-  return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+  if (saved && getAllThemes().some((t) => t.id === saved)) return saved;
+  return window.matchMedia("(prefers-color-scheme: light)").matches ? "mist" : "void";
 }
 
 function getInitialFontSize(): number {
@@ -25,12 +26,11 @@ function getInitialFontSize(): number {
 }
 
 interface EditorStore {
-  theme: "dark" | "light";
+  theme: string;
   fontSize: number;
   cursorInfo: { line: number; col: number };
   editorHandle: EditorHandle | null;
-  setTheme: (t: "dark" | "light") => void;
-  toggleTheme: () => void;
+  setTheme: (id: string) => void;
   setFontSize: (n: number) => void;
   adjustFontSize: (delta: number) => void;
   resetFontSize: () => void;
@@ -40,7 +40,7 @@ interface EditorStore {
 }
 
 const initialTheme = getInitialTheme();
-document.documentElement.setAttribute("data-theme", initialTheme);
+applyTheme(initialTheme);
 
 export const useEditorStore = create<EditorStore>()((set, get) => ({
   theme: initialTheme,
@@ -48,15 +48,10 @@ export const useEditorStore = create<EditorStore>()((set, get) => ({
   cursorInfo: { line: 1, col: 1 },
   editorHandle: null,
 
-  setTheme: (t) => {
-    localStorage.setItem(THEME_KEY, t);
-    document.documentElement.setAttribute("data-theme", t);
-    set({ theme: t });
-  },
-
-  toggleTheme: () => {
-    const next = get().theme === "dark" ? "light" : "dark";
-    get().setTheme(next);
+  setTheme: (id) => {
+    localStorage.setItem(THEME_KEY, id);
+    applyTheme(id);
+    set({ theme: id });
   },
 
   setFontSize: (n) => {

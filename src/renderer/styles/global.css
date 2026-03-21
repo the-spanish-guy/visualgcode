@@ -9,95 +9,34 @@
   padding: 0;
 }
 
-/* ─── Tema escuro (padrão) ───────────────────────────────────────────────────── */
 
-:root,
-[data-theme="dark"] {
-  /* Cores base */
+:root {
   --bg-void: #080b10;
   --bg-deep: #0d1117;
   --bg-panel: #111620;
   --bg-surface: #161c2a;
   --bg-elevated: #1c2333;
   --bg-hover: #232d42;
-
-  /* Bordas */
   --border-dim: #1e2a3a;
   --border-soft: #253042;
   --border-mid: #2e3d54;
-
-  /* Texto */
   --text-primary: #e2eaf5;
   --text-secondary: #7a90aa;
   --text-muted: #3f5068;
   --text-dim: #2a3a50;
-
-  /* Acento */
   --accent: #ff6b2b;
   --accent-glow: rgba(255, 107, 43, 0.2);
   --accent-dim: rgba(255, 107, 43, 0.08);
-
-  /* Status */
   --green: #3ddc97;
   --red: #ff4d6a;
   --yellow: #ffd166;
   --blue: #5ba4f5;
-
-  /* Cores semânticas usadas em componentes com rgba hardcoded */
   --error-bg: rgba(255, 77, 106, 0.06);
   --error-bg-hint: rgba(255, 77, 106, 0.06);
   --error-border: rgba(255, 77, 106, 0.25);
   --statusbar-text: rgba(255, 255, 255, 0.9);
   --statusbar-text-dim: rgba(255, 255, 255, 0.7);
   --statusbar-badge-bg: rgba(0, 0, 0, 0.2);
-
-  /* Monaco theme name */
-  --monaco-theme: visualg-dark;
-}
-
-/* ─── Tema claro ─────────────────────────────────────────────────────────────── */
-
-[data-theme="light"] {
-  /* Cores base */
-  --bg-void: #e8ecf2;
-  --bg-deep: #f0f4f8;
-  --bg-panel: #e4e9f0;
-  --bg-surface: #dde3ec;
-  --bg-elevated: #d6dde8;
-  --bg-hover: #cdd5e2;
-
-  /* Bordas */
-  --border-dim: #c8d0dc;
-  --border-soft: #bcc5d4;
-  --border-mid: #a8b4c8;
-
-  /* Texto */
-  --text-primary: #1a2232;
-  --text-secondary: #3a4f6a;
-  --text-muted: #6a7f9a;
-  --text-dim: #94a5b8;
-
-  /* Acento — mantém o laranja, é a identidade do projeto */
-  --accent: #e85a1a;
-  --accent-glow: rgba(232, 90, 26, 0.18);
-  --accent-dim: rgba(232, 90, 26, 0.08);
-
-  /* Status — ligeiramente mais saturados para contrastar no fundo claro */
-  --green: #1a9e6a;
-  --red: #d93050;
-  --yellow: #c47f00;
-  --blue: #2878d0;
-
-  /* Cores semânticas */
-  --error-bg: rgba(217, 48, 80, 0.06);
-  --error-bg-hint: rgba(217, 48, 80, 0.04);
-  --error-border: rgba(217, 48, 80, 0.25);
-  --statusbar-text: rgba(255, 255, 255, 0.95);
-  --statusbar-text-dim: rgba(255, 255, 255, 0.75);
-  --statusbar-badge-bg: rgba(0, 0, 0, 0.15);
-
-  /* Monaco theme name */
-  --monaco-theme: visualg-light;
 }
 
 /* ─── Base ───────────────────────────────────────────────────────────────────── */
@@ -130,6 +69,9 @@ body,
   --radius-md: 6px;
   --radius-lg: 10px;
 }
+
+/* Nota: as variáveis de cor são aplicadas dinamicamente via JS (src/renderer/themes/).
+   O bloco :root acima serve apenas como fallback até o JS carregar. */
 
 /* ─── Scrollbar ──────────────────────────────────────────────────────────────── */
 
