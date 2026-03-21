@@ -31,6 +31,7 @@ jobs:
         run: npm ci
 
       - name: Atualizar versão temporariamente
+        shell: bash
         run: npm version ${GITHUB_REF_NAME#v} --no-git-tag-version
 
       - name: Build application
