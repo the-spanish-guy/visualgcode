@@ -29,7 +29,10 @@ jobs:
       
       - name: Install dependencies
         run: npm ci
-      
+
+      - name: Atualizar versão temporariamente
+        run: npm version ${GITHUB_REF_NAME#v} --no-git-tag-version
+
       - name: Build application
         run: npm run build
       
@@ -92,6 +95,20 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Atualizar versão
+        run: npm version ${GITHUB_REF_NAME#v} --no-git-tag-version
+
+      - name: Atualizar CHANGELOG.md
+        run: npx git-cliff -o CHANGELOG.md
+
+      - name: Commit release
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add package.json CHANGELOG.md
+          git commit -m "chore: release ${{ github.ref_name }}"
+          git push origin HEAD:main
 
       - name: Gerar notas da release
         run: npx git-cliff --latest -o release-notes.md
