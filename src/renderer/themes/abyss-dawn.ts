@@ -1,8 +1,8 @@
 import type { ThemeDefinition } from "./index";
 
 export const lightTheme: ThemeDefinition = {
-  id: "mist",
-  label: "Mist",
+  id: "abyss-dawn",
+  label: "Abyss Dawn",
   base: "light",
   swatch: "#2878d0",
   css: {

@@ -1,8 +1,8 @@
 import type { ThemeDefinition } from "./index";
 
 export const darkTheme: ThemeDefinition = {
-  id: "void",
-  label: "Void",
+  id: "abyss-void",
+  label: "Abyss Void",
   base: "dark",
   swatch: "#ff6b2b",
   css: {

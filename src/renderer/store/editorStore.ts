@@ -14,7 +14,7 @@ const FONT_SIZE_DEFAULT = 14;
 function getInitialTheme(): string {
   const saved = localStorage.getItem(THEME_KEY);
   if (saved && getAllThemes().some((t) => t.id === saved)) return saved;
-  return window.matchMedia("(prefers-color-scheme: light)").matches ? "mist" : "void";
+  return window.matchMedia("(prefers-color-scheme: light)").matches ? "abyss-dawn" : "abyss-void";
 }
 
 function getInitialFontSize(): number {

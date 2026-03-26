@@ -1,12 +1,11 @@
 import type * as Monaco from "monaco-editor";
-
+import { lightTheme } from "./abyss-dawn";
+import { darkTheme } from "./abyss-void";
 import { catppuccinFrappeTheme } from "./catppuccin-frappe";
 import { catppuccinLatteTheme } from "./catppuccin-latte";
 import { catppuccinMacchiatoTheme } from "./catppuccin-macchiato";
 import { catppuccinMochaTheme } from "./catppuccin-mocha";
-import { darkTheme } from "./dark";
 import { draculaTheme } from "./dracula";
-import { lightTheme } from "./light";
 import { nordTheme } from "./nord";
 import { tokyoNightTheme } from "./tokyo-night";
 
@@ -41,7 +40,7 @@ export function setMonacoInstance(m: typeof Monaco): void {
 }
 
 export function getTheme(id: string): ThemeDefinition {
-  return themeRegistry.get(id) ?? (themeRegistry.get("void") as ThemeDefinition);
+  return themeRegistry.get(id) ?? (themeRegistry.get("abyss-void") as ThemeDefinition);
 }
 
 export function getAllThemes(): ThemeDefinition[] {
