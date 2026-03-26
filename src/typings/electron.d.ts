@@ -48,6 +48,8 @@ declare global {
         content?: string;
         error?: string;
       }>;
+
+      openExternal: (url: string) => Promise<void>;
     };
   }
 }

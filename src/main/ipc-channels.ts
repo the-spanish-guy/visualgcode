@@ -5,4 +5,5 @@ export const IpcChannels = {
   OPEN_FOLDER_DIALOG: 'open-folder-dialog',
   READ_FOLDER_TREE:   'read-folder-tree',
   READ_FILE:          'read-file',
+  OPEN_EXTERNAL:      'open-external',
 } as const;

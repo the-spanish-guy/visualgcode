@@ -61,6 +61,26 @@
   border-radius: 4px;
 }
 
+.starBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 4px;
+  background: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease;
+  -webkit-app-region: no-drag;
+}
+
+.starBtn:hover {
+  color: var(--accent);
+  background: var(--accent-dim);
+}
+
 /* ── Aba de arquivo ── */
 .fileTabs {
   display: flex;

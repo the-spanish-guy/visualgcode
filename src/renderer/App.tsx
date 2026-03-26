@@ -2,6 +2,7 @@ import styles from "./App.module.css";
 import StatusBar from "./components/StatusBar/StatusBar";
 import TabBar from "./components/TabBar/TabBar";
 import Toolbar from "./components/Toolbar/Toolbar";
+import WelcomeModal from "./components/WelcomeModal/WelcomeModal";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 import { useTabs } from "./hooks/useTabs";
 import CallStack from "./panels/CallStack/CallStack";
@@ -38,6 +39,7 @@ export default function App() {
         </div>
       </div>
       <StatusBar />
+      <WelcomeModal />
     </div>
   );
 }

@@ -34,6 +34,10 @@ export default function Toolbar() {
 
   const isMac = navigator.userAgent.includes("Macintosh");
 
+  function handleStarRepo() {
+    window.electronAPI.openExternal("https://github.com/the-spanish-guy/visualgcode");
+  }
+
   return (
     <div className={`${styles.toolbar} ${isMac ? styles.toolbarMac : ""}`}>
       <div className={styles.left}>
@@ -41,6 +45,16 @@ export default function Toolbar() {
           <span className={styles.logo}>▸</span>
           <span className={styles.name}>VisuAlg</span>
           <span className={styles.badge}>IDE</span>
+          <button
+            type="button"
+            className={styles.starBtn}
+            onClick={handleStarRepo}
+            title="Gostou? Deixe uma ⭐ no GitHub!"
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+            </svg>
+          </button>
         </div>
       </div>
 

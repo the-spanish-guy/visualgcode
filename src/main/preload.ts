@@ -20,4 +20,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
 
   // Lê arquivo ao clicar no explorador
   readFile: (filePath: string) => ipcRenderer.invoke(IpcChannels.READ_FILE, filePath),
+
+  // Abre URL no navegador padrão do sistema
+  openExternal: (url: string) => ipcRenderer.invoke(IpcChannels.OPEN_EXTERNAL, url),
 });

@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, ipcMain } from "electron";
+import { app, BrowserWindow, dialog, ipcMain, shell } from "electron";
 import * as fs from "fs";
 import * as path from "path";
 import { IpcChannels } from "./ipc-channels";
@@ -194,4 +194,9 @@ ipcMain.handle(IpcChannels.READ_FILE, async (_event, filePath: string) => {
   } catch (err) {
     return { success: false, error: (err as Error).message };
   }
+});
+
+// Abre URL no navegador padrão do sistema
+ipcMain.handle(IpcChannels.OPEN_EXTERNAL, async (_event, url: string) => {
+  await shell.openExternal(url);
 });
