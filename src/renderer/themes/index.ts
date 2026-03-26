@@ -6,6 +6,8 @@ import { catppuccinLatteTheme } from "./catppuccin-latte";
 import { catppuccinMacchiatoTheme } from "./catppuccin-macchiato";
 import { catppuccinMochaTheme } from "./catppuccin-mocha";
 import { draculaTheme } from "./dracula";
+import { gruvboxDarkTheme } from "./gruvbox-dark";
+import { gruvboxLightTheme } from "./gruvbox-light";
 import { nordTheme } from "./nord";
 import { tokyoNightTheme } from "./tokyo-night";
 
@@ -68,4 +70,6 @@ export function applyTheme(id: string): void {
   catppuccinMacchiatoTheme,
   catppuccinFrappeTheme,
   catppuccinLatteTheme,
+  gruvboxDarkTheme,
+  gruvboxLightTheme,
 ].forEach(register);
