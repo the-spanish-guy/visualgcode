@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.5] - 2026-03-26
+
+### Novas Funcionalidades
+- Adiciona tela de boas-vindas
+- Adiciona Gruvbox Dark/Light tema
+- Renomeando dark/light para Abyss Void e Abyss Dawn
+
+
 ## [1.0.4] - 2026-03-21
 
 ### Documentação
