@@ -396,30 +396,6 @@ function registerVisuAlgLanguage(monaco: typeof Monaco): void {
 
   // Keywords para autocomplete
   const KEYWORDS = [
-    "escreva",
-    "escreval",
-    "leia",
-    "se",
-    "entao",
-    "senao",
-    "fimse",
-    "para",
-    "de",
-    "ate",
-    "passo",
-    "faca",
-    "fimpara",
-    "enquanto",
-    "fimenquanto",
-    "repita",
-    "escolha",
-    "caso",
-    "outrocaso",
-    "fimescolha",
-    "procedimento",
-    "fimprocedimento",
-    "funcao",
-    "fimfuncao",
     "retorne",
     "interrompa",
     "limpatela",
@@ -427,8 +403,6 @@ function registerVisuAlgLanguage(monaco: typeof Monaco): void {
     "var",
     "constante",
     "inicio",
-    "fimalgoritmo",
-    "algoritmo",
   ];
 
   // Autocomplete
