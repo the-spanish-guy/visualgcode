@@ -33,25 +33,25 @@ export class StaticAnalyzer {
   }
 
   private analyzeScope(declarations: VarDeclarationNode[], body: ASTNode[]): void {
-    const used = new Map<string, { line: number; seen: boolean }>();
+    const used = new Map<string, { line: number; seen: boolean; originalName: string }>();
 
     for (const decl of declarations) {
       if (decl.kind !== "VarDeclaration") continue;
       for (const name of decl.names) {
-        used.set(name.toLowerCase(), { line: decl.line, seen: false });
+        used.set(name.toLowerCase(), { line: decl.line, seen: false, originalName: name });
       }
     }
 
     for (const stmt of body) this.walkStatement(stmt, used);
 
     // Emite warnings para variáveis não usadas
-    for (const [name, info] of used) {
+    for (const [, info] of used) {
       if (!info.seen) {
         this.warnings.push({
           kind: "unused",
-          variable: name,
+          variable: info.originalName,
           line: info.line,
-          message: `A variável '${name}' foi declarada mas nunca é utilizada.`,
+          message: `A variável '${info.originalName}' foi declarada mas nunca é utilizada.`,
         });
       }
     }

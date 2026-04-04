@@ -161,7 +161,7 @@ export class Lexer {
 
     this.tokens.push({
       type: keywordType ?? TokenType.IDENTIFIER,
-      value: lower, // normaliza para lowercase
+      value: keywordType ? lower : word, // keywords: lowercase; identificadores: case original
       line: this.line,
       col: startCol,
     });

@@ -65,6 +65,7 @@ interface Variable {
   type: string;
   value: VizValue | RefSlot;
   readonly?: boolean;
+  originalName: string;
 }
 
 class ReturnSignal {
@@ -91,25 +92,27 @@ class Environment {
   constructor(private parent: Environment | null = null) {}
 
   declare(name: string, type: string, value: VizValue | RefSlot, readonly?: boolean): void {
-    this.store.set(name, { type, value, readonly });
+    this.store.set(name.toLowerCase(), { type, value, readonly, originalName: name });
   }
 
   get(name: string, line: number): Variable {
-    if (this.store.has(name)) {
-      const entry = this.store.get(name)!;
+    const key = name.toLowerCase();
+    if (this.store.has(key)) {
+      const entry = this.store.get(key)!;
       // Se for ref, retorna o valor atual do ambiente do caller
       if (isRefSlot(entry.value)) {
-        return { type: entry.type, value: entry.value.get() };
+        return { type: entry.type, value: entry.value.get(), originalName: entry.originalName };
       }
-      return entry as Variable;
+      return entry;
     }
-    if (this.parent) return this.parent.get(name, line);
+    if (this.parent) return this.parent.get(key, line);
     throw new RuntimeError(`Variável '${name}' não declarada`, line);
   }
 
   set(name: string, value: VizValue, line: number): void {
-    if (this.store.has(name)) {
-      const entry = this.store.get(name)!;
+    const key = name.toLowerCase();
+    if (this.store.has(key)) {
+      const entry = this.store.get(key)!;
       if (entry.readonly) {
         throw new RuntimeError(`'${name}' é uma constante e não pode ser alterada`, line);
       }
@@ -122,7 +125,7 @@ class Environment {
       return;
     }
     if (this.parent) {
-      this.parent.set(name, value, line);
+      this.parent.set(key, value, line);
       return;
     }
     throw new RuntimeError(`Variável '${name}' não declarada`, line);
@@ -255,10 +258,10 @@ export class Evaluator {
   // Snapshot das variáveis visíveis no momento
   private snapshot(env: Environment): VarSnapshot[] {
     // Acessa o store privado via cast — suficiente para o debug
-    const store = (env as any).store as Map<string, { type: string; value: any }>;
+    const store = (env as any).store as Map<string, { type: string; value: any; originalName: string }>;
     const result: VarSnapshot[] = [];
-    store.forEach((variable, name) => {
-      result.push({ name, type: variable.type, value: this.stringify(variable.value) });
+    store.forEach((variable) => {
+      result.push({ name: variable.originalName, type: variable.type, value: this.stringify(variable.value) });
     });
     return result;
   }
@@ -267,11 +270,11 @@ export class Evaluator {
     for (const decl of program.declarations) {
       if ((decl as any).kind === "Procedure") {
         this.procedures.set(
-          (decl as unknown as ProcedureNode).name,
+          (decl as unknown as ProcedureNode).name.toLowerCase(),
           decl as unknown as ProcedureNode,
         );
       } else if ((decl as any).kind === "Function") {
-        this.functions.set((decl as unknown as FunctionNode).name, decl as unknown as FunctionNode);
+        this.functions.set((decl as unknown as FunctionNode).name.toLowerCase(), decl as unknown as FunctionNode);
       } else if ((decl as any).kind === "ConstDeclaration") {
         const c = decl as unknown as ConstDeclarationNode;
         const typeStr =
@@ -551,7 +554,7 @@ export class Evaluator {
   }
 
   private async execCallStatement(node: CallNode, env: Environment): Promise<void> {
-    const proc = this.procedures.get(node.name);
+    const proc = this.procedures.get(node.name.toLowerCase());
     if (!proc) throw new RuntimeError(`Procedimento '${node.name}' não encontrado`, node.line);
     const localEnv = new Environment(this.globals);
     await this.bindParams(proc.params, node.args, localEnv, env, node.line);
@@ -711,7 +714,7 @@ export class Evaluator {
     const native = await this.callNative(node, env);
     if (native !== undefined) return native;
 
-    const func = this.functions.get(node.name);
+    const func = this.functions.get(node.name.toLowerCase());
     if (!func) throw new RuntimeError(`Função '${node.name}' não encontrada`, node.line);
 
     const localEnv = new Environment(this.globals);

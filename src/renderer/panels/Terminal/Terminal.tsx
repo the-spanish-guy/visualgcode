@@ -39,8 +39,12 @@ export default function Terminal() {
   }, [traceSnapshots.length]);
 
   useEffect(() => {
-    if (problemCount > 0 && !isRunning) setActiveTab("problemas");
-  }, [problemCount]);
+    if (isRunning) setActiveTab("saida");
+  }, [isRunning]);
+
+  useEffect(() => {
+    if (errors.length > 0 && !isRunning) setActiveTab("problemas");
+  }, [errors.length]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && waitingInput) {
