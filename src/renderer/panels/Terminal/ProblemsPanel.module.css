@@ -80,7 +80,7 @@
 .line {
   flex-shrink: 0;
   font-size: 10px;
-  color: var(--text-dim);
+  color: var(--text-secondary);
   background: var(--bg-elevated);
   padding: 1px 5px;
   border-radius: 3px;
