@@ -1,6 +1,9 @@
 # Changelog
 
 ## [2.0.0] - 2026-04-05
+### ⚠ Breaking Changes
+- **interpreter**: Sqrt renomeada para raizq e numcarac para numpcarac
+
 
 ### Correções
 - **editor**: Adiciona keywords ausentes no realce e remove funções inexistentes
@@ -45,6 +48,9 @@
 
 
 ## [1.0.3] - 2026-03-21
+### ⚠ Breaking Changes
+- Editor, Toolbar, TabBar, StatusBar, Terminal, VariablesPanel, CallStack e Explorer não aceitam mais props, tudo foi migrado para o zustand.
+
 
 ### Correções
 - Corrige manualChunks para função (Vite 8)
