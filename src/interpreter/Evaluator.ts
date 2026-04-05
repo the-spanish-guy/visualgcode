@@ -258,10 +258,17 @@ export class Evaluator {
   // Snapshot das variáveis visíveis no momento
   private snapshot(env: Environment): VarSnapshot[] {
     // Acessa o store privado via cast — suficiente para o debug
-    const store = (env as any).store as Map<string, { type: string; value: any; originalName: string }>;
+    const store = (env as any).store as Map<
+      string,
+      { type: string; value: any; originalName: string }
+    >;
     const result: VarSnapshot[] = [];
     store.forEach((variable) => {
-      result.push({ name: variable.originalName, type: variable.type, value: this.stringify(variable.value) });
+      result.push({
+        name: variable.originalName,
+        type: variable.type,
+        value: this.stringify(variable.value),
+      });
     });
     return result;
   }
@@ -274,7 +281,10 @@ export class Evaluator {
           decl as unknown as ProcedureNode,
         );
       } else if ((decl as any).kind === "Function") {
-        this.functions.set((decl as unknown as FunctionNode).name.toLowerCase(), decl as unknown as FunctionNode);
+        this.functions.set(
+          (decl as unknown as FunctionNode).name.toLowerCase(),
+          decl as unknown as FunctionNode,
+        );
       } else if ((decl as any).kind === "ConstDeclaration") {
         const c = decl as unknown as ConstDeclarationNode;
         const typeStr =
@@ -427,7 +437,8 @@ export class Evaluator {
       // 2D: m[i, j] <- valor
       const row = Number(await this.evalExpr(node.index, env));
       const col = Number(await this.evalExpr(node.col, env));
-      if (isNaN(row) || isNaN(col)) throw new RuntimeError("Índices devem ser números", node.line);
+      if (Number.isNaN(row) || Number.isNaN(col))
+        throw new RuntimeError("Índices devem ser números", node.line);
       env.setMatrixElement(node.name, row, col, value, node.line);
       return;
     }
@@ -435,7 +446,7 @@ export class Evaluator {
     if (node.index) {
       // 1D: v[i] <- valor
       const index = Number(await this.evalExpr(node.index, env));
-      if (isNaN(index)) throw new RuntimeError("Índice deve ser um número", node.line);
+      if (Number.isNaN(index)) throw new RuntimeError("Índice deve ser um número", node.line);
       env.setArrayElement(node.name, index, value, node.line);
       return;
     }
@@ -462,7 +473,8 @@ export class Evaluator {
       // 2D: leia(m[i, j])
       const row = Number(await this.evalExpr(node.index, env));
       const col = Number(await this.evalExpr(node.col, env));
-      if (isNaN(row) || isNaN(col)) throw new RuntimeError("Índices devem ser números", node.line);
+      if (Number.isNaN(row) || Number.isNaN(col))
+        throw new RuntimeError("Índices devem ser números", node.line);
       const arr = env.get(node.name, node.line).value as VizArray;
       env.setMatrixElement(
         node.name,
@@ -477,7 +489,7 @@ export class Evaluator {
     if (node.index) {
       // 1D: leia(v[i])
       const index = Number(await this.evalExpr(node.index, env));
-      if (isNaN(index)) throw new RuntimeError("Índice deve ser um número", node.line);
+      if (Number.isNaN(index)) throw new RuntimeError("Índice deve ser um número", node.line);
       const arr = env.get(node.name, node.line).value as VizArray;
       env.setArrayElement(
         node.name,
@@ -621,7 +633,7 @@ export class Evaluator {
       case "ArrayAccess": {
         const n = node as ArrayAccessNode;
         const index = Number(await this.evalExpr(n.index, env));
-        if (isNaN(index)) throw new RuntimeError("Índice deve ser um número", n.line);
+        if (Number.isNaN(index)) throw new RuntimeError("Índice deve ser um número", n.line);
         return env.getArrayElement(n.name, index, n.line);
       }
 
@@ -629,7 +641,8 @@ export class Evaluator {
         const n = node as MatrixAccessNode;
         const row = Number(await this.evalExpr(n.row, env));
         const col = Number(await this.evalExpr(n.col, env));
-        if (isNaN(row) || isNaN(col)) throw new RuntimeError("Índices devem ser números", n.line);
+        if (Number.isNaN(row) || Number.isNaN(col))
+          throw new RuntimeError("Índices devem ser números", n.line);
         return env.getMatrixElement(n.name, row, col, n.line);
       }
 
@@ -870,12 +883,12 @@ export class Evaluator {
     switch (type) {
       case "inteiro": {
         const n = parseInt(raw.trim(), 10);
-        if (isNaN(n)) throw new RuntimeError(`Valor inválido para inteiro: '${raw}'`, line);
+        if (Number.isNaN(n)) throw new RuntimeError(`Valor inválido para inteiro: '${raw}'`, line);
         return n;
       }
       case "real": {
         const n = parseFloat(raw.trim().replace(",", "."));
-        if (isNaN(n)) throw new RuntimeError(`Valor inválido para real: '${raw}'`, line);
+        if (Number.isNaN(n)) throw new RuntimeError(`Valor inválido para real: '${raw}'`, line);
         return n;
       }
       case "logico":

@@ -10,7 +10,7 @@ const TIMER_DELAY_DEFAULT = 500;
 function getInitialTimerDelay(): number {
   const saved = localStorage.getItem(TIMER_DELAY_KEY);
   const parsed = saved ? parseInt(saved) : NaN;
-  return isNaN(parsed)
+  return Number.isNaN(parsed)
     ? TIMER_DELAY_DEFAULT
     : Math.min(TIMER_DELAY_MAX, Math.max(TIMER_DELAY_MIN, parsed));
 }

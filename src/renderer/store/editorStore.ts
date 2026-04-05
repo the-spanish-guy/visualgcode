@@ -20,7 +20,7 @@ function getInitialTheme(): string {
 function getInitialFontSize(): number {
   const saved = localStorage.getItem(FONT_SIZE_KEY);
   const parsed = saved ? parseInt(saved) : NaN;
-  return isNaN(parsed)
+  return Number.isNaN(parsed)
     ? FONT_SIZE_DEFAULT
     : Math.min(FONT_SIZE_MAX, Math.max(FONT_SIZE_MIN, parsed));
 }
