@@ -35,16 +35,16 @@ export default function Toolbar() {
   const isMac = navigator.userAgent.includes("Macintosh");
 
   function handleStarRepo() {
-    window.electronAPI.openExternal(
-      "https://github.com/the-spanish-guy/visualgcode",
-    );
+    window.electronAPI.openExternal("https://github.com/the-spanish-guy/visualgcode");
   }
 
   return (
     <div className={`${styles.toolbar} ${isMac ? styles.toolbarMac : ""}`}>
       <div className={styles.left}>
         <div className={styles.brand}>
-          <span className={styles.logo}>▸</span>
+          <span className={styles.logo}>
+            <i className="nf nf-fa-caret_right"></i>
+          </span>
           <span className={styles.name}>VisuAlg</span>
           <span className={styles.badge}>IDE</span>
           <button
@@ -60,11 +60,7 @@ export default function Toolbar() {
 
       <div className={styles.right}>
         <div className={styles.fileActions}>
-          <button
-            className={styles.iconBtn}
-            onClick={newTab}
-            title="Novo (Ctrl+N)"
-          >
+          <button className={styles.iconBtn} onClick={newTab} title="Novo (Ctrl+N)">
             <svg
               width="14"
               height="14"
@@ -80,11 +76,7 @@ export default function Toolbar() {
             </svg>
           </button>
 
-          <button
-            className={styles.iconBtn}
-            onClick={handleOpen}
-            title="Abrir arquivo (Ctrl+O)"
-          >
+          <button className={styles.iconBtn} onClick={handleOpen} title="Abrir arquivo (Ctrl+O)">
             <svg
               width="14"
               height="14"
@@ -163,19 +155,11 @@ export default function Toolbar() {
         <div className={styles.actions}>
           {idle && (
             <>
-              <button
-                className={styles.btnRun}
-                onClick={handleRun}
-                title="Executar (F5)"
-              >
+              <button className={styles.btnRun} onClick={handleRun} title="Executar (F5)">
                 <span className={styles.btnIcon}>▶</span>
                 Executar
               </button>
-              <button
-                className={styles.btnDebug}
-                onClick={handleDebug}
-                title="Debug (F8)"
-              >
+              <button className={styles.btnDebug} onClick={handleDebug} title="Debug (F8)">
                 <span className={styles.btnIcon}>⬡</span>
                 Debug
               </button>
@@ -191,11 +175,7 @@ export default function Toolbar() {
           )}
 
           {isRunning && !isDebugging && !isTimer && (
-            <button
-              className={styles.btnStop}
-              onClick={handleStop}
-              title="Parar (Esc)"
-            >
+            <button className={styles.btnStop} onClick={handleStop} title="Parar (Esc)">
               <span className={styles.btnIcon}>■</span>
               Parar
             </button>
@@ -221,11 +201,7 @@ export default function Toolbar() {
                 <span className={styles.btnIcon}>▶▶</span>
                 Continuar
               </button>
-              <button
-                className={styles.btnStop}
-                onClick={handleStop}
-                title="Parar (Esc)"
-              >
+              <button className={styles.btnStop} onClick={handleStop} title="Parar (Esc)">
                 <span className={styles.btnIcon}>■</span>
                 Parar
               </button>
@@ -254,11 +230,7 @@ export default function Toolbar() {
                   </button>
                 </>
               )}
-              <button
-                className={styles.btnStop}
-                onClick={handleStop}
-                title="Parar (Esc)"
-              >
+              <button className={styles.btnStop} onClick={handleStop} title="Parar (Esc)">
                 <span className={styles.btnIcon}>■</span>
                 Parar
               </button>
