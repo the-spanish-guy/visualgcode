@@ -834,8 +834,6 @@ export class Evaluator {
     asc: ([s]) => (s as string).charCodeAt(0),
     carac: ([code]) => String.fromCharCode(code as number),
     // Conversão
-    real: ([x]) => parseFloat(String(x)),
-    inteiro: ([x]) => parseInt(String(x), 10),
     caracpnum: ([s]) => parseFloat(s as string),
     numpcarac: ([n]) => String(n),
   };
