@@ -536,8 +536,14 @@ export class Parser {
   private parseRepeat(): RepeatNode {
     const line = this.current().line;
     this.advance(); // consome "repita"
-    const body = this.parseStatements([TokenType.ATE]);
-    this.expect(TokenType.ATE, "Esperado 'ate' após corpo do repita");
+    const body = this.parseStatements([TokenType.ATE, TokenType.FIMREPITA]);
+
+    if (this.check(TokenType.FIMREPITA)) {
+      this.advance(); // consome "fimrepita"
+      return { kind: "Repeat", body, line };
+    }
+
+    this.expect(TokenType.ATE, "Esperado 'ate' ou 'fimrepita' após corpo do repita");
     const condition = this.parseExpression();
     return { kind: "Repeat", body, condition, line };
   }

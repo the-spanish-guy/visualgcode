@@ -566,6 +566,7 @@ export class Evaluator {
       const result = await this.execStatements(node.body, env);
       if (result instanceof ReturnSignal) return result;
       if (result instanceof BreakSignal) break;
+      if (!node.condition) continue;
       const condition = await this.evalExpr(node.condition, env);
       if (condition) break;
     }

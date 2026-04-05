@@ -88,6 +88,7 @@ export enum TokenType {
   FIMENQUANTO = "FIMENQUANTO",
   REPITA = "REPITA",
   ATE_REPITA = "ATE_REPITA", // "ate" usado no repita..ate
+  FIMREPITA = "FIMREPITA",
 
   // Subprogramas
   PROCEDIMENTO = "PROCEDIMENTO",

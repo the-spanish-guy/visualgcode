@@ -76,6 +76,14 @@ export const snippets = (monaco: Monaco, range: IRange): languages.CompletionIte
     range,
   },
   {
+    label: "repita...fimrepita",
+    kind: monaco.languages.CompletionItemKind.Snippet,
+    insertText: "repita\n   ${1}\n   interrompa\nfimrepita",
+    insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+    documentation: "Laço repita (sai apenas por interrompa)",
+    range,
+  },
+  {
     label: "escolha...fimescolha",
     kind: monaco.languages.CompletionItemKind.Snippet,
     insertText: "escolha (${1:variavel})\n   caso ${2:valor}\n      ${3}\n   outrocaso\n      ${4}\nfimescolha",

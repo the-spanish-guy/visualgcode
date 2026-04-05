@@ -42,6 +42,7 @@ export const KEYWORDS: Record<string, TokenType> = {
   enquanto: TokenType.ENQUANTO,
   fimenquanto: TokenType.FIMENQUANTO,
   repita: TokenType.REPITA,
+  fimrepita: TokenType.FIMREPITA,
 
   // Operadores lógicos escritos
   e: TokenType.AND,

@@ -130,7 +130,7 @@ export interface WhileNode {
 export interface RepeatNode {
   kind: "Repeat";
   body: ASTNode[];
-  condition: ASTNode;
+  condition?: ASTNode; // undefined = repita...fimrepita (sai apenas por interrompa)
   line: number;
 }
 

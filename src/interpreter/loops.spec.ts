@@ -120,6 +120,42 @@ fimalgoritmo
   });
 });
 
+describe("Repita...Fimrepita", () => {
+  test("repita...fimrepita executa e sai por interrompa", async () => {
+    const { output, errors } = await runCode(`
+algoritmo "teste"
+var x: inteiro
+inicio
+  x <- 0
+  repita
+    x <- x + 1
+    escreval(x)
+    se x = 3 entao
+      interrompa
+    fimse
+  fimrepita
+fimalgoritmo
+`);
+    expect(errors).toHaveLength(0);
+    expect(output.map((l) => l.trim())).toEqual(["1", "2", "3"]);
+  });
+
+  test("repita...fimrepita executa o body pelo menos uma vez", async () => {
+    const { output, errors } = await runCode(`
+algoritmo "teste"
+inicio
+  repita
+    escreval("executou")
+    interrompa
+  fimrepita
+fimalgoritmo
+`);
+    expect(errors).toHaveLength(0);
+    expect(output.length).toBe(1);
+    expect(output[0].trim()).toBe("executou");
+  });
+});
+
 describe("Repita...Ate", () => {
   test("repita...ate executa pelo menos uma vez mesmo com condição verdadeira imediata", async () => {
     const { output, errors } = await runCode(`
