@@ -36,7 +36,19 @@
 .editorPane {
   flex: 1;
   overflow: hidden;
-  border-bottom: 1px solid var(--border-dim);
+}
+
+.resizer {
+  height: 4px;
+  cursor: ns-resize;
+  background: var(--border-dim);
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.resizer:hover,
+.resizer:active {
+  background: var(--border-mid);
 }
 
 .bottomPane {
@@ -45,5 +57,4 @@
   max-height: 50vh;
   overflow: hidden;
   background: var(--bg-deep);
-  border-top: 1px solid var(--border-dim);
 }
