@@ -6,6 +6,13 @@ body = """
 {% else %}\
 ## [Não lançado]
 {% endif %}\
+{% set breaking = commits | filter(attribute="breaking", value=true) %}\
+{% if breaking %}\
+### ⚠ Breaking Changes
+{% for commit in breaking %}\
+- {% if commit.scope %}**{{ commit.scope }}**: {% endif %}{{ commit.breaking_description | default(value=commit.message) | upper_first }}
+{% endfor %}
+{% endif %}\
 {% for group, commits in commits | group_by(attribute="group") %}
 ### {{ group }}
 {% for commit in commits %}\
@@ -18,6 +25,7 @@ trim = true
 [git]
 conventional_commits = true
 filter_unconventional = true
+protect_breaking_commits = true
 tag_pattern = "v[0-9]*"
 sort_commits = "newest"
 
