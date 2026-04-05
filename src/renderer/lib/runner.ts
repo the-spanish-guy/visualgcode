@@ -1,4 +1,9 @@
-import { type CancelSignal, Evaluator, type StepCallback } from "../../interpreter/Evaluator";
+import {
+  type CancelSignal,
+  type DebugBreakCallback,
+  Evaluator,
+  type StepCallback,
+} from "../../interpreter/Evaluator";
 import { Lexer } from "../../interpreter/Lexer";
 import { Parser } from "../../interpreter/Parser";
 import { analyzeAST, type StaticWarning } from "../../interpreter/StaticAnalyzer";
@@ -12,6 +17,7 @@ export interface RunCallbacks {
   onOutput: (text: string) => void;
   onInput: () => Promise<string>;
   onClearScreen?: () => void;
+  onDebugBreak?: DebugBreakCallback;
 }
 
 export async function runCode(
@@ -33,6 +39,7 @@ export async function runCode(
       cancelSignal,
       onStep,
       callbacks.onClearScreen,
+      callbacks.onDebugBreak,
     );
 
     await evaluator.run(ast);

@@ -74,6 +74,24 @@ export class DebugController {
     this.stepResolve = null;
   }
 
+  // Força uma pausa imediata (debug <expr> com condição verdadeira)
+  async forceBreak(line: number, vars: VarSnapshot[], callStack: string[]): Promise<void> {
+    this.continueMode = false;
+    this.timerPaused = false;
+    this.onStateChange({
+      mode: this.timerDelay > 0 ? "timer" : "paused",
+      currentLine: line,
+      variables: vars,
+      callStack,
+      timerPaused: false,
+    });
+    await new Promise<void>((resolve) => {
+      this.stepResolve = resolve;
+    });
+    this.timerPaused = false;
+    this.onStateChange({ timerPaused: false });
+  }
+
   // Para o debug — resolve a Promise pendente para não vazar
   stop(): void {
     this.stepResolve?.();

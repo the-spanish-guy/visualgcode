@@ -8,6 +8,7 @@ import type {
   CaseClause,
   ClearScreenNode,
   ConstDeclarationNode,
+  DebugBreakNode,
   ForNode,
   FunctionNode,
   IfNode,
@@ -352,6 +353,8 @@ export class Parser {
         return this.parsePause();
       case TokenType.ALEATORIO:
         return this.parseAleatorio();
+      case TokenType.DEBUG:
+        return this.parseDebugBreak();
       default:
         throw new ParseError(`Comando inesperado '${token.value}'`, token.line, token.col);
     }
@@ -653,6 +656,13 @@ export class Parser {
     }
 
     return { kind: "Aleatorio", active: true, min: DEFAULT_MIN, max: DEFAULT_MAX, line };
+  }
+
+  private parseDebugBreak(): DebugBreakNode {
+    const line = this.current().line;
+    this.advance(); // consome "debug"
+    const condition = this.parseExpression();
+    return { kind: "DebugBreak", condition, line };
   }
 
   // ─── Expressões ───────────────────────────────────────────────────────────────

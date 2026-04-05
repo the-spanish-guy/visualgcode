@@ -8,6 +8,7 @@ import type {
   BooleanLiteralNode,
   CallNode,
   ConstDeclarationNode,
+  DebugBreakNode,
   ForNode,
   FunctionNode,
   IdentifierNode,
@@ -233,6 +234,12 @@ export type StepCallback = (
   callStack: string[],
 ) => Promise<void>;
 
+export type DebugBreakCallback = (
+  line: number,
+  vars: VarSnapshot[],
+  callStack: string[],
+) => Promise<void>;
+
 // ─── Evaluator async ──────────────────────────────────────────────────────────
 
 export class Evaluator {
@@ -250,6 +257,7 @@ export class Evaluator {
     cancelSignal?: CancelSignal,
     private onStep?: StepCallback,
     private onClearScreen?: () => void,
+    private onDebugBreak?: DebugBreakCallback,
   ) {
     this.cancel = cancelSignal ?? new CancelSignal();
   }
@@ -430,6 +438,8 @@ export class Evaluator {
         return this.execPause();
       case "Aleatorio":
         return this.execAleatorio(node as AleatorioNode);
+      case "DebugBreak":
+        return this.execDebugBreak(node as DebugBreakNode, env);
       default:
         throw new RuntimeError(`Nó desconhecido: ${(node as any).kind}`, 0);
     }
@@ -530,6 +540,14 @@ export class Evaluator {
 
   private execAleatorio(node: AleatorioNode): void {
     this.aleatorio = node.active ? { min: node.min, max: node.max } : null;
+  }
+
+  private async execDebugBreak(node: DebugBreakNode, env: Environment): Promise<void> {
+    const condition = await this.evalExpr(node.condition, env);
+    if (condition !== true) return;
+    if (this.onDebugBreak) {
+      await this.onDebugBreak(node.line, this.snapshot(env), [...this.callStack]);
+    }
   }
 
   private async execIf(node: IfNode, env: Environment): Promise<void | ReturnSignal | BreakSignal> {

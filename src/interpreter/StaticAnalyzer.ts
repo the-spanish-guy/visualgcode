@@ -124,6 +124,10 @@ export class StaticAnalyzer {
       case "Break":
         break;
 
+      case "DebugBreak":
+        this.walkExpr(node.condition, used);
+        break;
+
       case "MultiRead":
         for (const read of node.reads) {
           this.markUsed(read.name, used);

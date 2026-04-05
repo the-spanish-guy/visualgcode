@@ -45,7 +45,8 @@ export type ASTNode =
   | FunctionNode
   | ReturnNode
   | CallNode
-  | AleatorioNode;
+  | AleatorioNode
+  | DebugBreakNode;
 
 // ─── Estrutura do programa ─────────────────────────────────────────────────────
 
@@ -174,6 +175,12 @@ export interface AleatorioNode {
   active: boolean;
   min: number;
   max: number;
+  line: number;
+}
+
+export interface DebugBreakNode {
+  kind: "DebugBreak";
+  condition: ASTNode;
   line: number;
 }
 

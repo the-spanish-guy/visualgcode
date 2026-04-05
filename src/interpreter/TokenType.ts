@@ -106,4 +106,5 @@ export enum TokenType {
   LIMPATELA = "LIMPATELA",
   PAUSA = "PAUSA",
   ALEATORIO = "ALEATORIO",
+  DEBUG = "DEBUG",
 }

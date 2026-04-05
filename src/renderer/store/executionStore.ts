@@ -93,12 +93,33 @@ export const useExecutionStore = create<ExecutionStore>()((set, get) => ({
     debug.setDebugMode("running");
     debug.setCurrentLine(null);
 
+    const makeDebugBreakCtrl = () => {
+      if (!debugCtrlRef) {
+        const { activeTab: tab } = getActiveTab();
+        const ctrl = new DebugController((state) => {
+          const d = useDebugStore.getState();
+          if (state.mode !== undefined) d.setDebugMode(state.mode);
+          if (state.currentLine !== undefined) d.setCurrentLine(state.currentLine);
+          if (state.callStack !== undefined) d.setCallStack(state.callStack);
+          if (state.variables !== undefined) {
+            d.setVariables(state.variables);
+            d.addTraceSnapshot(state.variables);
+          }
+        }, tab.breakpoints);
+        debugCtrlRef = ctrl;
+      }
+      return debugCtrlRef;
+    };
+
     const result = await runCode(
       activeTab.code,
       {
         onOutput: (t) => get().appendOutput(t),
         onInput: makeInputCallback,
         onClearScreen: () => get().clearOutput(),
+        onDebugBreak: async (line, vars, callStack) => {
+          await makeDebugBreakCtrl().forceBreak(line, vars, callStack);
+        },
       },
       cancelSignalRef,
     );
@@ -107,6 +128,7 @@ export const useExecutionStore = create<ExecutionStore>()((set, get) => ({
     if (result.warnings.length > 0) set({ warnings: result.warnings });
     set({ isRunning: false });
     debug.setDebugMode("idle");
+    debugCtrlRef = null;
   },
 
   handleDebug: async () => {
@@ -139,6 +161,7 @@ export const useExecutionStore = create<ExecutionStore>()((set, get) => ({
         onOutput: (t) => get().appendOutput(t),
         onInput: makeInputCallback,
         onClearScreen: () => get().clearOutput(),
+        onDebugBreak: (line, vars, callStack) => ctrl.forceBreak(line, vars, callStack),
       },
       cancelSignalRef,
       ctrl.onStep,
@@ -186,6 +209,7 @@ export const useExecutionStore = create<ExecutionStore>()((set, get) => ({
         onOutput: (t) => get().appendOutput(t),
         onInput: makeInputCallback,
         onClearScreen: () => get().clearOutput(),
+        onDebugBreak: (line, vars, callStack) => ctrl.forceBreak(line, vars, callStack),
       },
       cancelSignalRef,
       ctrl.onStep,
