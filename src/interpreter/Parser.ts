@@ -1,4 +1,5 @@
 import type {
+  AleatorioNode,
   ArrayType,
   AssignNode,
   ASTNode,
@@ -349,6 +350,8 @@ export class Parser {
         return this.parseClearScreen();
       case TokenType.PAUSA:
         return this.parsePause();
+      case TokenType.ALEATORIO:
+        return this.parseAleatorio();
       default:
         throw new ParseError(`Comando inesperado '${token.value}'`, token.line, token.col);
     }
@@ -616,6 +619,40 @@ export class Parser {
     const line = this.current().line;
     this.advance(); // consome "pausa"
     return { kind: "Pause", line };
+  }
+
+  private parseAleatorio(): AleatorioNode {
+    const line = this.current().line;
+    this.advance(); // consome "aleatorio"
+
+    const DEFAULT_MIN = 0;
+    const DEFAULT_MAX = 100;
+
+    if (this.check(TokenType.IDENTIFIER)) {
+      const keyword = this.current().value.toLowerCase();
+      if (keyword === "off") {
+        this.advance();
+        return { kind: "Aleatorio", active: false, min: DEFAULT_MIN, max: DEFAULT_MAX, line };
+      }
+      if (keyword === "on") {
+        this.advance();
+        return { kind: "Aleatorio", active: true, min: DEFAULT_MIN, max: DEFAULT_MAX, line };
+      }
+    }
+
+    if (this.check(TokenType.NUMBER)) {
+      const first = Number(this.advance().value);
+      if (this.check(TokenType.COMMA)) {
+        this.advance();
+        const second = Number(this.expect(TokenType.NUMBER, "Esperado número após ','").value);
+        const min = Math.min(first, second);
+        const max = Math.max(first, second);
+        return { kind: "Aleatorio", active: true, min, max, line };
+      }
+      return { kind: "Aleatorio", active: true, min: DEFAULT_MIN, max: first, line };
+    }
+
+    return { kind: "Aleatorio", active: true, min: DEFAULT_MIN, max: DEFAULT_MAX, line };
   }
 
   // ─── Expressões ───────────────────────────────────────────────────────────────

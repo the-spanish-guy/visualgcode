@@ -1,4 +1,5 @@
 import type {
+  AleatorioNode,
   ArrayAccessNode,
   ArrayType,
   AssignNode,
@@ -241,6 +242,7 @@ export class Evaluator {
   private cancel: CancelSignal;
   private breakpoints: Set<number> = new Set();
   private callStack: string[] = [];
+  private aleatorio: { min: number; max: number } | null = null;
 
   constructor(
     private onOutput: (text: string) => void,
@@ -426,6 +428,8 @@ export class Evaluator {
         return this.execClearScreen();
       case "Pause":
         return this.execPause();
+      case "Aleatorio":
+        return this.execAleatorio(node as AleatorioNode);
       default:
         throw new RuntimeError(`Nó desconhecido: ${(node as any).kind}`, 0);
     }
@@ -473,12 +477,6 @@ export class Evaluator {
   }
 
   private async execRead(node: ReadNode, env: Environment): Promise<void> {
-    // A execução fica PAUSADA aqui até o usuário digitar no terminal.
-    // A Promise só resolve quando o componente Terminal chama onInput().
-    const raw = await this.onInput();
-
-    if (this.cancel.cancelled) return;
-
     if (node.index && node.col) {
       // 2D: leia(m[i, j])
       const row = Number(await this.evalExpr(node.index, env));
@@ -486,13 +484,9 @@ export class Evaluator {
       if (Number.isNaN(row) || Number.isNaN(col))
         throw new RuntimeError("Índices devem ser números", node.line);
       const arr = env.get(node.name, node.line).value as VizArray;
-      env.setMatrixElement(
-        node.name,
-        row,
-        col,
-        this.parseInput(raw, arr.elementType, node.line),
-        node.line,
-      );
+      const raw = await this.readInput(arr.elementType);
+      if (this.cancel.cancelled) return;
+      env.setMatrixElement(node.name, row, col, this.parseInput(raw, arr.elementType, node.line), node.line);
       return;
     }
 
@@ -501,18 +495,41 @@ export class Evaluator {
       const index = Number(await this.evalExpr(node.index, env));
       if (Number.isNaN(index)) throw new RuntimeError("Índice deve ser um número", node.line);
       const arr = env.get(node.name, node.line).value as VizArray;
-      env.setArrayElement(
-        node.name,
-        index,
-        this.parseInput(raw, arr.elementType, node.line),
-        node.line,
-      );
+      const raw = await this.readInput(arr.elementType);
+      if (this.cancel.cancelled) return;
+      env.setArrayElement(node.name, index, this.parseInput(raw, arr.elementType, node.line), node.line);
       return;
     }
 
     // Simples: leia(x)
     const variable = env.get(node.name, node.line);
+    const raw = await this.readInput(variable.type);
+    if (this.cancel.cancelled) return;
     env.set(node.name, this.parseInput(raw, variable.type, node.line), node.line);
+  }
+
+  private async readInput(type: string): Promise<string> {
+    if (this.aleatorio && type !== "logico") {
+      const generated = this.generateRandom(type);
+      this.onOutput(generated + "\n");
+      return generated;
+    }
+    return this.onInput();
+  }
+
+  private generateRandom(type: string): string {
+    const { min, max } = this.aleatorio!;
+    if (type === "caractere") {
+      return Array.from({ length: 5 }, () =>
+        String.fromCharCode(65 + Math.floor(Math.random() * 26)),
+      ).join("");
+    }
+    if (type === "real") return String(Math.random() * (max - min) + min);
+    return String(Math.floor(Math.random() * (max - min + 1)) + min);
+  }
+
+  private execAleatorio(node: AleatorioNode): void {
+    this.aleatorio = node.active ? { min: node.min, max: node.max } : null;
   }
 
   private async execIf(node: IfNode, env: Environment): Promise<void | ReturnSignal | BreakSignal> {

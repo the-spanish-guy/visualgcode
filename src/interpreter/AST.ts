@@ -44,7 +44,8 @@ export type ASTNode =
   | ProcedureNode
   | FunctionNode
   | ReturnNode
-  | CallNode;
+  | CallNode
+  | AleatorioNode;
 
 // ─── Estrutura do programa ─────────────────────────────────────────────────────
 
@@ -165,6 +166,14 @@ export interface ClearScreenNode {
 
 export interface PauseNode {
   kind: "Pause";
+  line: number;
+}
+
+export interface AleatorioNode {
+  kind: "Aleatorio";
+  active: boolean;
+  min: number;
+  max: number;
   line: number;
 }
 

@@ -74,4 +74,5 @@ export const KEYWORDS: Record<string, TokenType> = {
   xou: TokenType.XOU,
   limpatela: TokenType.LIMPATELA,
   pausa: TokenType.PAUSA,
+  aleatorio: TokenType.ALEATORIO,
 };
