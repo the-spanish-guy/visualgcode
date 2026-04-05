@@ -97,6 +97,7 @@
 .line {
   font-size: 13px;
   line-height: 20px;
+  min-height: 20px;
   color: var(--text-primary);
   white-space: pre-wrap;
   word-break: break-word;
