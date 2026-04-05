@@ -1,5 +1,35 @@
 # Changelog
 
+## [2.0.0] - 2026-04-05
+
+### Correções
+- **editor**: Adiciona keywords ausentes no realce e remove funções inexistentes
+- **interpreter**: Comparação de strings passa a ser case-insensitive
+- **interpreter**: Corrige StaticAnalyzer para WriteArg
+- **interpreter**: Corrige log e logn invertidos
+- Corrige isNaN(var) para Number.isNaN(var) e roda o lint
+- Corrige escreval("") nao printava a quebra de linha
+- Corrige cor que mostrava a linha onde tinha um erro/warning
+- Corrige autocomplete de variavel
+- Corrige snippet escreva/escreval e adiciona mais snippets
+
+
+### Novas Funcionalidades
+- **interpretador**: Implementa comando debug <expr>
+- **editor**: Adiciona aleatorio e fimrepita ao realce e autocomplete
+- **interpreter**: Implementa comando aleatorio
+- **interpreter**: Adiciona sintaxe repita...fimrepita e adiciona snippet
+- **interpreter**: Adiciona formatação de saída escreva(x:N) e escreva(x:N:M)
+- **interpreter**: Adiciona funções nativas ausentes e refatora callNative
+- Muda o ícone na logotipo
+- Muda o ícone de estrela para o do github
+- Permite que seja possível redimensionar o terminal
+
+
+### Refatoração
+- Tipos e remoção de código morto
+
+
 ## [1.0.5] - 2026-03-26
 
 ### Novas Funcionalidades
