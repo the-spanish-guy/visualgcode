@@ -92,6 +92,66 @@ fimalgoritmo
   });
 });
 
+describe("Formatação de saída (:width e :width:decimals)", () => {
+  test("escreva(x:5) alinha inteiro à direita em 5 espaços", async () => {
+    const run = makeRunner();
+    const { output, errors } = await run(`
+algoritmo "teste"
+var x: inteiro
+inicio
+  x <- 9
+  escreva(x:5)
+fimalgoritmo
+`);
+    expect(errors).toHaveLength(0);
+    expect(output[0]).toBe("    9");
+  });
+
+  test("escreva(y:6:2) formata real com 2 casas decimais em 6 espaços", async () => {
+    const run = makeRunner();
+    const { output, errors } = await run(`
+algoritmo "teste"
+var y: real
+inicio
+  y <- 2.5
+  escreva(y:6:2)
+fimalgoritmo
+`);
+    expect(errors).toHaveLength(0);
+    expect(output[0]).toBe("  2.50");
+  });
+
+  test("escreva(x:2) não trunca valor maior que a largura", async () => {
+    const run = makeRunner();
+    const { output, errors } = await run(`
+algoritmo "teste"
+var x: inteiro
+inicio
+  x <- 12345
+  escreva(x:2)
+fimalgoritmo
+`);
+    expect(errors).toHaveLength(0);
+    expect(output[0]).toBe("12345");
+  });
+
+  test("escreval com formatação mista de argumentos", async () => {
+    const run = makeRunner();
+    const { output, errors } = await run(`
+algoritmo "teste"
+var x: real
+    y: inteiro
+inicio
+  x <- 2.5
+  y <- 9
+  escreval("x", x:4:1, y+3:4)
+fimalgoritmo
+`);
+    expect(errors).toHaveLength(0);
+    expect(output[0]).toBe("x 2.5  12\n");
+  });
+});
+
 describe("Leia", () => {
   test("leia lê valor para variável simples", async () => {
     const run = makeRunner(["42"]);

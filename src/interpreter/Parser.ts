@@ -22,6 +22,7 @@ import type {
   VarDeclarationNode,
   VizType,
   WhileNode,
+  WriteArg,
   WriteNode,
 } from "./AST";
 import type { Token } from "./Token";
@@ -411,17 +412,31 @@ export class Parser {
     this.advance(); // consome "escreva" ou "escreval"
     this.expect(TokenType.LPAREN, "Esperado '(' após escreva/escreval");
 
-    const args: ASTNode[] = [];
+    const args: WriteArg[] = [];
     if (!this.check(TokenType.RPAREN)) {
-      args.push(this.parseExpression());
+      args.push(this.parseWriteArg());
       while (this.check(TokenType.COMMA)) {
         this.advance();
-        args.push(this.parseExpression());
+        args.push(this.parseWriteArg());
       }
     }
 
     this.expect(TokenType.RPAREN, "Esperado ')' após argumentos");
     return { kind: "Write", args, newline, line };
+  }
+
+  private parseWriteArg(): WriteArg {
+    const expr = this.parseExpression();
+    if (!this.check(TokenType.COLON)) return { expr };
+
+    this.advance(); // consome ':'
+    const width = Number(this.expect(TokenType.NUMBER, "Esperado número após ':'").value);
+
+    if (!this.check(TokenType.COLON)) return { expr, width };
+
+    this.advance(); // consome ':'
+    const decimals = Number(this.expect(TokenType.NUMBER, "Esperado número após ':'").value);
+    return { expr, width, decimals };
   }
 
   private parseRead(): ASTNode {

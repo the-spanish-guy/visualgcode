@@ -81,9 +81,15 @@ export interface AssignNode {
   line: number;
 }
 
+export type WriteArg = {
+  expr: ASTNode;
+  width?: number;
+  decimals?: number;
+};
+
 export interface WriteNode {
   kind: "Write";
-  args: ASTNode[];
+  args: WriteArg[];
   newline: boolean;
   line: number;
 }

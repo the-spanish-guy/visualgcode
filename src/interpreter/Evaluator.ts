@@ -26,6 +26,7 @@ import type {
   VarDeclarationNode,
   VizType,
   WhileNode,
+  WriteArg,
   WriteNode,
 } from "./AST";
 
@@ -457,9 +458,18 @@ export class Evaluator {
   }
 
   private async execWrite(node: WriteNode, env: Environment): Promise<void> {
-    const parts = await Promise.all(node.args.map((arg) => this.evalExpr(arg, env)));
-    const text = parts.map((v) => this.stringify(v)).join("") + (node.newline ? "\n" : "");
+    const parts = await Promise.all(node.args.map((arg) => this.formatWriteArg(arg, env)));
+    const text = parts.join("") + (node.newline ? "\n" : "");
     this.onOutput(text);
+  }
+
+  private async formatWriteArg(arg: WriteArg, env: Environment): Promise<string> {
+    const value = await this.evalExpr(arg.expr, env);
+    const raw =
+      arg.decimals !== undefined
+        ? (value as number).toFixed(arg.decimals)
+        : this.stringify(value);
+    return arg.width !== undefined ? raw.padStart(arg.width) : raw;
   }
 
   private async execRead(node: ReadNode, env: Environment): Promise<void> {
