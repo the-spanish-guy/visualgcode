@@ -701,6 +701,15 @@ export class Evaluator {
     }
   }
 
+  private static readonly STRING_RELATIONAL_OPS: Record<string, (l: string, r: string) => boolean> = {
+    "=": (l, r) => l === r,
+    "<>": (l, r) => l !== r,
+    "<": (l, r) => l < r,
+    ">": (l, r) => l > r,
+    "<=": (l, r) => l <= r,
+    ">=": (l, r) => l >= r,
+  };
+
   private static readonly BINARY_OPS: Record<
     string,
     (l: VizValue, r: VizValue, line: number) => VizValue
@@ -751,6 +760,11 @@ export class Evaluator {
       return typeof left === "string" || typeof right === "string"
         ? this.stringify(left) + this.stringify(right)
         : (left as number) + (right as number);
+    }
+
+    const stringOp = Evaluator.STRING_RELATIONAL_OPS[op];
+    if (typeof left === "string" && typeof right === "string" && stringOp) {
+      return stringOp(left.toLowerCase(), right.toLowerCase());
     }
 
     const handler = Evaluator.BINARY_OPS[op];

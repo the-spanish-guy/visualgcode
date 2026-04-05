@@ -230,3 +230,86 @@ fimalgoritmo
     expect(errors[0]).toMatch(/zero/i);
   });
 });
+
+describe("Comparação de strings (case-insensitive)", () => {
+  test('"ABC" = "abc" resulta em VERDADEIRO', async () => {
+    const { output, errors } = await runCode(`
+algoritmo "teste"
+inicio
+escreval("ABC" = "abc")
+fimalgoritmo
+`);
+    expect(errors).toHaveLength(0);
+    expect(output.join("").toLowerCase()).toMatch(/verdadeiro/);
+  });
+
+  test('"ABC" <> "abc" resulta em FALSO', async () => {
+    const { output, errors } = await runCode(`
+algoritmo "teste"
+inicio
+escreval("ABC" <> "abc")
+fimalgoritmo
+`);
+    expect(errors).toHaveLength(0);
+    expect(output.join("").toLowerCase()).toMatch(/falso/);
+  });
+
+  test('"ana" < "bia" resulta em VERDADEIRO', async () => {
+    const { output, errors } = await runCode(`
+algoritmo "teste"
+inicio
+escreval("ana" < "bia")
+fimalgoritmo
+`);
+    expect(errors).toHaveLength(0);
+    expect(output.join("").toLowerCase()).toMatch(/verdadeiro/);
+  });
+
+  test('"Bia" > "ana" resulta em VERDADEIRO (case-insensitive)', async () => {
+    const { output, errors } = await runCode(`
+algoritmo "teste"
+inicio
+escreval("Bia" > "ana")
+fimalgoritmo
+`);
+    expect(errors).toHaveLength(0);
+    expect(output.join("").toLowerCase()).toMatch(/verdadeiro/);
+  });
+
+  test('"abc" <= "abc" resulta em VERDADEIRO', async () => {
+    const { output, errors } = await runCode(`
+algoritmo "teste"
+inicio
+escreval("abc" <= "abc")
+fimalgoritmo
+`);
+    expect(errors).toHaveLength(0);
+    expect(output.join("").toLowerCase()).toMatch(/verdadeiro/);
+  });
+
+  test('"zzz" >= "aaa" resulta em VERDADEIRO', async () => {
+    const { output, errors } = await runCode(`
+algoritmo "teste"
+inicio
+escreval("zzz" >= "aaa")
+fimalgoritmo
+`);
+    expect(errors).toHaveLength(0);
+    expect(output.join("").toLowerCase()).toMatch(/verdadeiro/);
+  });
+
+  test("comparação em se..entao usa case-insensitive", async () => {
+    const { output, errors } = await runCode(`
+algoritmo "teste"
+var s: caractere
+inicio
+s <- "Brasil"
+se s = "brasil" entao
+  escreval("igual")
+fimse
+fimalgoritmo
+`);
+    expect(errors).toHaveLength(0);
+    expect(output.join("")).toMatch(/igual/);
+  });
+});
