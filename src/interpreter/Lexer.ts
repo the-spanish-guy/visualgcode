@@ -36,59 +36,87 @@ export class Lexer {
   private readNextToken(): void {
     const char = this.current();
 
-    if (this.isDigit(char)) return this.readNumber();
-    if (char === '"') return this.readString();
-    if (this.isAlpha(char)) return this.readIdentifierOrKeyword();
+    if (this.isDigit(char)) {
+      this.readNumber();
+      return;
+    }
+
+    if (char === '"') {
+      this.readString();
+      return;
+    }
+
+    if (this.isAlpha(char)) {
+      this.readIdentifierOrKeyword();
+      return;
+    }
 
     // Operadores de 1 ou 2 caracteres
     switch (char) {
       case "+":
         this.advance();
-        return this.pushToken(TokenType.PLUS, "+");
+        this.pushToken(TokenType.PLUS, "+");
+        return;
       case "-":
         this.advance();
-        return this.pushToken(TokenType.MINUS, "-");
+        this.pushToken(TokenType.MINUS, "-");
+        return;
       case "*":
         this.advance();
-        return this.pushToken(TokenType.MULTIPLY, "*");
+        this.pushToken(TokenType.MULTIPLY, "*");
+        return;
       case "/":
         this.advance();
-        return this.pushToken(TokenType.DIVIDE, "/");
+        this.pushToken(TokenType.DIVIDE, "/");
+        return;
       case "(":
         this.advance();
-        return this.pushToken(TokenType.LPAREN, "(");
+        this.pushToken(TokenType.LPAREN, "(");
+        return;
       case ")":
         this.advance();
-        return this.pushToken(TokenType.RPAREN, ")");
+        this.pushToken(TokenType.RPAREN, ")");
+        return;
       case ":":
         this.advance();
-        return this.pushToken(TokenType.COLON, ":");
+        this.pushToken(TokenType.COLON, ":");
+        return;
       case ",":
         this.advance();
-        return this.pushToken(TokenType.COMMA, ",");
+        this.pushToken(TokenType.COMMA, ",");
+        return;
       case "[":
         this.advance();
-        return this.pushToken(TokenType.LBRACKET, "[");
+        this.pushToken(TokenType.LBRACKET, "[");
+        return;
       case "]":
         this.advance();
-        return this.pushToken(TokenType.RBRACKET, "]");
+        this.pushToken(TokenType.RBRACKET, "]");
+        return;
       case ".":
-        return this.readDotDot();
+        this.readDotDot();
+        return;
       case "=":
         this.advance();
-        return this.pushToken(TokenType.EQUAL, "=");
+        this.pushToken(TokenType.EQUAL, "=");
+        return;
       case "<":
-        return this.readLessThan();
+        this.readLessThan();
+        return;
       case ">":
-        return this.readGreaterThan();
+        this.readGreaterThan();
+        return;
       case "^":
         this.advance();
-        return this.pushToken(TokenType.POWER, "^");
+        this.pushToken(TokenType.POWER, "^");
+        return;
       case "%":
         this.advance();
-        return this.pushToken(TokenType.PERCENT, "%");
+        this.pushToken(TokenType.PERCENT, "%");
+        return;
       case "\\":
-        return this.readBackslash();
+        this.readBackslash();
+        return;
 
       default:
         throw new LexerError(`Caractere inesperado '${char}'`, this.line, this.col);
