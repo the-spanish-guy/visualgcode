@@ -746,60 +746,49 @@ export class Evaluator {
 
   // ─── Funções nativas ──────────────────────────────────────────────────────
 
-  private async callNative(node: CallNode, env: Environment): Promise<VizValue | undefined> {
-    const args = await Promise.all(node.args.map((a) => this.evalExpr(a, env)));
+  private static readonly NATIVE_FNS: Record<string, (args: VizValue[]) => VizValue> = {
+    // Numéricas e algébricas
+    abs: ([x]) => Math.abs(x as number),
+    int: ([x]) => Math.trunc(x as number),
+    raizq: ([x]) => Math.sqrt(x as number),
+    quad: ([x]) => (x as number) ** 2,
+    exp: ([base, exponent]) => (base as number) ** (exponent as number),
+    log: ([x]) => Math.log10(x as number),
+    logn: ([x]) => Math.log(x as number),
+    pi: () => Math.PI,
+    rand: () => Math.random(),
+    randi: ([limit]) => Math.floor(Math.random() * (limit as number)),
+    // Trigonométricas
+    sen: ([x]) => Math.sin(x as number),
+    cos: ([x]) => Math.cos(x as number),
+    tan: ([x]) => Math.tan(x as number),
+    cotan: ([x]) => 1 / Math.tan(x as number),
+    arcsen: ([x]) => Math.asin(x as number),
+    arccos: ([x]) => Math.acos(x as number),
+    arctan: ([x]) => Math.atan(x as number),
+    grauprad: ([x]) => (x as number) * (Math.PI / 180),
+    radpgrau: ([x]) => (x as number) * (180 / Math.PI),
+    // Strings
+    compr: ([s]) => (s as string).length,
+    copia: ([s, start, length]) =>
+      (s as string).slice((start as number) - 1, (start as number) - 1 + (length as number)),
+    maiusc: ([s]) => (s as string).toUpperCase(),
+    minusc: ([s]) => (s as string).toLowerCase(),
+    pos: ([substring, source]) => (source as string).indexOf(substring as string) + 1,
+    asc: ([s]) => (s as string).charCodeAt(0),
+    carac: ([code]) => String.fromCharCode(code as number),
+    // Conversão
+    real: ([x]) => parseFloat(String(x)),
+    inteiro: ([x]) => parseInt(String(x), 10),
+    caracpnum: ([s]) => parseFloat(s as string),
+    numpcarac: ([n]) => String(n),
+  };
 
-    switch (node.name) {
-      case "abs":
-        return Math.abs(args[0] as number);
-      case "int":
-        return Math.trunc(args[0] as number);
-      case "sqrt":
-        return Math.sqrt(args[0] as number);
-      case "quad":
-        return (args[0] as number) ** 2;
-      case "exp":
-        return (args[0] as number) ** (args[1] as number);
-      case "log":
-        return Math.log10(args[0] as number);
-      case "logn":
-        return Math.log(args[0] as number);
-      case "sen":
-        return Math.sin(args[0] as number);
-      case "cos":
-        return Math.cos(args[0] as number);
-      case "tan":
-        return Math.tan(args[0] as number);
-      case "pi":
-        return Math.PI;
-      case "rand":
-        return Math.random();
-      case "randi":
-        return Math.floor(Math.random() * (args[0] as number));
-      case "compr":
-        return (args[0] as string).length;
-      case "copia":
-        return (args[0] as string).slice(
-          (args[1] as number) - 1,
-          (args[1] as number) - 1 + (args[2] as number),
-        );
-      case "maiusc":
-        return (args[0] as string).toUpperCase();
-      case "minusc":
-        return (args[0] as string).toLowerCase();
-      case "pos":
-        return (args[1] as string).indexOf(args[0] as string) + 1;
-      case "real":
-        return parseFloat(String(args[0]));
-      case "inteiro":
-        return parseInt(String(args[0]), 10);
-      case "caracpnum":
-        return parseFloat(args[0] as string);
-      case "numcarac":
-        return String(args[0]);
-      default:
-        return undefined;
-    }
+  private async callNative(node: CallNode, env: Environment): Promise<VizValue | undefined> {
+    const nativeFn = Evaluator.NATIVE_FNS[node.name];
+    if (!nativeFn) return undefined;
+    const args = await Promise.all(node.args.map((a) => this.evalExpr(a, env)));
+    return nativeFn(args);
   }
 
   // ─── Utilitários ─────────────────────────────────────────────────────────

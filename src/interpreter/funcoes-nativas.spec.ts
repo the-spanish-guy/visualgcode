@@ -32,11 +32,10 @@ fimalgoritmo
 }
 
 describe("Funções nativas — Matemáticas", () => {
-  // Funções de um argumento com resultado numérico — mesmo padrão de asserção
   it.each([
     ["abs(-5)", 5],
     ["abs(3)", 3],
-    ["sqrt(9)", 3],
+    ["raizq(9)", 3],
     ["quad(3)", 9],
     ["log(1)", 0],
     ["log(100)", 2],
@@ -44,13 +43,18 @@ describe("Funções nativas — Matemáticas", () => {
     ["sen(0)", 0],
     ["cos(0)", 1],
     ["tan(0)", 0],
+    ["cotan(0.7853981633974483)", 1],
+    ["arcsen(0)", 0],
+    ["arccos(1)", 0],
+    ["arctan(0)", 0],
+    ["grauprad(180)", 3.141592653589793],
+    ["radpgrau(3.141592653589793)", 180],
   ])("escreval(%s) ≈ %s", async (expr, expected) => {
     const { output, errors } = await evalExpr(expr);
     expect(errors).toHaveLength(0);
     expect(parseFloat(output.join(""))).toBeCloseTo(expected as number, 5);
   });
 
-  // int() usa parseInt — asserção diferente das demais
   it.each([
     ["int(3.7)", 3],
     ["int(-3.7)", -3],
@@ -103,9 +107,8 @@ fimalgoritmo
     expect(val).toBeLessThan(10);
   });
 
-  // Edge cases: resultados especiais de ponto flutuante
-  test("sqrt(-1) retorna NaN (sem erro de runtime)", async () => {
-    const { output, errors } = await evalExpr("sqrt(-1)");
+  test("raizq(-1) retorna NaN (sem erro de runtime)", async () => {
+    const { output, errors } = await evalExpr("raizq(-1)");
     expect(errors).toHaveLength(0);
     expect(output.join("").toLowerCase()).toMatch(/nan/);
   });
@@ -130,7 +133,6 @@ describe("Funções nativas — Strings", () => {
     expect(output.join("").trim()).toBe("bcd");
   });
 
-  // maiusc/minusc — mesma asserção toBe(string)
   it.each([
     ['maiusc("abc")', "ABC"],
     ['minusc("ABC")', "abc"],
@@ -140,7 +142,6 @@ describe("Funções nativas — Strings", () => {
     expect(output.join("").trim()).toBe(expected as string);
   });
 
-  // pos() — encontrado e não-encontrado
   it.each([
     ['"bc"', '"abcd"', 2],
     ['"xyz"', '"abcd"', 0],
@@ -148,6 +149,25 @@ describe("Funções nativas — Strings", () => {
     const { output, errors } = await evalExpr(`pos(${sub}, ${s})`);
     expect(errors).toHaveLength(0);
     expect(parseInt(output.join("").trim(), 10)).toBe(expected as number);
+  });
+
+  test('asc("B") = 66', async () => {
+    const { output, errors } = await evalExpr('asc("Brasil")');
+    expect(errors).toHaveLength(0);
+    expect(parseInt(output.join("").trim(), 10)).toBe(66);
+  });
+
+  test("carac(65) + carac(66) + carac(67) = ABC", async () => {
+    const { output, errors } = await runCode(`
+algoritmo "teste"
+var s: caractere
+inicio
+  s <- carac(65) + carac(66) + carac(67)
+  escreval(s)
+fimalgoritmo
+`);
+    expect(errors).toHaveLength(0);
+    expect(output.join("").trim()).toBe("ABC");
   });
 });
 
@@ -158,8 +178,8 @@ describe("Funções nativas — Conversão de tipos", () => {
     expect(parseFloat(output.join("").trim())).toBe(42);
   });
 
-  test('numcarac(42) = "42"', async () => {
-    const { output, errors } = await evalExpr("numcarac(42)");
+  test('numpcarac(42) = "42"', async () => {
+    const { output, errors } = await evalExpr("numpcarac(42)");
     expect(errors).toHaveLength(0);
     expect(output.join("").trim()).toBe("42");
   });
