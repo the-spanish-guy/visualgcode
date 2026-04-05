@@ -761,9 +761,9 @@ export class Evaluator {
       case "exp":
         return (args[0] as number) ** (args[1] as number);
       case "log":
-        return Math.log(args[0] as number);
-      case "logn":
         return Math.log10(args[0] as number);
+      case "logn":
+        return Math.log(args[0] as number);
       case "sen":
         return Math.sin(args[0] as number);
       case "cos":
