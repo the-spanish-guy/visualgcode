@@ -73,7 +73,7 @@ export class StaticAnalyzer {
         break;
 
       case "Write":
-        for (const arg of node.args) this.walkExpr(arg, used);
+        for (const arg of node.args) this.walkExpr(arg.expr, used);
         break;
 
       case "If":
@@ -97,7 +97,7 @@ export class StaticAnalyzer {
 
       case "Repeat":
         for (const s of node.body) this.walkStatement(s, used);
-        this.walkExpr(node.condition, used);
+        if (node.condition) this.walkExpr(node.condition, used);
         break;
 
       case "Return":
