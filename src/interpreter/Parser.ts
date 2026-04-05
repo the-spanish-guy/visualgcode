@@ -245,17 +245,6 @@ export class Parser {
 
   // ─── Subprogramas ─────────────────────────────────────────────────────────────
 
-  private parseProceduresAndFunctions(): (ProcedureNode | FunctionNode)[] {
-    const subs: (ProcedureNode | FunctionNode)[] = [];
-
-    while (this.check(TokenType.PROCEDIMENTO) || this.check(TokenType.FUNCAO)) {
-      if (this.check(TokenType.PROCEDIMENTO)) subs.push(this.parseProcedure());
-      else subs.push(this.parseFunction());
-    }
-
-    return subs;
-  }
-
   private parseProcedure(): ProcedureNode {
     const line = this.current().line;
     this.advance();

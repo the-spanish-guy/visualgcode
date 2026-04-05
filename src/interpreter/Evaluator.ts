@@ -7,7 +7,6 @@ import type {
   BinaryOpNode,
   BooleanLiteralNode,
   CallNode,
-  ConstDeclarationNode,
   DebugBreakNode,
   ForNode,
   FunctionNode,
@@ -65,11 +64,13 @@ function isRefSlot(v: unknown): v is RefSlot {
 }
 
 interface Variable {
-  type: string;
+  type: VizType;
   value: VizValue | RefSlot;
   readonly?: boolean;
   originalName: string;
 }
+
+type ResolvedVariable = Omit<Variable, "value"> & { value: VizValue };
 
 class ReturnSignal {
   constructor(public value: VizValue) {}
@@ -94,19 +95,20 @@ class Environment {
 
   constructor(private parent: Environment | null = null) {}
 
-  declare(name: string, type: string, value: VizValue | RefSlot, readonly?: boolean): void {
+  declare(name: string, type: VizType, value: VizValue | RefSlot, readonly?: boolean): void {
     this.store.set(name.toLowerCase(), { type, value, readonly, originalName: name });
   }
 
-  get(name: string, line: number): Variable {
+  getAllVariables(): Map<string, Variable> {
+    return this.store;
+  }
+
+  get(name: string, line: number): ResolvedVariable {
     const key = name.toLowerCase();
     if (this.store.has(key)) {
       const entry = this.store.get(key)!;
-      // Se for ref, retorna o valor atual do ambiente do caller
-      if (isRefSlot(entry.value)) {
-        return { type: entry.type, value: entry.value.get(), originalName: entry.originalName };
-      }
-      return entry;
+      const value = isRefSlot(entry.value) ? entry.value.get() : entry.value;
+      return { type: entry.type, value, readonly: entry.readonly, originalName: entry.originalName };
     }
     if (this.parent) return this.parent.get(key, line);
     throw new RuntimeError(`Variável '${name}' não declarada`, line);
@@ -247,7 +249,6 @@ export class Evaluator {
   private procedures: Map<string, ProcedureNode> = new Map();
   private functions: Map<string, FunctionNode> = new Map();
   private cancel: CancelSignal;
-  private breakpoints: Set<number> = new Set();
   private callStack: string[] = [];
   private aleatorio: { min: number; max: number } | null = null;
 
@@ -262,23 +263,14 @@ export class Evaluator {
     this.cancel = cancelSignal ?? new CancelSignal();
   }
 
-  setBreakpoints(lines: number[]): void {
-    this.breakpoints = new Set(lines);
-  }
-
-  // Snapshot das variáveis visíveis no momento
   private snapshot(env: Environment): VarSnapshot[] {
-    // Acessa o store privado via cast — suficiente para o debug
-    const store = (env as any).store as Map<
-      string,
-      { type: string; value: any; originalName: string }
-    >;
     const result: VarSnapshot[] = [];
-    store.forEach((variable) => {
+    env.getAllVariables().forEach((variable) => {
+      const value = isRefSlot(variable.value) ? variable.value.get() : variable.value;
       result.push({
         name: variable.originalName,
-        type: variable.type,
-        value: this.stringify(variable.value),
+        type: this.typeToString(variable.type),
+        value: this.stringify(value),
       });
     });
     return result;
@@ -286,29 +278,22 @@ export class Evaluator {
 
   async run(program: ProgramNode): Promise<void> {
     for (const decl of program.declarations) {
-      if ((decl as any).kind === "Procedure") {
-        this.procedures.set(
-          (decl as unknown as ProcedureNode).name.toLowerCase(),
-          decl as unknown as ProcedureNode,
-        );
-      } else if ((decl as any).kind === "Function") {
-        this.functions.set(
-          (decl as unknown as FunctionNode).name.toLowerCase(),
-          decl as unknown as FunctionNode,
-        );
-      } else if ((decl as any).kind === "ConstDeclaration") {
-        const c = decl as unknown as ConstDeclarationNode;
-        const typeStr =
-          typeof c.value === "number"
-            ? Number.isInteger(c.value)
+      if (decl.kind === "Procedure") {
+        this.procedures.set(decl.name.toLowerCase(), decl);
+      } else if (decl.kind === "Function") {
+        this.functions.set(decl.name.toLowerCase(), decl);
+      } else if (decl.kind === "ConstDeclaration") {
+        const typeStr: PrimitiveType =
+          typeof decl.value === "number"
+            ? Number.isInteger(decl.value)
               ? "inteiro"
               : "real"
-            : typeof c.value === "string"
+            : typeof decl.value === "string"
               ? "caractere"
               : "logico";
-        this.globals.declare(c.name, typeStr, c.value, true);
+        this.globals.declare(decl.name, typeStr, decl.value, true);
       } else {
-        this.declareVars(decl as VarDeclarationNode, this.globals);
+        this.declareVars(decl, this.globals);
       }
     }
     await this.execStatements(program.body, this.globals);
@@ -318,9 +303,8 @@ export class Evaluator {
 
   private declareVars(decl: VarDeclarationNode, env: Environment): void {
     const defaultValue = this.defaultFor(decl.type);
-    const typeStr = this.typeToString(decl.type);
     for (const name of decl.names) {
-      env.declare(name, typeStr, defaultValue);
+      env.declare(name, decl.type, defaultValue);
     }
   }
 
@@ -480,9 +464,7 @@ export class Evaluator {
   private async formatWriteArg(arg: WriteArg, env: Environment): Promise<string> {
     const value = await this.evalExpr(arg.expr, env);
     const raw =
-      arg.decimals !== undefined
-        ? (value as number).toFixed(arg.decimals)
-        : this.stringify(value);
+      arg.decimals !== undefined ? (value as number).toFixed(arg.decimals) : this.stringify(value);
     return arg.width !== undefined ? raw.padStart(arg.width) : raw;
   }
 
@@ -496,7 +478,13 @@ export class Evaluator {
       const arr = env.get(node.name, node.line).value as VizArray;
       const raw = await this.readInput(arr.elementType);
       if (this.cancel.cancelled) return;
-      env.setMatrixElement(node.name, row, col, this.parseInput(raw, arr.elementType, node.line), node.line);
+      env.setMatrixElement(
+        node.name,
+        row,
+        col,
+        this.parseInput(raw, arr.elementType, node.line),
+        node.line,
+      );
       return;
     }
 
@@ -507,31 +495,41 @@ export class Evaluator {
       const arr = env.get(node.name, node.line).value as VizArray;
       const raw = await this.readInput(arr.elementType);
       if (this.cancel.cancelled) return;
-      env.setArrayElement(node.name, index, this.parseInput(raw, arr.elementType, node.line), node.line);
+      env.setArrayElement(
+        node.name,
+        index,
+        this.parseInput(raw, arr.elementType, node.line),
+        node.line,
+      );
       return;
     }
 
     // Simples: leia(x)
     const variable = env.get(node.name, node.line);
+    if (typeof variable.type !== "string")
+      throw new RuntimeError(`Não é possível usar leia() diretamente em vetor`, node.line);
     const raw = await this.readInput(variable.type);
     if (this.cancel.cancelled) return;
     env.set(node.name, this.parseInput(raw, variable.type, node.line), node.line);
   }
 
-  private async readInput(type: string): Promise<string> {
+  private async readInput(type: PrimitiveType): Promise<string> {
     if (this.aleatorio && type !== "logico") {
-      const generated = this.generateRandom(type);
+      const { min, max } = this.aleatorio;
+      const generated = this.generateRandom(type, min, max);
       this.onOutput(generated + "\n");
       return generated;
     }
     return this.onInput();
   }
 
-  private generateRandom(type: string): string {
-    const { min, max } = this.aleatorio!;
+  private generateRandom(type: PrimitiveType, min: number, max: number): string {
+    const RANDOM_STRING_LENGTH = 5;
+    const CHAR_CODE_A = "A".charCodeAt(0);
+    const ALPHABET_SIZE = 26;
     if (type === "caractere") {
-      return Array.from({ length: 5 }, () =>
-        String.fromCharCode(65 + Math.floor(Math.random() * 26)),
+      return Array.from({ length: RANDOM_STRING_LENGTH }, () =>
+        String.fromCharCode(CHAR_CODE_A + Math.floor(Math.random() * ALPHABET_SIZE)),
       ).join("");
     }
     if (type === "real") return String(Math.random() * (max - min) + min);
@@ -703,70 +701,68 @@ export class Evaluator {
     }
   }
 
+  private static readonly BINARY_OPS: Record<
+    string,
+    (l: VizValue, r: VizValue, line: number) => VizValue
+  > = (() => {
+    const intDiv = (l: VizValue, r: VizValue, line: number): VizValue => {
+      if ((r as number) === 0) throw new RuntimeError("Divisão inteira por zero", line);
+      return Math.trunc((l as number) / (r as number));
+    };
+    const modulo = (l: VizValue, r: VizValue, line: number): VizValue => {
+      if ((r as number) === 0) throw new RuntimeError("Módulo por zero", line);
+      return (l as number) % (r as number);
+    };
+    return {
+      "-": (l, r) => (l as number) - (r as number),
+      "*": (l, r) => (l as number) * (r as number),
+      "/": (l, r, line) => {
+        if ((r as number) === 0) throw new RuntimeError("Divisão por zero", line);
+        return (l as number) / (r as number);
+      },
+      div: intDiv,
+      "\\\\": intDiv,
+      mod: modulo,
+      "%": modulo,
+      "=": (l, r) => l === r,
+      "<>": (l, r) => l !== r,
+      "<": (l, r) => (l as number) < (r as number),
+      ">": (l, r) => (l as number) > (r as number),
+      "<=": (l, r) => (l as number) <= (r as number),
+      ">=": (l, r) => (l as number) >= (r as number),
+      e: (l, r) => Boolean(l) && Boolean(r),
+      ou: (l, r) => Boolean(l) || Boolean(r),
+      xou: (l, r) => Boolean(l) !== Boolean(r),
+      "^": (l, r) => (l as number) ** (r as number),
+    };
+  })();
+
+  private static readonly UNARY_OPS: Record<string, (operand: VizValue) => VizValue> = {
+    "-": (operand) => -(operand as number),
+    nao: (operand) => !operand,
+  };
+
   private async evalBinaryOp(node: BinaryOpNode, env: Environment): Promise<VizValue> {
     const left = await this.evalExpr(node.left, env);
     const right = await this.evalExpr(node.right, env);
-    const line = node.line;
+    const { op, line } = node;
 
-    switch (node.op) {
-      case "+":
-        if (typeof left === "string" || typeof right === "string")
-          return this.stringify(left) + this.stringify(right);
-        return (left as number) + (right as number);
-      case "-":
-        return (left as number) - (right as number);
-      case "*":
-        return (left as number) * (right as number);
-      case "/":
-        if (right === 0) throw new RuntimeError("Divisão por zero", line);
-        return (left as number) / (right as number);
-      case "div":
-        if (right === 0) throw new RuntimeError("Divisão inteira por zero", line);
-        return Math.trunc((left as number) / (right as number));
-      case "mod":
-        if (right === 0) throw new RuntimeError("Módulo por zero", line);
-        return (left as number) % (right as number);
-      case "=":
-        return left === right;
-      case "<>":
-        return left !== right;
-      case "<":
-        return (left as number) < (right as number);
-      case ">":
-        return (left as number) > (right as number);
-      case "<=":
-        return (left as number) <= (right as number);
-      case ">=":
-        return (left as number) >= (right as number);
-      case "e":
-        return Boolean(left) && Boolean(right);
-      case "ou":
-        return Boolean(left) || Boolean(right);
-      case "xou":
-        return Boolean(left) !== Boolean(right);
-      case "^":
-        return (left as number) ** (right as number);
-      case "\\\\":
-        if (right === 0) throw new RuntimeError("Divisão inteira por zero", line);
-        return Math.trunc((left as number) / (right as number));
-      case "%":
-        if (right === 0) throw new RuntimeError("Módulo por zero", line);
-        return (left as number) % (right as number);
-      default:
-        throw new RuntimeError(`Operador desconhecido '${node.op}'`, line);
+    if (op === "+") {
+      return typeof left === "string" || typeof right === "string"
+        ? this.stringify(left) + this.stringify(right)
+        : (left as number) + (right as number);
     }
+
+    const handler = Evaluator.BINARY_OPS[op];
+    if (!handler) throw new RuntimeError(`Operador desconhecido '${op}'`, line);
+    return handler(left, right, line);
   }
 
   private async evalUnaryOp(node: UnaryOpNode, env: Environment): Promise<VizValue> {
     const operand = await this.evalExpr(node.operand, env);
-    switch (node.op) {
-      case "-":
-        return -(operand as number);
-      case "nao":
-        return !operand;
-      default:
-        throw new RuntimeError(`Operador unário desconhecido '${node.op}'`, node.line);
-    }
+    const handler = Evaluator.UNARY_OPS[node.op];
+    if (!handler) throw new RuntimeError(`Operador unário desconhecido '${node.op}'`, node.line);
+    return handler(operand);
   }
 
   private async evalFunctionCall(node: CallNode, env: Environment): Promise<VizValue> {
@@ -846,11 +842,10 @@ export class Evaluator {
     callerEnv: Environment,
     line: number,
   ): Promise<void> {
-    const flat: { name: string; type: string; byRef: boolean }[] = [];
+    const flat: { name: string; type: VizType; byRef: boolean }[] = [];
     for (const p of params) {
       if (p.kind !== "VarDeclaration") continue;
-      const typeStr = this.typeToString(p.type);
-      for (const name of p.names) flat.push({ name, type: typeStr, byRef: !!p.byRef });
+      for (const name of p.names) flat.push({ name, type: p.type, byRef: !!p.byRef });
     }
 
     if (flat.length !== args.length) {
@@ -882,7 +877,7 @@ export class Evaluator {
     }
   }
 
-  private coerce(value: VizValue, type: string, _line: number): VizValue {
+  private coerce(value: VizValue, type: VizType, _line: number): VizValue {
     switch (type) {
       case "inteiro":
         return Math.trunc(value as number);
@@ -914,7 +909,7 @@ export class Evaluator {
     return String(value);
   }
 
-  private parseInput(raw: string, type: string, line: number): VizValue {
+  private parseInput(raw: string, type: VizType, line: number): VizValue {
     switch (type) {
       case "inteiro": {
         const n = parseInt(raw.trim(), 10);

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { explainError } from "../../lib/explainError";
 import { useDebugStore } from "../../store/debugStore";
 import { useEditorStore } from "../../store/editorStore";
@@ -6,6 +6,9 @@ import { useExecutionStore } from "../../store/executionStore";
 import ProblemsPanel from "./ProblemsPanel";
 import styles from "./Terminal.module.css";
 import TraceTable from "./TraceTable";
+
+const TABS = ["saida", "rastreamento", "problemas"] as const;
+type TerminalTab = (typeof TABS)[number];
 
 export default function Terminal() {
   const lines = useExecutionStore((s) => s.output.lines);
@@ -19,7 +22,7 @@ export default function Terminal() {
   const clearTraceSnapshots = useDebugStore((s) => s.clearTraceSnapshots);
   const goToLine = useEditorStore((s) => s.goToLine);
 
-  const [activeTab, setActiveTab] = useState<"saida" | "rastreamento" | "problemas">("saida");
+  const [activeTab, setActiveTab] = useState<TerminalTab>("saida");
   const [inputVal, setInputVal] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -46,12 +49,15 @@ export default function Terminal() {
     if (errors.length > 0 && !isRunning) setActiveTab("problemas");
   }, [errors.length]);
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && waitingInput) {
-      handleTerminalInput(inputVal);
-      setInputVal("");
-    }
-  };
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === "Enter" && waitingInput) {
+        handleTerminalInput(inputVal);
+        setInputVal("");
+      }
+    },
+    [waitingInput, inputVal, handleTerminalInput],
+  );
 
   return (
     <div className={styles.terminal}>

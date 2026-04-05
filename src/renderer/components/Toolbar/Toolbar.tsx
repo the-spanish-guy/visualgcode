@@ -5,6 +5,16 @@ import { useWorkspaceStore } from "../../store/workspaceStore";
 import ThemeSelector from "../ThemeSelector/ThemeSelector";
 import styles from "./Toolbar.module.css";
 
+const REPO_URL = "https://github.com/the-spanish-guy/visualgcode";
+const TIMER_MIN = 100;
+const TIMER_MAX = 2000;
+const TIMER_STEP = 100;
+const IS_MAC = navigator.userAgent.includes("Macintosh");
+
+function handleStarRepo() {
+  window.electronAPI.openExternal(REPO_URL);
+}
+
 export default function Toolbar() {
   const isRunning = useExecutionStore((s) => s.isRunning);
   const handleRun = useExecutionStore((s) => s.handleRun);
@@ -32,14 +42,8 @@ export default function Toolbar() {
   const isPaused = debugMode === "paused";
   const idle = !isRunning && !isDebugging && !isTimer;
 
-  const isMac = navigator.userAgent.includes("Macintosh");
-
-  function handleStarRepo() {
-    window.electronAPI.openExternal("https://github.com/the-spanish-guy/visualgcode");
-  }
-
   return (
-    <div className={`${styles.toolbar} ${isMac ? styles.toolbarMac : ""}`}>
+    <div className={`${styles.toolbar} ${IS_MAC ? styles.toolbarMac : ""}`}>
       <div className={styles.left}>
         <div className={styles.brand}>
           <span className={styles.logo}>
@@ -245,9 +249,9 @@ export default function Toolbar() {
               <span className={styles.timerIcon}>⏱</span>
               <input
                 type="range"
-                min={100}
-                max={2000}
-                step={100}
+                min={TIMER_MIN}
+                max={TIMER_MAX}
+                step={TIMER_STEP}
                 value={timerDelay}
                 disabled={isTimer}
                 onChange={(e) => setTimerDelay(Number(e.target.value))}

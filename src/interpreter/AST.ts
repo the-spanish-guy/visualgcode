@@ -50,10 +50,12 @@ export type ASTNode =
 
 // ─── Estrutura do programa ─────────────────────────────────────────────────────
 
+export type Declaration = VarDeclarationNode | ConstDeclarationNode | ProcedureNode | FunctionNode;
+
 export interface ProgramNode {
   kind: "Program";
   name: string;
-  declarations: VarDeclarationNode[];
+  declarations: Declaration[];
   body: ASTNode[];
 }
 

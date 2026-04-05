@@ -56,6 +56,44 @@ function vectorColor(type: string): string {
   return is2DType(type) ? "#ffb86c" : "#ff9f68";
 }
 
+function isChanged(v: VarSnapshot, varInfoMap: Map<string, VarInfo>): boolean {
+  const info = varInfoMap.get(v.name);
+  const displayValue = isVectorType(v.type) ? formatVectorValue(v.value) : String(v.value);
+  const defaultValue = isVectorType(v.type) ? "[]" : (info?.defaultValue ?? "0");
+  return displayValue.toLowerCase() !== defaultValue.toLowerCase();
+}
+
+function VarRow({ v, varInfoMap }: { v: VarSnapshot; varInfoMap: Map<string, VarInfo> }) {
+  const changed = isChanged(v, varInfoMap);
+  const isVec = isVectorType(v.type);
+  const displayValue = isVec ? formatVectorValue(v.value) : String(v.value);
+  const color = isVec ? vectorColor(v.type) : (TYPE_COLORS[v.type] ?? "#7a90aa");
+
+  return (
+    <tr className={`${styles.row} ${changed ? styles.rowChanged : ""}`}>
+      <td className={styles.name}>{v.name}</td>
+      <td className={styles.type} style={{ color }}>
+        {v.type}
+      </td>
+      <td className={`${styles.value} ${changed ? styles.valueChanged : ""}`}>{displayValue}</td>
+    </tr>
+  );
+}
+
+function VarGroup({ label, items, varInfoMap }: { label: string; items: VarSnapshot[]; varInfoMap: Map<string, VarInfo> }) {
+  if (items.length === 0) return null;
+  return (
+    <>
+      <tr className={styles.groupHeader}>
+        <td colSpan={3}>{label}</td>
+      </tr>
+      {items.map((v) => (
+        <VarRow key={v.name} v={v} varInfoMap={varInfoMap} />
+      ))}
+    </>
+  );
+}
+
 export default function VariablesPanel() {
   const variables = useDebugStore((s) => s.variables);
   const debugMode = useDebugStore((s) => s.debugMode);
@@ -71,45 +109,9 @@ export default function VariablesPanel() {
     varInfo.current.set(v.name, { ...v, defaultValue: defaultVal });
   });
 
-  const isChanged = (v: VarSnapshot): boolean => {
-    const info = varInfo.current.get(v.name);
-    const displayValue = isVectorType(v.type) ? formatVectorValue(v.value) : String(v.value);
-    const defaultValue = isVectorType(v.type) ? "[]" : (info?.defaultValue ?? "0");
-    return displayValue.toLowerCase() !== defaultValue.toLowerCase();
-  };
-
   const scalars = variables.filter((v) => !isVectorType(v.type));
   const vectors = variables.filter((v) => isVectorType(v.type) && !is2DType(v.type));
   const matrices = variables.filter((v) => is2DType(v.type));
-
-  const renderRow = (v: VarSnapshot) => {
-    const changed = isChanged(v);
-    const isVec = isVectorType(v.type);
-    const displayValue = isVec ? formatVectorValue(v.value) : String(v.value);
-    const color = isVec ? vectorColor(v.type) : (TYPE_COLORS[v.type] ?? "#7a90aa");
-
-    return (
-      <tr key={v.name} className={`${styles.row} ${changed ? styles.rowChanged : ""}`}>
-        <td className={styles.name}>{v.name}</td>
-        <td className={styles.type} style={{ color }}>
-          {v.type}
-        </td>
-        <td className={`${styles.value} ${changed ? styles.valueChanged : ""}`}>{displayValue}</td>
-      </tr>
-    );
-  };
-
-  const renderGroup = (label: string, items: VarSnapshot[]) => {
-    if (items.length === 0) return null;
-    return (
-      <>
-        <tr className={styles.groupHeader}>
-          <td colSpan={3}>{label}</td>
-        </tr>
-        {items.map(renderRow)}
-      </>
-    );
-  };
 
   return (
     <div className={styles.panel}>
@@ -122,9 +124,9 @@ export default function VariablesPanel() {
           </tr>
         </thead>
         <tbody>
-          {renderGroup("Escalares", scalars)}
-          {renderGroup("Vetores", vectors)}
-          {renderGroup("Matrizes", matrices)}
+          <VarGroup label="Escalares" items={scalars} varInfoMap={varInfo.current} />
+          <VarGroup label="Vetores" items={vectors} varInfoMap={varInfo.current} />
+          <VarGroup label="Matrizes" items={matrices} varInfoMap={varInfo.current} />
         </tbody>
       </table>
     </div>

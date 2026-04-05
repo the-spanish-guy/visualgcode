@@ -1,4 +1,4 @@
-import type { ASTNode, FunctionNode, ProcedureNode, ProgramNode, VarDeclarationNode } from "./AST";
+import type { ASTNode, Declaration, FunctionNode, ProcedureNode, ProgramNode } from "./AST";
 
 export type WarningKind = "unused";
 
@@ -21,7 +21,7 @@ export class StaticAnalyzer {
     // Subprogramas (o parser os coloca em declarations com kind Procedure/Function)
     for (const decl of program.declarations) {
       if (decl.kind === "Procedure" || decl.kind === "Function") {
-        this.analyzeSubprogram(decl as unknown as ProcedureNode | FunctionNode);
+        this.analyzeSubprogram(decl);
       }
     }
 
@@ -32,7 +32,7 @@ export class StaticAnalyzer {
     this.analyzeScope([...node.params, ...node.locals], node.body);
   }
 
-  private analyzeScope(declarations: VarDeclarationNode[], body: ASTNode[]): void {
+  private analyzeScope(declarations: Declaration[], body: ASTNode[]): void {
     const used = new Map<string, { line: number; seen: boolean; originalName: string }>();
 
     for (const decl of declarations) {

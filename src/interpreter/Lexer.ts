@@ -126,7 +126,6 @@ export class Lexer {
   private readNumber(): void {
     const startCol = this.col;
     let num = "";
-    let isFloat = false;
 
     while (!this.isAtEnd() && this.isDigit(this.current())) {
       num += this.advance();
@@ -134,7 +133,6 @@ export class Lexer {
 
     // Ponto decimal: 3.14
     if (!this.isAtEnd() && this.current() === "." && this.isDigit(this.peek(1))) {
-      isFloat = true;
       num += this.advance(); // consome o "."
       while (!this.isAtEnd() && this.isDigit(this.current())) {
         num += this.advance();

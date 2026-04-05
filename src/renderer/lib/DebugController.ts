@@ -35,7 +35,13 @@ export class DebugController {
       return;
     }
 
-    // ── Breakpoint no timer ou modo debug normal: pausa e aguarda usuário ─────
+    // Modo continue: pula a pausa enquanto não há breakpoint
+    if (this.continueMode && !this.breakpoints.has(line)) {
+      this.onStateChange({ currentLine: line, variables: vars, callStack });
+      return;
+    }
+
+    // ── Breakpoint ou modo step: pausa e aguarda usuário ──────────────────────
     this.timerPaused = this.timerDelay > 0; // true só se veio do timer
     this.continueMode = false;
     this.onStateChange({

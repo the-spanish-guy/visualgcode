@@ -11,6 +11,9 @@ import type { CompletionFunction, CompletionVar } from "./extractFromAST";
 import { extractFromAST } from "./extractFromAST";
 import { snippets } from "./snippets";
 
+const MARKER_END_COLUMN = 999;
+const WARNING_SOURCE = "Variável não usada";
+
 // Refs globais — lidas pelo completion/signature provider que é registrado uma única vez
 const completionVarsRef = { current: [] as CompletionVar[] };
 const completionFunctionsRef = { current: [] as CompletionFunction[] };
@@ -223,8 +226,8 @@ export default function Editor() {
         startColumn: 1,
         startLineNumber: w.line,
         endLineNumber: w.line,
-        endColumn: 999,
-        source: "Variável não usada",
+        endColumn: MARKER_END_COLUMN,
+        source: WARNING_SOURCE,
       };
     });
 
