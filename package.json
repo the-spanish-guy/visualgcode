@@ -38,6 +38,7 @@
     },
     "files": [
       "dist/**/*",
+      "build/icon.png",
       "package.json",
       "!node_modules/*/{README,CHANGELOG,CONTRIBUTING}.md",
       "!node_modules/**/{test,tests,__tests__,spec,specs}/**",
