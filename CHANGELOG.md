@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.0.1] - 2026-10-26
+
+### Correções
+- **build**: Inclui build/icon.png no pacote
+- **#1**: Evita crash no macOS quando build/icon.png não está no pacote
+
+
+### Documentação
+- Adiciona guia de contribuição
+
+
 ## [2.0.0] - 2026-04-05
 ### ⚠ Breaking Changes
 - **interpreter**: Sqrt renomeada para raizq e numcarac para numpcarac
