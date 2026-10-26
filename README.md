@@ -119,6 +119,8 @@ O CI compila os instaladores para Windows, Linux e macOS, atualiza o `CHANGELOG.
 
 PRs são bem-vindos. Rode `npm run check` antes de abrir.
 
+As mensagens de commit (e o título do PR) seguem o padrão [Conventional Commits](https://www.conventionalcommits.org/pt-br/), por exemplo `fix(editor): corrige realce de keywords`. Veja o [CONTRIBUTING.md](./CONTRIBUTING.md) para os tipos, escopos e detalhes.
+
 Bugs? [Abra uma issue](https://github.com/the-spanish-guy/visualgcode/issues/new) descrevendo o problema, como reproduzir e qual SO/versão você está usando.
 
 ---
